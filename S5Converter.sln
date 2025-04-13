@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35919.96 d17.13
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "S5Converter", "S5Converter\S5Converter.csproj", "{E754B081-A4AB-48B7-AE09-066E37A0EF22}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E754B081-A4AB-48B7-AE09-066E37A0EF22}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E754B081-A4AB-48B7-AE09-066E37A0EF22}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E754B081-A4AB-48B7-AE09-066E37A0EF22}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E754B081-A4AB-48B7-AE09-066E37A0EF22}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EA4823A9-F04E-49E1-87FB-37F9EA8823F5}
+	EndGlobalSection
+EndGlobal
