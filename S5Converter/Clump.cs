@@ -9,23 +9,27 @@ namespace S5Converter
 {
     internal class Clump
     {
-        internal int NumAtomics, NumCameras, NumLights;
         [JsonPropertyName("frames")]
         [JsonInclude]
         public FrameWithExt[] Frames = [];
+        [JsonPropertyName("atomics")]
+        [JsonInclude]
+        public Atomic[] Atomics = [];
         [JsonPropertyName("geometries")]
         [JsonInclude]
         public Geometry[] Geometries = [];
 
+        [JsonPropertyName("extension")]
+        [JsonInclude]
+        public Extension Extension = new();
+
         internal static Clump Read(BinaryReader s)
         {
             ChunkHeader.FindChunk(s, RwCorePluginID.STRUCT);
-            Clump c = new()
-            {
-                NumAtomics = s.ReadInt32(),
-                NumLights = s.ReadInt32(),
-                NumCameras = s.ReadInt32()
-            };
+            int nAtomics = s.ReadInt32();
+            int nLights = s.ReadInt32();
+            int nCameras = s.ReadInt32();
+            Clump c = new();
 
             // framelist
             ChunkHeader.FindChunk(s, RwCorePluginID.FRAMELIST);
@@ -64,6 +68,23 @@ namespace S5Converter
                 c.Geometries[i] = Geometry.Read(s);
             }
 
+            // atomics
+            c.Atomics = new Atomic[nAtomics];
+            for (int i = 0; i < nAtomics; ++i)
+            {
+                ChunkHeader.FindChunk(s, RwCorePluginID.ATOMIC);
+                if (nGeoms == 0) // TODO
+                    throw new IOException("trying to read atomic without geometry in clump. inline geometry not supportet at the moment!");
+                c.Atomics[i] = Atomic.Read(s);
+            }
+
+            if (nLights > 0)
+                throw new IOException("lights not supported!");
+
+            if (nCameras > 0)
+                throw new IOException("cameras not supported");
+
+            c.Extension = Extension.Read(s);
 
             return c;
         }

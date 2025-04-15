@@ -20,13 +20,22 @@ namespace S5Converter
                 }
                 else
                 {
-                    using BinaryReader r = new(new FileStream(f, FileMode.Open, FileAccess.Read));
-                    ChunkHeader h = ChunkHeader.FindChunk(r, RwCorePluginID.CLUMP);
-                    Clump c = Clump.Read(r);
-                    using FileStream ou = new(Path.ChangeExtension(f, ".json"), FileMode.Create, FileAccess.Write);
-                    JsonSerializer.Serialize(ou, c, SourceGenerationContext.Default.Clump);
+                    try
+                    {
+                        Console.WriteLine($"converting {f}");
+                        using BinaryReader r = new(new FileStream(f, FileMode.Open, FileAccess.Read));
+                        ChunkHeader h = ChunkHeader.FindChunk(r, RwCorePluginID.CLUMP);
+                        Clump c = Clump.Read(r);
+                        using FileStream ou = new(Path.ChangeExtension(f, ".json"), FileMode.Create, FileAccess.Write);
+                        JsonSerializer.Serialize(ou, c, SourceGenerationContext.Default.Clump);
+                    }
+                    catch (IOException e)
+                    {
+                        Console.WriteLine(e.ToString());
+                    }
                 }
             }
+            Console.Read();
         }
     }
     [JsonSourceGenerationOptions(WriteIndented = true)]
