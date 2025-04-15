@@ -90,6 +90,7 @@ namespace S5Converter
         [JsonPropertyName("nodes")]
         [JsonInclude]
         public Node[] Nodes = [];
+        // TODO check what parents does and where it comes from
 
         internal struct Node
         {

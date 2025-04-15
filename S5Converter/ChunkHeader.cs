@@ -59,6 +59,35 @@ namespace S5Converter
                 s.ReadBytes((int)h.Length);
             }
         }
+
+        internal static string FindAndReadString(BinaryReader s)
+        {
+            while (true)
+            {
+                ChunkHeader h = Read(s);
+                if (h.Version > rwLIBRARYCURRENTVERSION || h.Version < rwLIBRARYBASEVERSION)
+                    throw new IOException($"{h.Version} bad version for string header");
+                if (h.Type == RwCorePluginID.STRING)
+                {
+                    byte[] c = s.ReadBytes((int)h.Length);
+                    ReadOnlySpan<byte> r = new(c);
+                    int i = Array.IndexOf(c, (byte)0);
+                    if (r.Length > 1 && i < r.Length)
+                        r = r[..i];
+                    return Encoding.ASCII.GetString(r);
+                }
+                else if (h.Type == RwCorePluginID.UNICODESTRING) // is there a difference?
+                {
+                    byte[] c = s.ReadBytes((int)h.Length);
+                    ReadOnlySpan<byte> r = new(c);
+                    int i = Array.IndexOf(c, (byte)0);
+                    if (r.Length > 1 && i < r.Length)
+                        r = r[..i];
+                    return Encoding.UTF8.GetString(r);
+                }
+                s.ReadBytes((int)h.Length);
+            }
+        }
     }
 
     internal static class Helper
@@ -68,20 +97,26 @@ namespace S5Converter
             int l = s.ReadInt32();
             if (l == 0)
                 return null;
-            char[] c = s.ReadChars(l);
-            ReadOnlySpan<char> r = new(c);
+            byte[] c = s.ReadBytes(l);
+            ReadOnlySpan<byte> r = new(c);
             if (r.Length > 1 && r[^1] == '\0')
                 r = r[..^1];
-            return new string(r);
+            return Encoding.ASCII.GetString(r);
         }
 
         internal static void WriteRWString(this BinaryWriter s, string v)
         {
-            bool needs0 = v.EndsWith('\0');
-            s.Write(v.Length + (needs0 ? 1 : 0));
-            s.Write(v.AsSpan());
+            byte[] d = Encoding.ASCII.GetBytes(v);
+            bool needs0 = d.Length == 0 || d[^1] != 0;
+            s.Write(d.Length + (needs0 ? 1 : 0));
+            s.Write(d);
             if (needs0)
-                s.Write('\0');
+                s.Write((byte)0);
+        }
+
+        internal static bool IsFlagSet(this Geometry.RpGeometryFlag f, Geometry.RpGeometryFlag check)
+        {
+            return (f & check) != 0;
         }
     }
 }

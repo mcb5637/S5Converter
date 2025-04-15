@@ -29,4 +29,9 @@ namespace S5Converter
             }
         }
     }
+    [JsonSourceGenerationOptions(WriteIndented = true)]
+    [JsonSerializable(typeof(Clump))]
+    internal partial class SourceGenerationContext : JsonSerializerContext
+    {
+    }
 }

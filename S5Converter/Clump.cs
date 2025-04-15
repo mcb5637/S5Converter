@@ -13,6 +13,9 @@ namespace S5Converter
         [JsonPropertyName("frames")]
         [JsonInclude]
         public FrameWithExt[] Frames = [];
+        [JsonPropertyName("geometries")]
+        [JsonInclude]
+        public Geometry[] Geometries = [];
 
         internal static Clump Read(BinaryReader s)
         {
@@ -31,21 +34,15 @@ namespace S5Converter
             c.Frames = new FrameWithExt[nframes];
             for (int i = 0; i < nframes; ++i)
             {
-                Frame f = new();
-                f.Right.X = s.ReadSingle();
-                f.Right.Y = s.ReadSingle();
-                f.Right.Z = s.ReadSingle();
-                f.Up.X = s.ReadSingle();
-                f.Up.Y = s.ReadSingle();
-                f.Up.Z = s.ReadSingle();
-                f.At.X = s.ReadSingle();
-                f.At.Y = s.ReadSingle();
-                f.At.Z = s.ReadSingle();
-                f.Position.X = s.ReadSingle();
-                f.Position.Y = s.ReadSingle();
-                f.Position.Z = s.ReadSingle();
-                f.ParentFrameIndex = s.ReadInt32();
-                f.UnknownIntProbablyUnused = s.ReadInt32();
+                Frame f = new()
+                {
+                    Right = Vec3.Read(s),
+                    Up = Vec3.Read(s),
+                    At = Vec3.Read(s),
+                    Position = Vec3.Read(s),
+                    ParentFrameIndex = s.ReadInt32(),
+                    UnknownIntProbablyUnused = s.ReadInt32()
+                };
                 c.Frames[i] = new()
                 {
                     Frame = f,
@@ -56,6 +53,16 @@ namespace S5Converter
                 c.Frames[i].Extension = Extension.Read(s);
             }
 
+            // geometrylist
+            ChunkHeader.FindChunk(s, RwCorePluginID.GEOMETRYLIST);
+            ChunkHeader.FindChunk(s, RwCorePluginID.STRUCT);
+            int nGeoms = s.ReadInt32();
+            c.Geometries = new Geometry[nGeoms];
+            for (int i = 0; i < nGeoms; ++i)
+            {
+                ChunkHeader.FindChunk(s, RwCorePluginID.GEOMETRY);
+                c.Geometries[i] = Geometry.Read(s);
+            }
 
 
             return c;
@@ -64,10 +71,5 @@ namespace S5Converter
         {
 
         }
-    }
-    [JsonSourceGenerationOptions(WriteIndented = true)]
-    [JsonSerializable(typeof(Clump))]
-    internal partial class SourceGenerationContext : JsonSerializerContext
-    {
     }
 }

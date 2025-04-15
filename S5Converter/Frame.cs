@@ -36,6 +36,40 @@ namespace S5Converter
         [JsonPropertyName("z")]
         [JsonInclude]
         public float Z;
+
+        internal static Vec3 Read(BinaryReader s)
+        {
+            return new()
+            {
+                X = s.ReadSingle(),
+                Y = s.ReadSingle(),
+                Z = s.ReadSingle(),
+            };
+        }
+    }
+    internal struct Sphere
+    {
+        [JsonIgnore]
+        public Vec3 Center;
+        [JsonPropertyName("x")]
+        public float X { readonly get => Center.X; set => Center.X = value; }
+        [JsonPropertyName("y")]
+        public float Y { readonly get => Center.Y; set => Center.Y = value; }
+        [JsonPropertyName("z")]
+        public float Z { readonly get => Center.Z; set => Center.Z = value; }
+
+        [JsonPropertyName("radius")]
+        [JsonInclude]
+        public float Radius;
+
+        internal static Sphere Read(BinaryReader s)
+        {
+            return new()
+            {
+                Center = Vec3.Read(s),
+                Radius = s.ReadSingle(),
+            };
+        }
     }
     internal class FrameWithExt
     {
