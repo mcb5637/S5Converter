@@ -56,6 +56,7 @@ namespace S5Converter
 
         HAnim = 286,
         UserData = 287,
+        MaterialFX = 288,
         PrtStd = 304,
     }
 }

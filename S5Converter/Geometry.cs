@@ -124,7 +124,7 @@ namespace S5Converter
                 }
             }
 
-            r.Extension = Extension.Read(s);
+            r.Extension = Extension.Read(s, RwCorePluginID.GEOMETRY);
 
             return r;
         }
@@ -267,7 +267,7 @@ namespace S5Converter
                 UnusedInt1 = s.ReadInt16(),
                 Tex = ChunkHeader.FindAndReadString(s),
                 TextureAlpha = ChunkHeader.FindAndReadString(s),
-                Extension = Extension.Read(s),
+                Extension = Extension.Read(s, RwCorePluginID.TEXTURE),
             };
 
             return r;
@@ -324,7 +324,7 @@ namespace S5Converter
                 m.Textures = [Texture.Read(s)];
             }
 
-            m.Extension = Extension.Read(s);
+            m.Extension = Extension.Read(s, RwCorePluginID.MATERIAL);
 
             return m;
         }

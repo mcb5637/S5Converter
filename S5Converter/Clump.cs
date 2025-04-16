@@ -54,7 +54,7 @@ namespace S5Converter
             }
             for (int i = 0; i < nframes; ++i)
             {
-                c.Frames[i].Extension = Extension.Read(s);
+                c.Frames[i].Extension = Extension.Read(s, RwCorePluginID.FRAMELIST);
             }
 
             // geometrylist
@@ -84,7 +84,7 @@ namespace S5Converter
             if (nCameras > 0)
                 throw new IOException("cameras not supported");
 
-            c.Extension = Extension.Read(s);
+            c.Extension = Extension.Read(s, RwCorePluginID.CLUMP);
 
             return c;
         }

@@ -35,7 +35,7 @@ namespace S5Converter
                 GeometryIndex = s.ReadInt32(),
                 Flags = s.ReadInt32(),
                 UnknownInt1 = s.ReadInt32(),
-                Extension = Extension.Read(s),
+                Extension = Extension.Read(s, RwCorePluginID.ATOMIC),
             };
             return a;
         }

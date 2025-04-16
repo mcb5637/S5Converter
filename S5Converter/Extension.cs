@@ -21,20 +21,34 @@ namespace S5Converter
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public RpHAnimHierarchy? HanimPLG;
 
-        internal static Extension Read(BinaryReader s)
+        [JsonInclude]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public MaterialFXMaterial? MaterialFXMat;
+
+        [JsonInclude]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public bool? MaterialFXAtomic_EffectsEnabled;
+
+        internal static Extension Read(BinaryReader s, RwCorePluginID src)
         {
             ChunkHeader exheader = ChunkHeader.FindChunk(s, RwCorePluginID.EXTENSION);
             Extension e = new();
             while (exheader.Length > 0)
             {
                 ChunkHeader h = ChunkHeader.Read(s);
-                switch (h.Type)
+                switch ((h.Type, src))
                 {
-                    case RwCorePluginID.UserData:
+                    case (RwCorePluginID.UserData, RwCorePluginID.FRAMELIST):
                         e.UserDataPLG = ReadUserData(s);
                         break;
-                    case RwCorePluginID.HAnim:
+                    case (RwCorePluginID.HAnim, RwCorePluginID.FRAMELIST):
                         e.HanimPLG = RpHAnimHierarchy.Read(s);
+                        break;
+                    case (RwCorePluginID.MaterialFX, RwCorePluginID.MATERIAL):
+                        e.MaterialFXMat = MaterialFXMaterial.Read(s);
+                        break;
+                    case (RwCorePluginID.MaterialFX, RwCorePluginID.ATOMIC):
+                        e.MaterialFXAtomic_EffectsEnabled = s.ReadInt32() != 0;
                         break;
                     default:
                         Console.Error.WriteLine($"unknown extension {(int)h.Type}, skipping");
@@ -131,6 +145,92 @@ namespace S5Converter
                 }
             }
             return r;
+        }
+    }
+
+    internal class MaterialFXMaterial
+    {
+        internal enum DataType : int
+        {
+            BumpMap = 1,
+            EnvMap = 2,
+            DualTexture = 4,
+            UVTransformMat = 5,
+        };
+
+        internal struct Data
+        {
+            [JsonInclude]
+            public DataType Type;
+            [JsonInclude]
+            public Texture? Texture1;
+            [JsonInclude]
+            public Texture? Texture2;
+            [JsonInclude]
+            public float? Coefficient;
+            [JsonInclude]
+            public bool? FrameBufferAlpha;
+            [JsonInclude]
+            public int? SrcBlendMode;
+            [JsonInclude]
+            public int? DstBlendMode;
+        }
+
+        [JsonInclude]
+        internal Data Data1;
+        [JsonInclude]
+        internal Data Data2;
+        [JsonIgnore]
+        internal int Flags;
+
+        internal static MaterialFXMaterial Read(BinaryReader s)
+        {
+            MaterialFXMaterial r = new()
+            {
+                Flags = s.ReadInt32(),
+            };
+            ReadData(ref r.Data1, s);
+            ReadData(ref r.Data2, s);
+
+            return r;
+        }
+
+        private static void ReadData(ref Data d, BinaryReader s)
+        {
+            d.Type = (DataType)s.ReadInt32();
+            switch (d.Type)
+            {
+                case DataType.BumpMap:
+                    d.Coefficient = s.ReadSingle();
+                    d.Texture1 = ReadOptText(s);
+                    d.Texture2 = ReadOptText(s);
+                    break;
+                case DataType.EnvMap:
+                    d.Coefficient = s.ReadSingle();
+                    d.FrameBufferAlpha = s.ReadInt32() != 0;
+                    d.Texture1 = ReadOptText(s);
+                    break;
+                case DataType.DualTexture:
+                    d.SrcBlendMode = s.ReadInt32();
+                    d.DstBlendMode = s.ReadInt32();
+                    d.Texture1 = ReadOptText(s);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        private static Texture? ReadOptText(BinaryReader s)
+        {
+            if (s.ReadInt32() == 0)
+            {
+                return null;
+            }
+            else
+            {
+                ChunkHeader.FindChunk(s, RwCorePluginID.TEXTURE);
+                return Texture.Read(s);
+            }
         }
     }
 }
