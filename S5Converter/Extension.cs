@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using static S5Converter.RpUserDataArray;
 
 namespace S5Converter
 {
@@ -14,7 +15,7 @@ namespace S5Converter
         [JsonPropertyName("userDataPLG")]
         [JsonInclude]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public Dictionary<string, string?[]>? UserDataPLG; // TODO better representation?
+        public Dictionary<string, RpUserDataArray>? UserDataPLG;
 
         [JsonPropertyName("hanimPLG")]
         [JsonInclude]
@@ -43,7 +44,7 @@ namespace S5Converter
                 switch ((h.Type, src))
                 {
                     case (RwCorePluginID.USERDATAPLUGIN, RwCorePluginID.FRAMELIST):
-                        e.UserDataPLG = ReadUserData(s);
+                        e.UserDataPLG = RpUserDataArray.Read(s);
                         break;
                     case (RwCorePluginID.HANIMPLUGIN, RwCorePluginID.FRAMELIST):
                         e.HanimPLG = RpHAnimHierarchy.Read(s);
@@ -66,35 +67,157 @@ namespace S5Converter
             }
             return e;
         }
+    }
 
-        private static Dictionary<string, string?[]> ReadUserData(BinaryReader s)
+    [JsonConverter(typeof(RpUserDataArrayJsonConverter))]
+    internal class RpUserDataArray
+    {
+        internal enum RpUserDataFormat : int
         {
-            Dictionary<string, string?[]> r = [];
+            rpNAUSERDATAFORMAT = 0,
+		    rpINTUSERDATA,          /**< 32 bit int data */
+		    rpREALUSERDATA,         /**< 32 bit float data */
+		    rpSTRINGUSERDATA,       /**< unsigned byte pointer data */
+	    };
+        internal class DataObj
+        {
+            public int I;
+            public float F;
+            public string? S;
+        }
+
+        public RpUserDataFormat Format;
+        public DataObj[] Data = [];
+
+
+        internal static Dictionary<string, RpUserDataArray> Read(BinaryReader s)
+        {
+            Dictionary<string, RpUserDataArray> r = [];
             int numUD = s.ReadInt32();
             for (int i = 0; i < numUD; ++i)
             {
                 string udname = s.ReadRWString() ?? Guid.NewGuid().ToString();
-                int type = s.ReadInt32();
+                RpUserDataFormat type = (RpUserDataFormat)s.ReadInt32();
                 int nelems = s.ReadInt32();
-                string?[] o = new string?[nelems];
+                RpUserDataArray o = new()
+                {
+                    Format = type,
+                    Data = new DataObj[nelems]
+                };
                 for (int j = 0; j < nelems; ++j)
                 {
                     switch (type)
                     {
-                        case 1: // int
-                            o[j] = s.ReadInt32().ToString();
+                        case RpUserDataFormat.rpINTUSERDATA:
+                            o.Data[j] = new() { I = s.ReadInt32()};
                             break;
-                        case 2: // float
-                            o[j] = s.ReadSingle().ToString();
+                        case RpUserDataFormat.rpREALUSERDATA:
+                            o.Data[j] = new() { F = s.ReadSingle() };
                             break;
-                        case 3: // string
-                            o[j] = s.ReadRWString();
+                        case RpUserDataFormat.rpSTRINGUSERDATA:
+                            o.Data[j] = new() { S = s.ReadRWString() };
                             break;
                     }
                 }
                 r[udname] = o;
             }
             return r;
+        }
+    }
+    internal class RpUserDataArrayJsonConverter : JsonConverter<RpUserDataArray>
+    {
+        public override RpUserDataArray? Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            if (reader.TokenType != JsonTokenType.StartArray)
+                throw new JsonException();
+            reader.Read();
+            List<RpUserDataArray.DataObj> l = [];
+            RpUserDataArray.RpUserDataFormat f = RpUserDataArray.RpUserDataFormat.rpNAUSERDATAFORMAT;
+            while (reader.TokenType != JsonTokenType.EndArray)
+            {
+                switch (reader.TokenType)
+                {
+                    case JsonTokenType.String:
+                        if (f == RpUserDataArray.RpUserDataFormat.rpSTRINGUSERDATA || f == RpUserDataArray.RpUserDataFormat.rpNAUSERDATAFORMAT)
+                        {
+                            f = RpUserDataArray.RpUserDataFormat.rpSTRINGUSERDATA;
+                            l.Add(new() { S = reader.GetString()! });
+                            reader.Read();
+                            continue;
+                        }
+                        else
+                        {
+                            throw new JsonException("type missmatch");
+                        }
+
+                    case JsonTokenType.Number:
+                        {
+                            if (f == RpUserDataArray.RpUserDataFormat.rpSTRINGUSERDATA)
+                                throw new JsonException("type missmatch");
+                            if (f == RpUserDataArray.RpUserDataFormat.rpNAUSERDATAFORMAT || f == RpUserDataArray.RpUserDataFormat.rpINTUSERDATA)
+                            {
+                                if (reader.TryGetInt32(out int v))
+                                {
+                                    f = RpUserDataArray.RpUserDataFormat.rpINTUSERDATA;
+                                    l.Add(new() { I = v });
+                                    reader.Read();
+                                    continue;
+                                }
+                            }
+                            if (reader.TryGetSingle(out float vf))
+                            {
+                                if (f == RpUserDataArray.RpUserDataFormat.rpINTUSERDATA)
+                                {
+                                    foreach (RpUserDataArray.DataObj c in l)
+                                        c.F = (float)c.I;
+                                }
+                                f = RpUserDataArray.RpUserDataFormat.rpREALUSERDATA;
+                                l.Add(new() { F = vf });
+                                reader.Read();
+                                continue;
+                            }
+
+                            break;
+                        }
+
+                    case JsonTokenType.Null:
+                        if (f == RpUserDataArray.RpUserDataFormat.rpSTRINGUSERDATA || f == RpUserDataArray.RpUserDataFormat.rpNAUSERDATAFORMAT)
+                        {
+                            f = RpUserDataArray.RpUserDataFormat.rpSTRINGUSERDATA;
+                            l.Add(new() { });
+                            reader.Read();
+                            continue;
+                        }
+                        else
+                        {
+                            throw new JsonException("type missmatch");
+                        }
+                }
+                throw new JsonException();
+            }
+
+            return new() { Format = f, Data = [.. l] };
+        }
+
+        public override void Write(Utf8JsonWriter writer, RpUserDataArray value, JsonSerializerOptions options)
+        {
+            writer.WriteStartArray();
+            for (int i = 0; i < value.Data.Length; ++i)
+            {
+                switch (value.Format)
+                {
+                    case RpUserDataArray.RpUserDataFormat.rpINTUSERDATA:
+                        writer.WriteNumberValue(value.Data[i].I);
+                        break;
+                    case RpUserDataArray.RpUserDataFormat.rpREALUSERDATA:
+                        writer.WriteNumberValue(value.Data[i].F);
+                        break;
+                    case RpUserDataArray.RpUserDataFormat.rpSTRINGUSERDATA:
+                        writer.WriteStringValue(value.Data[i].S);
+                        break;
+                }
+            }
+            writer.WriteEndArray();
         }
     }
 
