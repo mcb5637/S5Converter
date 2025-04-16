@@ -37,7 +37,7 @@ namespace S5Converter
                         e.HanimPLG = RpHAnimHierarchy.Read(s);
                         break;
                     default:
-                        Console.WriteLine($"unknown extension {(int)h.Type}, skipping");
+                        Console.Error.WriteLine($"unknown extension {(int)h.Type}, skipping");
                         s.ReadBytes((int)h.Length);
                         break;
                 }

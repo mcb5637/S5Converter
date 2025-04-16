@@ -56,7 +56,7 @@ namespace S5Converter
                         throw new IOException($"{h.Version} bad version for header of type {type}");
                     return h;
                 }
-                Console.WriteLine($"warning: skipping chunk {h.Type}, searching for {type}");
+                Console.Error.WriteLine($"warning: skipping chunk {h.Type}, searching for {type}");
                 s.ReadBytes((int)h.Length);
             }
         }
@@ -86,7 +86,7 @@ namespace S5Converter
                         r = r[..i];
                     return Encoding.UTF8.GetString(r);
                 }
-                Console.WriteLine($"warning: skipping chunk {h.Type}, searching for string/unicode string");
+                Console.Error.WriteLine($"warning: skipping chunk {h.Type}, searching for string/unicode string");
                 s.ReadBytes((int)h.Length);
             }
         }
