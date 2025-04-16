@@ -54,9 +54,11 @@ namespace S5Converter
         COLLTREE = 0x2C,
         ENVIRONMENT = 0x2D,
 
-        HAnim = 286,
-        UserData = 287,
-        MaterialFX = 288,
-        PrtStd = 304,
+        HANIMPLUGIN = 286,
+        USERDATAPLUGIN = 287,
+        MATERIALEFFECTSPLUGIN = 288,
+        PRTSTDPLUGIN = 304,
+
+        BINMESHPLUGIN = 1294,
     }
 }

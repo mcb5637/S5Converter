@@ -29,6 +29,10 @@ namespace S5Converter
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public bool? MaterialFXAtomic_EffectsEnabled;
 
+        [JsonInclude]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public RpMeshHeader? BinMeshPLG;
+
         internal static Extension Read(BinaryReader s, RwCorePluginID src)
         {
             ChunkHeader exheader = ChunkHeader.FindChunk(s, RwCorePluginID.EXTENSION);
@@ -38,17 +42,20 @@ namespace S5Converter
                 ChunkHeader h = ChunkHeader.Read(s);
                 switch ((h.Type, src))
                 {
-                    case (RwCorePluginID.UserData, RwCorePluginID.FRAMELIST):
+                    case (RwCorePluginID.USERDATAPLUGIN, RwCorePluginID.FRAMELIST):
                         e.UserDataPLG = ReadUserData(s);
                         break;
-                    case (RwCorePluginID.HAnim, RwCorePluginID.FRAMELIST):
+                    case (RwCorePluginID.HANIMPLUGIN, RwCorePluginID.FRAMELIST):
                         e.HanimPLG = RpHAnimHierarchy.Read(s);
                         break;
-                    case (RwCorePluginID.MaterialFX, RwCorePluginID.MATERIAL):
+                    case (RwCorePluginID.MATERIALEFFECTSPLUGIN, RwCorePluginID.MATERIAL):
                         e.MaterialFXMat = MaterialFXMaterial.Read(s);
                         break;
-                    case (RwCorePluginID.MaterialFX, RwCorePluginID.ATOMIC):
+                    case (RwCorePluginID.MATERIALEFFECTSPLUGIN, RwCorePluginID.ATOMIC):
                         e.MaterialFXAtomic_EffectsEnabled = s.ReadInt32() != 0;
+                        break;
+                    case (RwCorePluginID.BINMESHPLUGIN, RwCorePluginID.GEOMETRY):
+                        e.BinMeshPLG = RpMeshHeader.Read(s);
                         break;
                     default:
                         Console.Error.WriteLine($"unknown extension {(int)h.Type}, skipping");
@@ -180,7 +187,7 @@ namespace S5Converter
         internal Data Data1;
         [JsonInclude]
         internal Data Data2;
-        [JsonIgnore]
+        [JsonInclude]
         internal int Flags;
 
         internal static MaterialFXMaterial Read(BinaryReader s)
@@ -231,6 +238,47 @@ namespace S5Converter
                 ChunkHeader.FindChunk(s, RwCorePluginID.TEXTURE);
                 return Texture.Read(s);
             }
+        }
+    }
+
+    internal class RpMeshHeader
+    {
+        [JsonInclude]
+        public int Flags;
+        [JsonInclude]
+        public RpMesh[] Meshes = [];
+
+        internal struct RpMesh
+        {
+            [JsonInclude]
+            public int MaterialIndex;
+            [JsonInclude]
+            public int[] VertexIndices;
+        }
+
+        internal static RpMeshHeader Read(BinaryReader s)
+        {
+            RpMeshHeader r = new()
+            {
+                Flags = s.ReadInt32(),
+            };
+            int numMeshes = s.ReadInt32();
+            int totalInices = s.ReadInt32();
+
+            r.Meshes = new RpMesh[numMeshes];
+            for (int i = 0; i < numMeshes; ++i)
+            {
+                int nIndices = s.ReadInt32();
+                r.Meshes[i] = new RpMesh()
+                {
+                    MaterialIndex = s.ReadInt32(),
+                    VertexIndices = new int[nIndices],
+                };
+                for (int j = 0; j < nIndices; ++j)
+                    r.Meshes[i].VertexIndices[j] = s.ReadInt32();
+            }
+
+            return r;
         }
     }
 }

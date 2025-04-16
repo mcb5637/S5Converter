@@ -272,6 +272,8 @@ namespace S5Converter
 
             return r;
         }
+
+        // on writing: ensure string length < 0x80 (read buffer)
     }
     internal struct SurfaceProperties
     {
