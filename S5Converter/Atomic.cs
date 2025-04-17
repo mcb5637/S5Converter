@@ -24,10 +24,15 @@ namespace S5Converter
         [JsonInclude]
         public Extension Extension;
 
+        internal readonly int Size => ChunkHeader.Size + sizeof(int) * 4 + Extension.SizeH(RwCorePluginID.ATOMIC);
+        internal readonly int SizeH => Size + ChunkHeader.Size;
 
-        internal static Atomic Read(BinaryReader s)
+
+        internal static Atomic Read(BinaryReader s, bool header)
         {
-            if (ChunkHeader.FindChunk(s, RwCorePluginID.STRUCT).Length != 4 * 4)
+            if (header)
+                ChunkHeader.FindChunk(s, RwCorePluginID.ATOMIC);
+            if (ChunkHeader.FindChunk(s, RwCorePluginID.STRUCT).Length != 4 * sizeof(int))
                 throw new IOException("atomic read invalid struct length");
             Atomic a = new()
             {
@@ -38,6 +43,28 @@ namespace S5Converter
                 Extension = Extension.Read(s, RwCorePluginID.ATOMIC),
             };
             return a;
+        }
+
+        internal void Write(BinaryWriter s, bool header)
+        {
+            if (header)
+            {
+                new ChunkHeader()
+                {
+                    Length = Size,
+                    Type = RwCorePluginID.ATOMIC,
+                }.Write(s);
+            }
+            new ChunkHeader()
+            {
+                Length = 4 * sizeof(int),
+                Type = RwCorePluginID.STRUCT,
+            }.Write(s);
+            s.Write(FrameIndex);
+            s.Write(GeometryIndex);
+            s.Write(Flags);
+            s.Write(UnknownInt1);
+            Extension.Write(s, RwCorePluginID.ATOMIC);
         }
     }
 }

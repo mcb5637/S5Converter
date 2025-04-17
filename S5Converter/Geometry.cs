@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -52,8 +53,40 @@ namespace S5Converter
         [JsonInclude]
         public Extension Extension = new();
 
-        internal static Geometry Read(BinaryReader s)
+
+        private int MaterialListSize => sizeof(int) + sizeof(int) * Materials.Length + Materials.Sum(x => x.SizeH);
+
+        private int SizeActual
         {
+            get
+            {
+                int r = sizeof(int) * 4;
+                if (!Flags.IsFlagSet(RpGeometryFlag.rpGEOMETRYNATIVE))
+                {
+                    r += (PreLitLum?.Length ?? 0) * RGBA.Size + TextureCoordinates.Sum(x => x.Length) * TexCoord.Size;
+                    r += Triangles.Length * Triangle.Size;
+                }
+                r += MorphTargets.Sum(x => x.Size);
+                return r;
+            }
+        }
+        internal int Size
+        {
+            get
+            {
+                int r = SizeActual + ChunkHeader.Size;
+                r += ChunkHeader.Size * 2;
+                r += MaterialListSize;
+                r += Extension.SizeH(RwCorePluginID.GEOMETRY);
+                return r;
+            }
+        }
+        internal int SizeH => Size + ChunkHeader.Size;
+
+        internal static Geometry Read(BinaryReader s, bool header)
+        {
+            if (header)
+                ChunkHeader.FindChunk(s, RwCorePluginID.GEOMETRY);
             ChunkHeader.FindChunk(s, RwCorePluginID.STRUCT);
             Geometry r = new()
             {
@@ -119,14 +152,101 @@ namespace S5Converter
                 }
                 else
                 {
-                    ChunkHeader.FindChunk(s, RwCorePluginID.MATERIAL);
-                    r.Materials[i] = Material.Read(s);
+                    r.Materials[i] = Material.Read(s, true);
                 }
             }
 
             r.Extension = Extension.Read(s, RwCorePluginID.GEOMETRY);
 
             return r;
+        }
+
+        internal void Write(BinaryWriter s, bool header)
+        {
+            if (header)
+            {
+                new ChunkHeader()
+                {
+                    Length = Size,
+                    Type = RwCorePluginID.GEOMETRY,
+                }.Write(s);
+            }
+            new ChunkHeader()
+            {
+                Length = SizeActual,
+                Type = RwCorePluginID.STRUCT,
+            }.Write(s);
+
+            int nTexCoordSets;
+            if (Flags.IsFlagSet(RpGeometryFlag.NumTexCoordSetsStoredInFlags))
+                nTexCoordSets = ((int)(Flags & RpGeometryFlag.NumTexCoordSetsStoredInFlags)) >> 16;
+            else if (Flags.IsFlagSet(RpGeometryFlag.rpGEOMETRYTEXTURED2))
+                nTexCoordSets = 2;
+            else if (Flags.IsFlagSet(RpGeometryFlag.rpGEOMETRYTEXTURED))
+                nTexCoordSets = 1;
+            else
+                nTexCoordSets = 0;
+
+            int nVerts;
+            if (nTexCoordSets > 0)
+                nVerts = TextureCoordinates[0].Length;
+            else if (MorphTargets.Length > 0)
+                nVerts = MorphTargets[0].NumVerts;
+            else
+                nVerts = 0;
+
+            s.Write((int)Flags);
+            s.Write(Triangles.Length);
+            s.Write(nVerts);
+            s.Write(MorphTargets.Length);
+
+
+            if (!Flags.IsFlagSet(RpGeometryFlag.rpGEOMETRYNATIVE))
+            {
+                if (Flags.IsFlagSet(RpGeometryFlag.rpGEOMETRYPRELIT))
+                {
+                    if (PreLitLum == null)
+                        throw new IOException("prelit null, but flag set");
+                    foreach (RGBA l in PreLitLum)
+                        l.Write(s);
+                }
+
+                if (TextureCoordinates.Length != nTexCoordSets)
+                    throw new IOException("tex coord set number missmatch");
+                foreach (TexCoord[] t in TextureCoordinates)
+                {
+                    if (t.Length != nVerts)
+                        throw new IOException("vertex number missmatch");
+                    foreach (TexCoord tc in t)
+                    {
+                        tc.Write(s);
+                    }
+                }
+
+                foreach (Triangle t in Triangles)
+                    t.Write(s);
+            }
+
+            foreach (MorphTarget t in MorphTargets)
+                t.Write(s, nVerts);
+
+            new ChunkHeader()
+            {
+                Length = MaterialListSize + ChunkHeader.Size,
+                Type = RwCorePluginID.MATLIST,
+            }.Write(s);
+            new ChunkHeader()
+            {
+                Length = sizeof(int) + sizeof(int) * Materials.Length,
+                Type = RwCorePluginID.STRUCT,
+            }.Write(s);
+            s.Write(Materials.Length);
+            for (int i = 0; i < Materials.Length; ++i)
+                s.Write(-1);
+            foreach (Material m in Materials)
+                m.Write(s, true);
+
+            Extension.Write(s, RwCorePluginID.GEOMETRY);
         }
     }
 
@@ -145,6 +265,8 @@ namespace S5Converter
         [JsonInclude]
         public byte Alpha;
 
+        internal const int Size = 4 * sizeof(byte);
+
         internal static RGBA Read(BinaryReader s)
         {
             return new()
@@ -154,6 +276,14 @@ namespace S5Converter
                 Blue = s.ReadByte(),
                 Alpha = s.ReadByte(),
             };
+        }
+
+        internal readonly void Write(BinaryWriter s)
+        {
+            s.Write(Red);
+            s.Write(Green);
+            s.Write(Blue);
+            s.Write(Alpha);
         }
     }
     internal struct TexCoord
@@ -165,6 +295,8 @@ namespace S5Converter
         [JsonInclude]
         public float V;
 
+        internal const int Size = 2 * sizeof(float);
+
         internal static TexCoord Read(BinaryReader s)
         {
             return new()
@@ -172,6 +304,12 @@ namespace S5Converter
                 U = s.ReadSingle(),
                 V = s.ReadSingle(),
             };
+        }
+
+        internal readonly void Write(BinaryWriter s)
+        {
+            s.Write(U);
+            s.Write(V);
         }
     }
     internal struct Triangle
@@ -189,6 +327,8 @@ namespace S5Converter
         [JsonInclude]
         public Int16 MaterialId;
 
+        internal const int Size = sizeof(Int16) * 4;
+
         internal static Triangle Read(BinaryReader s)
         {
             return new() // original code reads as is and then swaps around
@@ -198,6 +338,14 @@ namespace S5Converter
                 MaterialId = s.ReadInt16(),
                 V3 = s.ReadInt16(),
             };
+        }
+
+        internal readonly void Write(BinaryWriter s)
+        {
+            s.Write(V2);
+            s.Write(V1);
+            s.Write(MaterialId);
+            s.Write(V3);
         }
     }
     internal struct MorphTarget
@@ -213,6 +361,10 @@ namespace S5Converter
         [JsonPropertyName("sphere")]
         [JsonInclude]
         public Sphere BoundingSphere;
+
+        internal int NumVerts => Verts?.Length ?? Normals?.Length ?? 0;
+
+        internal readonly int Size => (Verts?.Length ?? 0) * Vec3.Size + (Normals?.Length ?? 0) * Vec3.Size + Sphere.Size + sizeof(int) * 2;
 
         internal static MorphTarget Read(BinaryReader s, int numVert)
         {
@@ -236,6 +388,27 @@ namespace S5Converter
             }
             return r;
         }
+
+        internal readonly void Write(BinaryWriter s, int nvert)
+        {
+            BoundingSphere.Write(s);
+            s.Write(Verts == null ? 0 : 1);
+            s.Write(Normals == null ? 0 : 1);
+            if (Verts != null)
+            {
+                if (nvert != Verts.Length)
+                    throw new IOException("morphtarget vertex number missmatch");
+                foreach (var v in Verts)
+                    v.Write(s);
+            }
+            if (Normals != null)
+            {
+                if (nvert != Normals.Length)
+                    throw new IOException("morphtarget normals number missmatch");
+                foreach (var n in Normals)
+                    n.Write(s);
+            }
+        }
     }
 
     internal struct Texture
@@ -257,9 +430,15 @@ namespace S5Converter
 
         public Texture() { }
 
-        internal static Texture Read(BinaryReader s)
+        internal readonly int Size => ChunkHeader.Size + ChunkHeader.GetStringSize(Tex) + ChunkHeader.GetStringSize(TextureAlpha)
+            + 2 * sizeof(Int16) + Extension.SizeH(RwCorePluginID.TEXTURE);
+        internal readonly int SizeH => Size + ChunkHeader.Size;
+
+        internal static Texture Read(BinaryReader s, bool header)
         {
-            if (ChunkHeader.FindChunk(s, RwCorePluginID.STRUCT).Length != 1 * 4)
+            if (header)
+                ChunkHeader.FindChunk(s, RwCorePluginID.TEXTURE);
+            if (ChunkHeader.FindChunk(s, RwCorePluginID.STRUCT).Length != 2 * sizeof(Int16))
                 throw new IOException("Texture struct invalid length");
             Texture r = new()
             {
@@ -273,7 +452,31 @@ namespace S5Converter
             return r;
         }
 
-        // on writing: ensure string length < 0x80 (read buffer)
+        internal void Write(BinaryWriter s, bool header)
+        {
+            if (ChunkHeader.GetStringSize(Tex) > 0x80)
+                throw new IOException("Texture name too long");
+            if (ChunkHeader.GetStringSize(TextureAlpha) > 0x80)
+                throw new IOException("Texture name too long");
+            if (header)
+            {
+                new ChunkHeader()
+                {
+                    Length = Size,
+                    Type = RwCorePluginID.TEXTURE,
+                }.Write(s);
+            }
+            new ChunkHeader()
+            {
+                Length = 2 * sizeof(Int16),
+                Type = RwCorePluginID.STRUCT,
+            }.Write(s);
+            s.Write(FilterAddressing);
+            s.Write(UnusedInt1);
+            ChunkHeader.WriteString(s, Tex);
+            ChunkHeader.WriteString(s, TextureAlpha);
+            Extension.Write(s, RwCorePluginID.TEXTURE);
+        }
     }
     internal struct SurfaceProperties
     {
@@ -286,6 +489,8 @@ namespace S5Converter
         [JsonPropertyName("diffuse")]
         [JsonInclude]
         public float Diffuse;
+
+        internal const int Size = sizeof(float) * 3;
     }
     internal class Material
     {
@@ -306,9 +511,14 @@ namespace S5Converter
         [JsonInclude]
         public Extension Extension = new();
 
-        internal static Material Read(BinaryReader s)
+        internal int Size => ChunkHeader.Size + RGBA.Size + sizeof(int) * 3 + SurfaceProperties.Size + Textures.Sum(t => t.SizeH) + Extension.SizeH(RwCorePluginID.MATERIAL);
+        internal int SizeH => Size + ChunkHeader.Size;
+
+        internal static Material Read(BinaryReader s, bool header)
         {
-            if (ChunkHeader.FindChunk(s, RwCorePluginID.STRUCT).Length != 7 * 4)
+            if (header)
+                ChunkHeader.FindChunk(s, RwCorePluginID.MATERIAL);
+            if (ChunkHeader.FindChunk(s, RwCorePluginID.STRUCT).Length != 7 * sizeof(int))
                 throw new IOException("Material struct invalid length");
             Material m = new()
             {
@@ -322,13 +532,40 @@ namespace S5Converter
             m.SurfaceProps.Diffuse = s.ReadSingle();
             if (hastex)
             {
-                ChunkHeader.FindChunk(s, RwCorePluginID.TEXTURE);
-                m.Textures = [Texture.Read(s)];
+                m.Textures = [Texture.Read(s, true)];
             }
 
             m.Extension = Extension.Read(s, RwCorePluginID.MATERIAL);
 
             return m;
+        }
+
+        internal void Write(BinaryWriter s, bool header)
+        {
+            if (header)
+            {
+                new ChunkHeader()
+                {
+                    Length = Size,
+                    Type = RwCorePluginID.MATERIAL,
+                }.Write(s);
+            }
+            new ChunkHeader()
+            {
+                Length = 7 * sizeof(int),
+                Type = RwCorePluginID.STRUCT,
+            }.Write(s);
+            s.Write(UnknownInt1);
+            Color.Write(s);
+            s.Write(UnknownInt2);
+            s.Write(Textures.Length > 0 ? 1 : 0);
+            s.Write(SurfaceProps.Ambient);
+            s.Write(SurfaceProps.Specular);
+            s.Write(SurfaceProps.Diffuse);
+            foreach (Texture t in Textures)
+                t.Write(s, true);
+
+            Extension.Write(s, RwCorePluginID.MATERIAL);
         }
     }
 }

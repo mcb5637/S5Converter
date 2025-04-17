@@ -9,19 +9,25 @@ namespace S5Converter
     internal struct ChunkHeader
     {
         internal RwCorePluginID Type;
-        internal UInt32 Length;
-        internal UInt32 Version;
-        internal UInt32 BuildNum;
+        internal int Length;
+        internal UInt32 Version = rwLIBRARYCURRENTVERSION;
+        internal UInt32 BuildNum = 10;
 
         internal const UInt32 rwLIBRARYCURRENTVERSION = 0x37002;
         internal const UInt32 rwLIBRARYBASEVERSION = 0x35000;
+
+        internal const int Size = 3 * sizeof(int);
+
+        public ChunkHeader()
+        {
+        }
 
         internal static ChunkHeader Read(BinaryReader s)
         {
             ChunkHeader h = new()
             {
                 Type = (RwCorePluginID)s.ReadUInt32(),
-                Length = s.ReadUInt32(),
+                Length = s.ReadInt32(),
             };
             UInt32 lib = s.ReadUInt32();
 
@@ -90,6 +96,57 @@ namespace S5Converter
                 s.ReadBytes((int)h.Length);
             }
         }
+
+        internal static void WriteString(BinaryWriter s, string str)
+        {
+            if (str.Contains('\0'))
+                throw new IOException("string contains \\0");
+            ChunkHeader h;
+            byte[] b;
+            if (str.All(char.IsAscii))
+            {
+                b = Encoding.ASCII.GetBytes(str);
+                h = new()
+                {
+                    Type = RwCorePluginID.STRING,
+                    Length = b.Length + 1,
+                };
+            }
+            else
+            {
+                b = Encoding.UTF8.GetBytes(str);
+                h = new()
+                {
+                    Type = RwCorePluginID.UNICODESTRING,
+                    Length = b.Length + 1,
+                };
+            }
+            int extra0 = 0;
+            while ((h.Length + extra0) % sizeof(int) != 0)
+                ++extra0;
+            h.Length += extra0;
+            h.Write(s);
+            s.Write(b);
+            for (int i = 0; i < (extra0 + 1); ++i)
+                s.Write((byte)0);
+        }
+
+        internal static int GetStringSize(string str)
+        {
+            int l;
+            if (str.All(char.IsAscii))
+            {
+                l = Encoding.ASCII.GetByteCount(str) + 1;
+            }
+            else
+            {
+                l = Encoding.UTF8.GetByteCount(str) + 1;
+            }
+            int extra0 = 0;
+            while ((l + extra0) % sizeof(int) != 0)
+                ++extra0;
+            return l + extra0 + Size;
+        }
     }
 
     internal static class Helper
@@ -108,12 +165,12 @@ namespace S5Converter
 
         internal static void WriteRWString(this BinaryWriter s, string v)
         {
+            if (v.Contains('\0'))
+                throw new IOException("string contains \\0");
             byte[] d = Encoding.ASCII.GetBytes(v);
-            bool needs0 = d.Length == 0 || d[^1] != 0;
-            s.Write(d.Length + (needs0 ? 1 : 0));
+            s.Write(d.Length + 1);
             s.Write(d);
-            if (needs0)
-                s.Write((byte)0);
+            s.Write((byte)0);
         }
 
         internal static bool IsFlagSet(this Geometry.RpGeometryFlag f, Geometry.RpGeometryFlag check)

@@ -23,8 +23,10 @@ namespace S5Converter
         [JsonInclude]
         public Extension Extension = new();
 
-        internal static Clump Read(BinaryReader s)
+        internal static Clump Read(BinaryReader s, bool header)
         {
+            if (header)
+                ChunkHeader.FindChunk(s, RwCorePluginID.CLUMP);
             ChunkHeader.FindChunk(s, RwCorePluginID.STRUCT);
             int nAtomics = s.ReadInt32();
             int nLights = s.ReadInt32();
@@ -38,15 +40,7 @@ namespace S5Converter
             c.Frames = new FrameWithExt[nframes];
             for (int i = 0; i < nframes; ++i)
             {
-                Frame f = new()
-                {
-                    Right = Vec3.Read(s),
-                    Up = Vec3.Read(s),
-                    At = Vec3.Read(s),
-                    Position = Vec3.Read(s),
-                    ParentFrameIndex = s.ReadInt32(),
-                    UnknownIntProbablyUnused = s.ReadInt32()
-                };
+                Frame f = Frame.Read(s);
                 c.Frames[i] = new()
                 {
                     Frame = f,
@@ -64,18 +58,16 @@ namespace S5Converter
             c.Geometries = new Geometry[nGeoms];
             for (int i = 0; i < nGeoms; ++i)
             {
-                ChunkHeader.FindChunk(s, RwCorePluginID.GEOMETRY);
-                c.Geometries[i] = Geometry.Read(s);
+                c.Geometries[i] = Geometry.Read(s, true);
             }
 
             // atomics
             c.Atomics = new Atomic[nAtomics];
             for (int i = 0; i < nAtomics; ++i)
             {
-                ChunkHeader.FindChunk(s, RwCorePluginID.ATOMIC);
                 if (nGeoms == 0) // TODO
                     throw new IOException("trying to read atomic without geometry in clump. inline geometry not supportet at the moment!");
-                c.Atomics[i] = Atomic.Read(s);
+                c.Atomics[i] = Atomic.Read(s, true);
             }
 
             if (nLights > 0)
@@ -88,9 +80,69 @@ namespace S5Converter
 
             return c;
         }
-        internal void Write(BinaryWriter s)
+        internal void Write(BinaryWriter s, bool header)
         {
+            if (header)
+            {
+                new ChunkHeader()
+                {
+                    Length = Size,
+                    Type = RwCorePluginID.CLUMP,
+                }.Write(s);
+            }
+            new ChunkHeader()
+            {
+                Length = 3 * sizeof(int),
+                Type = RwCorePluginID.STRUCT,
+            }.Write(s);
+            s.Write(Atomics.Length);
+            s.Write(0);
+            s.Write(0);
 
+            // framelist
+            new ChunkHeader()
+            {
+                Length = FrameListSize + ChunkHeader.Size,
+                Type = RwCorePluginID.FRAMELIST,
+            }.Write(s);
+            new ChunkHeader()
+            {
+                Length = Frame.Size * Frames.Length + sizeof(int),
+                Type = RwCorePluginID.STRUCT,
+            }.Write(s);
+            s.Write(Frames.Length);
+            foreach (FrameWithExt f in Frames)
+                f.Frame.Write(s);
+            foreach (FrameWithExt f in Frames)
+                f.Extension.Write(s, RwCorePluginID.FRAMELIST);
+
+            // geometrylist
+            new ChunkHeader()
+            {
+                Length = GeometryListSize + ChunkHeader.Size,
+                Type = RwCorePluginID.GEOMETRYLIST,
+            }.Write(s);
+            new ChunkHeader()
+            {
+                Length = sizeof(int),
+                Type = RwCorePluginID.STRUCT,
+            }.Write(s);
+            s.Write(Geometries.Length);
+            foreach (Geometry g in Geometries)
+                g.Write(s, true);
+
+            // atomics
+            foreach (Atomic a in Atomics)
+                a.Write(s, true);
+
+
+            // extension
+            Extension.Write(s, RwCorePluginID.CLUMP);
         }
+
+        private int GeometryListSize => sizeof(int) + Geometries.Sum(x => x.SizeH);
+        private int FrameListSize => sizeof(int) + Frames.Sum(x => Frame.Size + x.Extension.SizeH(RwCorePluginID.FRAMELIST));
+        internal int Size => ChunkHeader.Size * 5 + sizeof(int) * 3 + FrameListSize + GeometryListSize + Atomics.Sum(x => x.SizeH) + Extension.SizeH(RwCorePluginID.CLUMP);
+        internal int SizeH => Size + ChunkHeader.Size;
     }
 }

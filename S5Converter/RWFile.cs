@@ -21,13 +21,22 @@ namespace S5Converter
             switch(h.Type)
             {
                 case RwCorePluginID.CLUMP:
-                    f.Clp = Clump.Read(s);
+                    f.Clp = Clump.Read(s, false);
                     break;
                 default:
-                    Console.Error.WriteLine($"invalid top level type {h.Type}");
-                    break;
+                    throw new IOException($"invalid top level type {h.Type}");
             }
             return f;
+        }
+
+        internal void Write(BinaryWriter s)
+        {
+            if (Clp != null)
+            {
+                Clp.Write(s, true);
+                return;
+            }
+            throw new IOException("empty");
         }
     }
 }

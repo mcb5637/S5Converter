@@ -31,7 +31,18 @@ namespace S5Converter
             {
                 if (f.EndsWith(".json"))
                 {
-
+                    try
+                    {
+                        Console.Error.WriteLine($"converting {f}");
+                        using FileStream r = new(f, FileMode.Open, FileAccess.Read);
+                        RWFile d = JsonSerializer.Deserialize(r, SourceGenerationContext.Default.RWFile) ?? throw new IOException("failed to parse file");
+                        using BinaryWriter ou = new(new FileStream(Path.ChangeExtension(f, ".out"), FileMode.Create, FileAccess.Write));
+                        d.Write(ou);
+                    }
+                    catch (IOException e)
+                    {
+                        Console.Error.WriteLine(e.ToString());
+                    }
                 }
                 else
                 {

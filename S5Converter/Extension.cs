@@ -34,6 +34,11 @@ namespace S5Converter
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public RpMeshHeader? BinMeshPLG;
 
+        internal int SizeH(RwCorePluginID src)
+        {
+            return ChunkHeader.Size; // TODO
+        }
+
         internal static Extension Read(BinaryReader s, RwCorePluginID src)
         {
             ChunkHeader exheader = ChunkHeader.FindChunk(s, RwCorePluginID.EXTENSION);
@@ -66,6 +71,15 @@ namespace S5Converter
                 exheader.Length -= h.Length + 12;
             }
             return e;
+        }
+
+        internal void Write(BinaryWriter s, RwCorePluginID src) // TODO
+        {
+            new ChunkHeader()
+            {
+                Length = 0,
+                Type = RwCorePluginID.EXTENSION,
+            }.Write(s);
         }
     }
 
@@ -358,8 +372,7 @@ namespace S5Converter
             }
             else
             {
-                ChunkHeader.FindChunk(s, RwCorePluginID.TEXTURE);
-                return Texture.Read(s);
+                return Texture.Read(s, true);
             }
         }
     }

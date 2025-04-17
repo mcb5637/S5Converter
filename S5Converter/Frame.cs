@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
@@ -24,6 +25,31 @@ namespace S5Converter
 
         [JsonInclude]
         public int UnknownIntProbablyUnused;
+
+        internal const int Size = Vec3.Size * 4 + sizeof(int) * 2;
+
+        internal static Frame Read(BinaryReader s)
+        {
+            return new()
+            {
+                Right = Vec3.Read(s),
+                Up = Vec3.Read(s),
+                At = Vec3.Read(s),
+                Position = Vec3.Read(s),
+                ParentFrameIndex = s.ReadInt32(),
+                UnknownIntProbablyUnused = s.ReadInt32()
+            };
+        }
+
+        internal void Write(BinaryWriter s)
+        {
+            Right.Write(s);
+            Up.Write(s);
+            At.Write(s);
+            Position.Write(s);
+            s.Write(ParentFrameIndex);
+            s.Write(UnknownIntProbablyUnused);
+        }
     }
     internal struct Vec3
     {
@@ -37,6 +63,8 @@ namespace S5Converter
         [JsonInclude]
         public float Z;
 
+        internal const int Size = 3 * sizeof(float);
+
         internal static Vec3 Read(BinaryReader s)
         {
             return new()
@@ -45,6 +73,12 @@ namespace S5Converter
                 Y = s.ReadSingle(),
                 Z = s.ReadSingle(),
             };
+        }
+        internal readonly void Write(BinaryWriter s)
+        {
+            s.Write(X);
+            s.Write(Y);
+            s.Write(Z);
         }
     }
     internal struct Sphere
@@ -62,6 +96,8 @@ namespace S5Converter
         [JsonInclude]
         public float Radius;
 
+        internal const int Size = Vec3.Size + sizeof(float);
+
         internal static Sphere Read(BinaryReader s)
         {
             return new()
@@ -69,6 +105,12 @@ namespace S5Converter
                 Center = Vec3.Read(s),
                 Radius = s.ReadSingle(),
             };
+        }
+
+        internal readonly void Write(BinaryWriter s)
+        {
+            Center.Write(s);
+            s.Write(Radius);
         }
     }
     internal class FrameWithExt
