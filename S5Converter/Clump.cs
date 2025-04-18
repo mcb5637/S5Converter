@@ -23,6 +23,12 @@ namespace S5Converter
         [JsonInclude]
         public Extension Extension = new();
 
+
+        private int GeometryListSize => sizeof(int) + Geometries.Sum(x => x.SizeH);
+        private int FrameListSize => sizeof(int) + Frames.Sum(x => Frame.Size + x.Extension.SizeH(RwCorePluginID.FRAMELIST));
+        internal int Size => ChunkHeader.Size * 5 + sizeof(int) * 3 + FrameListSize + GeometryListSize + Atomics.Sum(x => x.SizeH) + Extension.SizeH(RwCorePluginID.CLUMP);
+        internal int SizeH => Size + ChunkHeader.Size;
+
         internal static Clump Read(BinaryReader s, bool header)
         {
             if (header)
@@ -139,10 +145,5 @@ namespace S5Converter
             // extension
             Extension.Write(s, RwCorePluginID.CLUMP);
         }
-
-        private int GeometryListSize => sizeof(int) + Geometries.Sum(x => x.SizeH);
-        private int FrameListSize => sizeof(int) + Frames.Sum(x => Frame.Size + x.Extension.SizeH(RwCorePluginID.FRAMELIST));
-        internal int Size => ChunkHeader.Size * 5 + sizeof(int) * 3 + FrameListSize + GeometryListSize + Atomics.Sum(x => x.SizeH) + Extension.SizeH(RwCorePluginID.CLUMP);
-        internal int SizeH => Size + ChunkHeader.Size;
     }
 }

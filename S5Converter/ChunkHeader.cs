@@ -163,14 +163,26 @@ namespace S5Converter
             return Encoding.ASCII.GetString(r);
         }
 
-        internal static void WriteRWString(this BinaryWriter s, string v)
+        internal static void WriteRWString(this BinaryWriter s, string? v)
         {
+            if (v == null)
+            {
+                s.Write(0);
+                return;
+            }
             if (v.Contains('\0'))
                 throw new IOException("string contains \\0");
             byte[] d = Encoding.ASCII.GetBytes(v);
             s.Write(d.Length + 1);
             s.Write(d);
             s.Write((byte)0);
+        }
+
+        internal static int GetRWLength(this string? s)
+        {
+            if (s == null)
+                return sizeof(int);
+            return Encoding.ASCII.GetByteCount(s) + 1 + sizeof(int);
         }
 
         internal static bool IsFlagSet(this Geometry.RpGeometryFlag f, Geometry.RpGeometryFlag check)

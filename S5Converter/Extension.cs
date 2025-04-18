@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using static S5Converter.RpUserDataArray;
 
 namespace S5Converter
 {
@@ -36,7 +36,22 @@ namespace S5Converter
 
         internal int SizeH(RwCorePluginID src)
         {
-            return ChunkHeader.Size; // TODO
+            return ChunkHeader.Size + Size(src);
+        }
+        internal int Size(RwCorePluginID src)
+        {
+            int r = 0;
+            if (UserDataPLG != null && src == RwCorePluginID.FRAMELIST)
+                r += RpUserDataArray.GetSizeH(UserDataPLG);
+            if (HanimPLG != null && src == RwCorePluginID.FRAMELIST)
+                r += HanimPLG.SizeH;
+            if (MaterialFXMat != null && src == RwCorePluginID.MATERIAL)
+                r += MaterialFXMat.SizeH;
+            if (MaterialFXAtomic_EffectsEnabled != null && src == RwCorePluginID.ATOMIC)
+                r += sizeof(int) + ChunkHeader.Size;
+            if (BinMeshPLG != null && src == RwCorePluginID.GEOMETRY)
+                r += BinMeshPLG.SizeH;
+            return r;
         }
 
         internal static Extension Read(BinaryReader s, RwCorePluginID src)
@@ -49,19 +64,19 @@ namespace S5Converter
                 switch ((h.Type, src))
                 {
                     case (RwCorePluginID.USERDATAPLUGIN, RwCorePluginID.FRAMELIST):
-                        e.UserDataPLG = RpUserDataArray.Read(s);
+                        e.UserDataPLG = RpUserDataArray.Read(s, false);
                         break;
                     case (RwCorePluginID.HANIMPLUGIN, RwCorePluginID.FRAMELIST):
-                        e.HanimPLG = RpHAnimHierarchy.Read(s);
+                        e.HanimPLG = RpHAnimHierarchy.Read(s, false);
                         break;
                     case (RwCorePluginID.MATERIALEFFECTSPLUGIN, RwCorePluginID.MATERIAL):
-                        e.MaterialFXMat = MaterialFXMaterial.Read(s);
+                        e.MaterialFXMat = MaterialFXMaterial.Read(s, false);
                         break;
                     case (RwCorePluginID.MATERIALEFFECTSPLUGIN, RwCorePluginID.ATOMIC):
                         e.MaterialFXAtomic_EffectsEnabled = s.ReadInt32() != 0;
                         break;
                     case (RwCorePluginID.BINMESHPLUGIN, RwCorePluginID.GEOMETRY):
-                        e.BinMeshPLG = RpMeshHeader.Read(s);
+                        e.BinMeshPLG = RpMeshHeader.Read(s, false);
                         break;
                     default:
                         Console.Error.WriteLine($"unknown extension {(int)h.Type}, skipping");
@@ -77,9 +92,26 @@ namespace S5Converter
         {
             new ChunkHeader()
             {
-                Length = 0,
+                Length = Size(src),
                 Type = RwCorePluginID.EXTENSION,
             }.Write(s);
+            if (UserDataPLG != null && src == RwCorePluginID.FRAMELIST)
+                RpUserDataArray.Write(UserDataPLG, s, true);
+            if (HanimPLG != null && src == RwCorePluginID.FRAMELIST)
+                HanimPLG.Write(s, true);
+            if (MaterialFXMat != null && src == RwCorePluginID.MATERIAL)
+                MaterialFXMat.Write(s, true);
+            if (MaterialFXAtomic_EffectsEnabled != null && src == RwCorePluginID.ATOMIC)
+            {
+                new ChunkHeader()
+                {
+                    Length = sizeof(int),
+                    Type = RwCorePluginID.MATERIALEFFECTSPLUGIN,
+                }.Write(s);
+                s.Write(MaterialFXAtomic_EffectsEnabled.Value ? 1 : 0);
+            }
+            if (BinMeshPLG != null && src == RwCorePluginID.GEOMETRY)
+                BinMeshPLG.Write(s, true);
         }
     }
 
@@ -98,14 +130,32 @@ namespace S5Converter
             public int I;
             public float F;
             public string? S;
+
+            internal int GetSize(RpUserDataFormat f)
+            {
+                if (f == RpUserDataFormat.rpSTRINGUSERDATA)
+                    return S.GetRWLength();
+                return sizeof(int); // float/int same size
+            }
         }
 
         public RpUserDataFormat Format;
         public DataObj[] Data = [];
 
-
-        internal static Dictionary<string, RpUserDataArray> Read(BinaryReader s)
+        private int Size => sizeof(int) * 2 + Data.Sum(x => x.GetSize(Format));
+        internal static int GetSize(Dictionary<string, RpUserDataArray> d)
         {
+            return sizeof(int) + d.Sum(x => x.Key.GetRWLength() + x.Value.Size);
+        }
+        internal static int GetSizeH(Dictionary<string, RpUserDataArray> d)
+        {
+            return GetSize(d) + ChunkHeader.Size;
+        }
+
+        internal static Dictionary<string, RpUserDataArray> Read(BinaryReader s, bool header)
+        {
+            if (header)
+                ChunkHeader.FindChunk(s, RwCorePluginID.USERDATAPLUGIN);
             Dictionary<string, RpUserDataArray> r = [];
             int numUD = s.ReadInt32();
             for (int i = 0; i < numUD; ++i)
@@ -136,6 +186,42 @@ namespace S5Converter
                 r[udname] = o;
             }
             return r;
+        }
+
+        internal static void Write(Dictionary<string, RpUserDataArray>  d, BinaryWriter s, bool header)
+        {
+            if (header)
+            {
+                new ChunkHeader()
+                {
+                    Length = GetSize(d),
+                    Type = RwCorePluginID.USERDATAPLUGIN,
+                }.Write(s);
+            }
+            s.Write(d.Count);
+            foreach (var (k, v) in d)
+            {
+                if (v.Format == RpUserDataFormat.rpNAUSERDATAFORMAT)
+                    throw new IOException("invalid format");
+                s.WriteRWString(k);
+                s.Write((int)v.Format);
+                s.Write(v.Data.Length);
+                foreach (var e in v.Data)
+                {
+                    switch (v.Format)
+                    {
+                        case RpUserDataFormat.rpINTUSERDATA:
+                            s.Write(e.I);
+                            break;
+                        case RpUserDataFormat.rpREALUSERDATA:
+                            s.Write(e.F);
+                            break;
+                        case RpUserDataFormat.rpSTRINGUSERDATA:
+                            s.WriteRWString(e.S);
+                            break;
+                    }
+                }
+            }
         }
     }
     internal class RpUserDataArrayJsonConverter : JsonConverter<RpUserDataArray>
@@ -262,10 +348,17 @@ namespace S5Converter
             [JsonPropertyName("nodeIndex")]
             [JsonInclude]
             public int NodeIndex;
+
+            internal const int Size = sizeof(int) * 3;
         }
 
-        internal static RpHAnimHierarchy Read(BinaryReader s)
+        internal int Size => sizeof(int) * (3 + (Nodes.Length > 0 ? 2 : 0)) + Node.Size * Nodes.Length;
+        internal int SizeH => Size + ChunkHeader.Size;
+
+        internal static RpHAnimHierarchy Read(BinaryReader s, bool header)
         {
+            if (header)
+                ChunkHeader.FindChunk(s, RwCorePluginID.HANIMPLUGIN);
             if (s.ReadInt32() != 256)
                 throw new IOException("RpHAnimHierarchy read missing 256 constant");
             RpHAnimHierarchy r = new()
@@ -289,6 +382,32 @@ namespace S5Converter
                 }
             }
             return r;
+        }
+
+        internal void Write(BinaryWriter s, bool header)
+        {
+            if (header)
+            {
+                new ChunkHeader()
+                {
+                    Length = Size,
+                    Type = RwCorePluginID.HANIMPLUGIN,
+                }.Write(s);
+            }
+            s.Write(256);
+            s.Write(NodeID);
+            s.Write(Nodes.Length);
+            if (Nodes.Length > 0)
+            {
+                s.Write(Flags);
+                s.Write(KeyFrameSize);
+                foreach (Node n in Nodes)
+                {
+                    s.Write(n.NodeID);
+                    s.Write(n.NodeIndex);
+                    s.Write(n.Flags);
+                }
+            }
         }
     }
 
@@ -318,6 +437,122 @@ namespace S5Converter
             public int? SrcBlendMode;
             [JsonInclude]
             public int? DstBlendMode;
+
+            private static int OptTextureSize(ref readonly Texture? t)
+            {
+                if (t == null)
+                {
+                    return sizeof(int);
+                }
+                else
+                {
+                    return sizeof(int) + t.Value.SizeH;
+                }
+            }
+
+            internal int Size
+            {
+                get
+                {
+                    int r = sizeof(int);
+                    switch (Type)
+                    {
+                        case DataType.BumpMap:
+                            r += sizeof(float);
+                            r += OptTextureSize(ref Texture1);
+                            r += OptTextureSize(ref Texture2);
+                            break;
+                        case DataType.EnvMap:
+                            r += sizeof(int) * 2; //float/int same size
+                            r += OptTextureSize(ref Texture1);
+                            break;
+                        case DataType.DualTexture:
+                            r += sizeof(int) * 2;
+                            r += OptTextureSize(ref Texture1);
+                            break;
+                        default:
+                            break;
+                    }
+                    return r;
+                }
+            }
+
+            internal static Data Read(BinaryReader s)
+            {
+                Data d = new()
+                {
+                    Type = (DataType)s.ReadInt32()
+                };
+                switch (d.Type)
+                {
+                    case DataType.BumpMap:
+                        d.Coefficient = s.ReadSingle();
+                        d.Texture1 = ReadOptText(s);
+                        d.Texture2 = ReadOptText(s);
+                        break;
+                    case DataType.EnvMap:
+                        d.Coefficient = s.ReadSingle();
+                        d.FrameBufferAlpha = s.ReadInt32() != 0;
+                        d.Texture1 = ReadOptText(s);
+                        break;
+                    case DataType.DualTexture:
+                        d.SrcBlendMode = s.ReadInt32();
+                        d.DstBlendMode = s.ReadInt32();
+                        d.Texture1 = ReadOptText(s);
+                        break;
+                    default:
+                        break;
+                }
+                return d;
+            }
+            private static Texture? ReadOptText(BinaryReader s)
+            {
+                if (s.ReadInt32() == 0)
+                {
+                    return null;
+                }
+                else
+                {
+                    return Texture.Read(s, true);
+                }
+            }
+
+            internal void Write(BinaryWriter s)
+            {
+                s.Write((int)Type);
+                switch (Type)
+                {
+                    case DataType.BumpMap:
+                        s.Write(Coefficient!.Value);
+                        WriteOptTexture(s, ref Texture1);
+                        WriteOptTexture(s, ref Texture2);
+                        break;
+                    case DataType.EnvMap:
+                        s.Write(Coefficient!.Value);
+                        s.Write(FrameBufferAlpha!.Value ? 1 : 0);
+                        WriteOptTexture(s, ref Texture1);
+                        break;
+                    case DataType.DualTexture:
+                        s.Write(SrcBlendMode!.Value);
+                        s.Write(DstBlendMode!.Value);
+                        WriteOptTexture(s, ref Texture1);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            private static void WriteOptTexture(BinaryWriter s, ref Texture? t)
+            {
+                if (t == null)
+                {
+                    s.Write(0);
+                }
+                else
+                {
+                    s.Write(1);
+                    t.Value.Write(s, true);
+                }
+            }
         }
 
         [JsonInclude]
@@ -327,53 +562,36 @@ namespace S5Converter
         [JsonInclude]
         internal int Flags;
 
-        internal static MaterialFXMaterial Read(BinaryReader s)
+        internal int Size => sizeof(int) + Data1.Size + Data2.Size;
+        internal int SizeH => Size + ChunkHeader.Size;
+
+        internal static MaterialFXMaterial Read(BinaryReader s, bool header)
         {
+            if (header)
+                ChunkHeader.FindChunk(s, RwCorePluginID.MATERIALEFFECTSPLUGIN);
             MaterialFXMaterial r = new()
             {
                 Flags = s.ReadInt32(),
+                Data1 = Data.Read(s),
+                Data2 = Data.Read(s)
             };
-            ReadData(ref r.Data1, s);
-            ReadData(ref r.Data2, s);
 
             return r;
         }
 
-        private static void ReadData(ref Data d, BinaryReader s)
+        internal void Write(BinaryWriter s, bool header)
         {
-            d.Type = (DataType)s.ReadInt32();
-            switch (d.Type)
+            if (header)
             {
-                case DataType.BumpMap:
-                    d.Coefficient = s.ReadSingle();
-                    d.Texture1 = ReadOptText(s);
-                    d.Texture2 = ReadOptText(s);
-                    break;
-                case DataType.EnvMap:
-                    d.Coefficient = s.ReadSingle();
-                    d.FrameBufferAlpha = s.ReadInt32() != 0;
-                    d.Texture1 = ReadOptText(s);
-                    break;
-                case DataType.DualTexture:
-                    d.SrcBlendMode = s.ReadInt32();
-                    d.DstBlendMode = s.ReadInt32();
-                    d.Texture1 = ReadOptText(s);
-                    break;
-                default:
-                    break;
+                new ChunkHeader()
+                {
+                    Length = Size,
+                    Type = RwCorePluginID.MATERIALEFFECTSPLUGIN,
+                }.Write(s);
             }
-        }
-
-        private static Texture? ReadOptText(BinaryReader s)
-        {
-            if (s.ReadInt32() == 0)
-            {
-                return null;
-            }
-            else
-            {
-                return Texture.Read(s, true);
-            }
+            s.Write(Flags);
+            Data1.Write(s);
+            Data2.Write(s);
         }
     }
 
@@ -390,16 +608,23 @@ namespace S5Converter
             public int MaterialIndex;
             [JsonInclude]
             public int[] VertexIndices;
+
+            internal readonly int Size => sizeof(int) * 2 + sizeof(int) * VertexIndices.Length;
         }
 
-        internal static RpMeshHeader Read(BinaryReader s)
+        internal int Size => sizeof(int) * 3 + Meshes.Sum(x => x.Size);
+        internal int SizeH => Size + ChunkHeader.Size;
+
+        internal static RpMeshHeader Read(BinaryReader s, bool header)
         {
+            if (header)
+                ChunkHeader.FindChunk(s, RwCorePluginID.BINMESHPLUGIN);
             RpMeshHeader r = new()
             {
                 Flags = s.ReadInt32(),
             };
             int numMeshes = s.ReadInt32();
-            int totalInices = s.ReadInt32();
+            _ = s.ReadInt32(); // total indices
 
             r.Meshes = new RpMesh[numMeshes];
             for (int i = 0; i < numMeshes; ++i)
@@ -415,6 +640,28 @@ namespace S5Converter
             }
 
             return r;
+        }
+
+        internal void Write(BinaryWriter s, bool header)
+        {
+            if (header)
+            {
+                new ChunkHeader()
+                {
+                    Length = Size,
+                    Type = RwCorePluginID.BINMESHPLUGIN,
+                }.Write(s);
+            }
+            s.Write(Flags);
+            s.Write(Meshes.Length);
+            s.Write(Meshes.Sum(x => x.VertexIndices.Length));
+            foreach (RpMesh m in Meshes)
+            {
+                s.Write(m.VertexIndices.Length);
+                s.Write(m.MaterialIndex);
+                foreach (int v in m.VertexIndices)
+                    s.Write(v);
+            }
         }
     }
 }

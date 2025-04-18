@@ -12,14 +12,27 @@ namespace S5Converter
     {
         internal static void Main(string[] args)
         {
-            if (args.Length == 0)
+            if (args.Length == 1 && args[0] == "--import")
             {
                 try
                 {
                     using BinaryReader r = new(Console.OpenStandardInput());
-                    RWFile d = RWFile.Read(r);
                     using Stream ou = Console.OpenStandardOutput();
-                    JsonSerializer.Serialize(ou, d, SourceGenerationContext.Default.RWFile);
+                    Import(r, ou);
+                }
+                catch (IOException e)
+                {
+                    Console.Error.WriteLine(e.ToString());
+                }
+                return;
+            }
+            else if (args.Length == 1 && args[0] == "--export")
+            {
+                try
+                {
+                    using Stream r = Console.OpenStandardInput();
+                    using BinaryWriter ou = new(Console.OpenStandardOutput());
+                    Export(r, ou);
                 }
                 catch (IOException e)
                 {
@@ -35,9 +48,8 @@ namespace S5Converter
                     {
                         Console.Error.WriteLine($"converting {f}");
                         using FileStream r = new(f, FileMode.Open, FileAccess.Read);
-                        RWFile d = JsonSerializer.Deserialize(r, SourceGenerationContext.Default.RWFile) ?? throw new IOException("failed to parse file");
                         using BinaryWriter ou = new(new FileStream(Path.ChangeExtension(f, ".out"), FileMode.Create, FileAccess.Write));
-                        d.Write(ou);
+                        Export(r, ou);
                     }
                     catch (IOException e)
                     {
@@ -50,9 +62,8 @@ namespace S5Converter
                     {
                         Console.Error.WriteLine($"converting {f}");
                         using BinaryReader r = new(new FileStream(f, FileMode.Open, FileAccess.Read));
-                        RWFile d = RWFile.Read(r);
                         using FileStream ou = new(Path.ChangeExtension(f, ".json"), FileMode.Create, FileAccess.Write);
-                        JsonSerializer.Serialize(ou, d, SourceGenerationContext.Default.RWFile);
+                        Import(r, ou);
                     }
                     catch (IOException e)
                     {
@@ -61,6 +72,18 @@ namespace S5Converter
                 }
             }
             Console.Read();
+        }
+
+        private static void Import(BinaryReader r, Stream ou)
+        {
+            RWFile d = RWFile.Read(r);
+            JsonSerializer.Serialize(ou, d, SourceGenerationContext.Default.RWFile);
+        }
+
+        private static void Export(Stream r, BinaryWriter ou)
+        {
+            RWFile d = JsonSerializer.Deserialize(r, SourceGenerationContext.Default.RWFile) ?? throw new IOException("failed to parse file");
+            d.Write(ou);
         }
     }
     [JsonSourceGenerationOptions(WriteIndented = true)]
