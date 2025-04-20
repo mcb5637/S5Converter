@@ -34,6 +34,10 @@ namespace S5Converter
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public RpMeshHeader? BinMeshPLG;
 
+        [JsonInclude]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public ParticleStandard? ParticleStandard;
+
         internal int SizeH(RwCorePluginID src)
         {
             return ChunkHeader.Size + Size(src);
@@ -51,6 +55,8 @@ namespace S5Converter
                 r += sizeof(int) + ChunkHeader.Size;
             if (BinMeshPLG != null && src == RwCorePluginID.GEOMETRY)
                 r += BinMeshPLG.SizeH;
+            if (ParticleStandard != null && src == RwCorePluginID.ATOMIC)
+                r += ParticleStandard.SizeH;
             return r;
         }
 
@@ -78,6 +84,9 @@ namespace S5Converter
                     case (RwCorePluginID.BINMESHPLUGIN, RwCorePluginID.GEOMETRY):
                         e.BinMeshPLG = RpMeshHeader.Read(s, false);
                         break;
+                    case (RwCorePluginID.PRTSTDPLUGIN, RwCorePluginID.ATOMIC):
+                        e.ParticleStandard = ParticleStandard.Read(s, false);
+                        break;
                     default:
                         Console.Error.WriteLine($"unknown extension {(int)h.Type}, skipping");
                         s.ReadBytes((int)h.Length);
@@ -88,7 +97,7 @@ namespace S5Converter
             return e;
         }
 
-        internal void Write(BinaryWriter s, RwCorePluginID src) // TODO
+        internal void Write(BinaryWriter s, RwCorePluginID src)
         {
             new ChunkHeader()
             {
@@ -112,6 +121,8 @@ namespace S5Converter
             }
             if (BinMeshPLG != null && src == RwCorePluginID.GEOMETRY)
                 BinMeshPLG.Write(s, true);
+            if (ParticleStandard != null && src == RwCorePluginID.ATOMIC)
+                ParticleStandard.Write(s, true);
         }
     }
 
@@ -438,18 +449,6 @@ namespace S5Converter
             [JsonInclude]
             public int? DstBlendMode;
 
-            private static int OptTextureSize(ref readonly Texture? t)
-            {
-                if (t == null)
-                {
-                    return sizeof(int);
-                }
-                else
-                {
-                    return sizeof(int) + t.Value.SizeH;
-                }
-            }
-
             internal int Size
             {
                 get
@@ -459,16 +458,16 @@ namespace S5Converter
                     {
                         case DataType.BumpMap:
                             r += sizeof(float);
-                            r += OptTextureSize(ref Texture1);
-                            r += OptTextureSize(ref Texture2);
+                            r += Texture.OptTextureSize(ref Texture1);
+                            r += Texture.OptTextureSize(ref Texture2);
                             break;
                         case DataType.EnvMap:
                             r += sizeof(int) * 2; //float/int same size
-                            r += OptTextureSize(ref Texture1);
+                            r += Texture.OptTextureSize(ref Texture1);
                             break;
                         case DataType.DualTexture:
                             r += sizeof(int) * 2;
-                            r += OptTextureSize(ref Texture1);
+                            r += Texture.OptTextureSize(ref Texture1);
                             break;
                         default:
                             break;
@@ -487,34 +486,23 @@ namespace S5Converter
                 {
                     case DataType.BumpMap:
                         d.Coefficient = s.ReadSingle();
-                        d.Texture1 = ReadOptText(s);
-                        d.Texture2 = ReadOptText(s);
+                        d.Texture1 = Texture.ReadOptText(s);
+                        d.Texture2 = Texture.ReadOptText(s);
                         break;
                     case DataType.EnvMap:
                         d.Coefficient = s.ReadSingle();
                         d.FrameBufferAlpha = s.ReadInt32() != 0;
-                        d.Texture1 = ReadOptText(s);
+                        d.Texture1 = Texture.ReadOptText(s);
                         break;
                     case DataType.DualTexture:
                         d.SrcBlendMode = s.ReadInt32();
                         d.DstBlendMode = s.ReadInt32();
-                        d.Texture1 = ReadOptText(s);
+                        d.Texture1 = Texture.ReadOptText(s);
                         break;
                     default:
                         break;
                 }
                 return d;
-            }
-            private static Texture? ReadOptText(BinaryReader s)
-            {
-                if (s.ReadInt32() == 0)
-                {
-                    return null;
-                }
-                else
-                {
-                    return Texture.Read(s, true);
-                }
             }
 
             internal void Write(BinaryWriter s)
@@ -524,33 +512,21 @@ namespace S5Converter
                 {
                     case DataType.BumpMap:
                         s.Write(Coefficient!.Value);
-                        WriteOptTexture(s, ref Texture1);
-                        WriteOptTexture(s, ref Texture2);
+                        Texture.WriteOptTexture(s, ref Texture1);
+                        Texture.WriteOptTexture(s, ref Texture2);
                         break;
                     case DataType.EnvMap:
                         s.Write(Coefficient!.Value);
                         s.Write(FrameBufferAlpha!.Value ? 1 : 0);
-                        WriteOptTexture(s, ref Texture1);
+                        Texture.WriteOptTexture(s, ref Texture1);
                         break;
                     case DataType.DualTexture:
                         s.Write(SrcBlendMode!.Value);
                         s.Write(DstBlendMode!.Value);
-                        WriteOptTexture(s, ref Texture1);
+                        Texture.WriteOptTexture(s, ref Texture1);
                         break;
                     default:
                         break;
-                }
-            }
-            private static void WriteOptTexture(BinaryWriter s, ref Texture? t)
-            {
-                if (t == null)
-                {
-                    s.Write(0);
-                }
-                else
-                {
-                    s.Write(1);
-                    t.Value.Write(s, true);
                 }
             }
         }

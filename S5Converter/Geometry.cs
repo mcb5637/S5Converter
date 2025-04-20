@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace S5Converter
 {
-    internal class Geometry
+    internal class Geometry : IJsonOnDeserialized
     {
         [Flags]
         internal enum RpGeometryFlag : int
@@ -248,6 +249,16 @@ namespace S5Converter
 
             Extension.Write(s, RwCorePluginID.GEOMETRY);
         }
+
+        public void OnDeserialized()
+        {
+            MorphTargets ??= [];
+            TextureCoordinates ??= [];
+            Triangles ??= [];
+            Materials ??= [];
+            PreLitLum ??= [];
+            Extension ??= new();
+        }
     }
 
     internal struct RGBA
@@ -286,6 +297,44 @@ namespace S5Converter
             s.Write(Alpha);
         }
     }
+    internal struct RGBAF
+    {
+        [JsonPropertyName("red")]
+        [JsonInclude]
+        public float Red;
+        [JsonPropertyName("green")]
+        [JsonInclude]
+        public float Green;
+        [JsonPropertyName("blue")]
+        [JsonInclude]
+        public float Blue;
+        [JsonPropertyName("alpha")]
+        [JsonInclude]
+        public float Alpha;
+
+        internal const int Size = 4 * sizeof(float);
+
+        internal static RGBAF Read(BinaryReader s)
+        {
+            return new()
+            {
+                Red = s.ReadSingle(),
+                Green = s.ReadSingle(),
+                Blue = s.ReadSingle(),
+                Alpha = s.ReadSingle(),
+            };
+        }
+
+        internal readonly void Write(BinaryWriter s)
+        {
+            s.Write(Red);
+            s.Write(Green);
+            s.Write(Blue);
+            s.Write(Alpha);
+        }
+    }
+
+
     internal struct TexCoord
     {
         [JsonPropertyName("u")]
@@ -411,7 +460,7 @@ namespace S5Converter
         }
     }
 
-    internal struct Texture
+    internal struct Texture : IJsonOnDeserialized
     {
         [JsonPropertyName("texture")]
         [JsonInclude]
@@ -477,6 +526,48 @@ namespace S5Converter
             ChunkHeader.WriteString(s, TextureAlpha);
             Extension.Write(s, RwCorePluginID.TEXTURE);
         }
+
+        internal static int OptTextureSize(ref readonly Texture? t)
+        {
+            if (t == null)
+            {
+                return sizeof(int);
+            }
+            else
+            {
+                return sizeof(int) + t.Value.SizeH;
+            }
+        }
+        internal static Texture? ReadOptText(BinaryReader s)
+        {
+            if (s.ReadInt32() == 0)
+            {
+                return null;
+            }
+            else
+            {
+                return Texture.Read(s, true);
+            }
+        }
+        internal static void WriteOptTexture(BinaryWriter s, ref Texture? t)
+        {
+            if (t == null)
+            {
+                s.Write(0);
+            }
+            else
+            {
+                s.Write(1);
+                t.Value.Write(s, true);
+            }
+        }
+
+        public void OnDeserialized()
+        {
+            Tex ??= "";
+            TextureAlpha ??= "";
+            Extension ??= new();
+        }
     }
     internal struct SurfaceProperties
     {
@@ -492,7 +583,7 @@ namespace S5Converter
 
         internal const int Size = sizeof(float) * 3;
     }
-    internal class Material
+    internal class Material : IJsonOnDeserialized
     {
         [JsonInclude]
         public int UnknownInt1;
@@ -566,6 +657,12 @@ namespace S5Converter
                 t.Write(s, true);
 
             Extension.Write(s, RwCorePluginID.MATERIAL);
+        }
+
+        public void OnDeserialized()
+        {
+            Textures ??= [];
+            Extension ??= new();
         }
     }
 }

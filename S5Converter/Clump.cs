@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace S5Converter
 {
-    internal class Clump
+    internal class Clump : IJsonOnDeserialized
     {
         [JsonPropertyName("frames")]
         [JsonInclude]
@@ -144,6 +144,14 @@ namespace S5Converter
 
             // extension
             Extension.Write(s, RwCorePluginID.CLUMP);
+        }
+
+        public void OnDeserialized()
+        {
+            Frames ??= [];
+            Geometries ??= [];
+            Atomics ??= [];
+            Extension ??= new();
         }
     }
 }

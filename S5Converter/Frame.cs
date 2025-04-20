@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace S5Converter
 {
-    internal class Frame
+    internal class Frame : IJsonOnDeserialized
     {
         [JsonPropertyName("parentFrameIndex")]
         [JsonInclude]
@@ -49,6 +49,36 @@ namespace S5Converter
             Position.Write(s);
             s.Write(ParentFrameIndex);
             s.Write(UnknownIntProbablyUnused);
+        }
+
+        public void OnDeserialized()
+        {
+            RotationMatrix ??= new Vec3[3];
+        }
+    }
+    internal struct Vec2
+    {
+        [JsonPropertyName("x")]
+        [JsonInclude]
+        public float X;
+        [JsonPropertyName("y")]
+        [JsonInclude]
+        public float Y;
+
+        internal const int Size = 2 * sizeof(float);
+
+        internal static Vec2 Read(BinaryReader s)
+        {
+            return new()
+            {
+                X = s.ReadSingle(),
+                Y = s.ReadSingle(),
+            };
+        }
+        internal readonly void Write(BinaryWriter s)
+        {
+            s.Write(X);
+            s.Write(Y);
         }
     }
     internal struct Vec3
@@ -113,7 +143,64 @@ namespace S5Converter
             s.Write(Radius);
         }
     }
-    internal class FrameWithExt
+
+    internal struct RwMatrix
+    {
+        [JsonInclude]
+        public Vec3 Right;
+        [JsonInclude]
+        public Vec3 Up;
+        [JsonInclude]
+        public Vec3 At;
+        [JsonInclude]
+        public Vec3 Pos;
+        [JsonInclude]
+        public int Flags;
+
+        private const int SizeData = Vec3.Size * 4 + sizeof(int);
+        internal const int Size = SizeData + ChunkHeader.Size;
+        internal const int SizeH = Size + ChunkHeader.Size;
+
+        internal static RwMatrix Read(BinaryReader s, bool header)
+        {
+            if (header)
+                ChunkHeader.FindChunk(s, RwCorePluginID.MATRIX);
+            if (ChunkHeader.FindChunk(s, RwCorePluginID.STRUCT).Length != SizeData)
+                throw new IOException("matrix invalid struct size");
+            return new()
+            {
+                Right = Vec3.Read(s),
+                Up = Vec3.Read(s),
+                At = Vec3.Read(s),
+                Pos = Vec3.Read(s),
+                Flags = s.ReadInt32(),
+            };
+        }
+
+        internal readonly void Write(BinaryWriter s, bool header)
+        {
+            if (header)
+            {
+                new ChunkHeader()
+                {
+                    Length = Size,
+                    Type = RwCorePluginID.MATRIX,
+                }.Write(s);
+            }
+            new ChunkHeader()
+            {
+                Length = SizeData,
+                Type = RwCorePluginID.STRUCT,
+            }.Write(s);
+            Right.Write(s);
+            Up.Write(s);
+            At.Write(s);
+            Pos.Write(s);
+            s.Write(Flags);
+        }
+    }
+
+    internal class FrameWithExt : IJsonOnDeserialized
     {
         [JsonPropertyName("frame")]
         [JsonInclude]
@@ -121,5 +208,11 @@ namespace S5Converter
         [JsonPropertyName("extension")]
         [JsonInclude]
         public Extension Extension = new();
+
+        public void OnDeserialized()
+        {
+            Frame ??= new();
+            Extension ??= new();
+        }
     }
 }

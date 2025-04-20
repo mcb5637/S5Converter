@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace S5Converter
 {
-    internal struct Atomic
+    internal struct Atomic : IJsonOnDeserialized
     {
         [JsonPropertyName("frameIndex")]
         [JsonInclude]
@@ -65,6 +65,10 @@ namespace S5Converter
             s.Write(Flags);
             s.Write(UnknownInt1);
             Extension.Write(s, RwCorePluginID.ATOMIC);
+        }
+        public void OnDeserialized()
+        {
+            Extension ??= new();
         }
     }
 }

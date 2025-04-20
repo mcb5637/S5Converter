@@ -2,7 +2,7 @@
   "profiles": {
     "S5Converter": {
       "commandName": "Project",
-      "commandLineArgs": "\"D:\\repos\\s5\\S5Converter\\test\\zxbox100.dff\" \"D:\\repos\\s5\\S5Converter\\test\\pb_residence1.dff\" \"D:\\repos\\s5\\S5Converter\\test\\pb_residence1.json\""
+      "commandLineArgs": "\"D:\\repos\\s5\\S5Converter\\test\\xf_dariofear.dff\" \"D:\\repos\\s5\\S5Converter\\test\\xf_dariofear.json\""
     }
   }
 }
