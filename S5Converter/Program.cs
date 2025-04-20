@@ -20,7 +20,7 @@ namespace S5Converter
                     using Stream ou = Console.OpenStandardOutput();
                     Import(r, ou);
                 }
-                catch (IOException e)
+                catch (Exception e) when (e is IOException || e is JsonException)
                 {
                     Console.Error.WriteLine(e.ToString());
                 }
@@ -34,7 +34,7 @@ namespace S5Converter
                     using BinaryWriter ou = new(Console.OpenStandardOutput());
                     Export(r, ou);
                 }
-                catch (IOException e)
+                catch (Exception e) when (e is IOException || e is JsonException)
                 {
                     Console.Error.WriteLine(e.ToString());
                 }
@@ -51,7 +51,7 @@ namespace S5Converter
                         using BinaryWriter ou = new(new FileStream(Path.ChangeExtension(f, ".out"), FileMode.Create, FileAccess.Write));
                         Export(r, ou);
                     }
-                    catch (IOException e)
+                    catch (Exception e) when (e is IOException || e is JsonException)
                     {
                         Console.Error.WriteLine(e.ToString());
                     }
@@ -65,7 +65,7 @@ namespace S5Converter
                         using FileStream ou = new(Path.ChangeExtension(f, ".json"), FileMode.Create, FileAccess.Write);
                         Import(r, ou);
                     }
-                    catch (IOException e)
+                    catch (Exception e) when (e is IOException || e is JsonException)
                     {
                         Console.Error.WriteLine(e.ToString());
                     }
