@@ -87,21 +87,21 @@ namespace S5Converter
         [JsonInclude]
         public RpPrtStdEmitterPTank? Tank;
         [JsonInclude]
-        public Ex_FogEmitter? Ex_Fog;
+        public RpPrtAdvEmtPointList? AdvPointList;
         [JsonInclude]
-        public Ex_CircularEmitter? Ex_Circular;
+        public RpPrtAdvEmtCircle? AdvCircle;
         [JsonInclude]
-        public Unknown1000008? Unknown1000008;
+        public RpPrtAdvEmtSphere? AdvSphere;
         [JsonInclude]
-        public Unknown1000001? Unknown1000001;
+        public RpPrtAdvEmtPrtEmt? AdvEmittingEmitter;
         [JsonInclude]
-        public Unknown1000002? Unknown1000002;
+        public RpPrtAdvEmtPrtMultiColor? AdvMultiColor;
         [JsonInclude]
-        public Unknown1000003? Unknown1000003;
+        public RpPrtAdvEmtPrtMultiTexCoords? AdvMultiTexCoords;
         [JsonInclude]
-        public Unknown1000005? Unknown1000005;
+        public RpPrtAdvEmtPrtMultiSize? AdvMultiSize;
         [JsonInclude]
-        public Unknown1000004? Unknown1000004;
+        public RpPrtAdvEmtPrtMultiTexCoords? AdvMultiTexCoordsStep;
 
 
         internal int GetSize(int flags)
@@ -122,22 +122,22 @@ namespace S5Converter
                 r += RpPrtStdEmitterPrt2DRotate.Size;
             if (Tank != null)
                 r += RpPrtStdEmitterPTank.Size;
-            if (Ex_Fog != null)
-                r += Ex_Fog.Size;
-            if (Ex_Circular != null)
-                r += Ex_CircularEmitter.Size;
-            if (Unknown1000008 != null)
-                r += Unknown1000008.Size;
-            if (Unknown1000001 != null)
-                r += Unknown1000001.Size;
-            if (Unknown1000002 != null)
-                r += Unknown1000002.Size;
-            if (Unknown1000003 != null)
-                r += Unknown1000003.Size;
-            if (Unknown1000005 != null)
-                r += Unknown1000005.Size;
-            if (Unknown1000004 != null)
-                r += Unknown1000004.Size;
+            if (AdvPointList != null)
+                r += AdvPointList.Size;
+            if (AdvCircle != null)
+                r += RpPrtAdvEmtCircle.Size;
+            if (AdvSphere != null)
+                r += RpPrtAdvEmtSphere.Size;
+            if (AdvEmittingEmitter != null)
+                r += RpPrtAdvEmtPrtEmt.Size;
+            if (AdvMultiColor != null)
+                r += AdvMultiColor.Size;
+            if (AdvMultiTexCoords != null)
+                r += AdvMultiTexCoords.Size;
+            if (AdvMultiSize != null)
+                r += AdvMultiSize.Size;
+            if (AdvMultiTexCoordsStep != null)
+                r += AdvMultiTexCoordsStep.Size;
             return r;
         }
 
@@ -170,22 +170,22 @@ namespace S5Converter
                 r.Rotate = RpPrtStdEmitterPrt2DRotate.Read(s);
             if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.PTANK))
                 r.Tank = RpPrtStdEmitterPTank.Read(s);
-            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.Ex_FogEmitter))
-                r.Ex_Fog = Ex_FogEmitter.Read(s);
-            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.Ex_CircularEmitter))
-                r.Ex_Circular = Ex_CircularEmitter.Read(s);
-            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.Unknown1000008))
-                r.Unknown1000008 = Unknown1000008.Read(s);
-            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.Unknown1000001))
-                r.Unknown1000001 = Unknown1000001.Read(s);
-            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.Unknown1000002))
-                r.Unknown1000002 = Unknown1000002.Read(s);
-            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.Unknown1000003))
-                r.Unknown1000003 = Unknown1000003.Read(s);
-            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.Unknown1000005))
-                r.Unknown1000005 = Unknown1000005.Read(s);
-            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.Unknown1000004))
-                r.Unknown1000004 = Unknown1000004.Read(s);
+            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERPOINTLIST))
+                r.AdvPointList = RpPrtAdvEmtPointList.Read(s);
+            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERCIRCLE))
+                r.AdvCircle = RpPrtAdvEmtCircle.Read(s);
+            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERSPHERE))
+                r.AdvSphere = RpPrtAdvEmtSphere.Read(s);
+            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERPRTEMITTER))
+                r.AdvEmittingEmitter = RpPrtAdvEmtPrtEmt.Read(s);
+            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERPRTMULTICOLOR))
+                r.AdvMultiColor = RpPrtAdvEmtPrtMultiColor.Read(s);
+            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERPRTMULTITEXCOORDS))
+                r.AdvMultiTexCoords = RpPrtAdvEmtPrtMultiTexCoords.Read(s);
+            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERPRTMULTISIZE))
+                r.AdvMultiSize = RpPrtAdvEmtPrtMultiSize.Read(s);
+            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERPRTMULTITEXCOORDSSTEP))
+                r.AdvMultiTexCoordsStep = RpPrtAdvEmtPrtMultiTexCoords.Read(s);
             return r;
         }
 
@@ -242,53 +242,53 @@ namespace S5Converter
                     throw new IOException("Tank mismatch");
                 Tank.Write(s);
             }
-            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.Ex_FogEmitter))
+            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERPOINTLIST))
             {
-                if (Ex_Fog == null)
+                if (AdvPointList == null)
                     throw new IOException("Ex_Fog mismatch");
-                Ex_Fog.Write(s);
+                AdvPointList.Write(s);
             }
-            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.Ex_CircularEmitter))
+            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERCIRCLE))
             {
-                if (Ex_Circular == null)
+                if (AdvCircle == null)
                     throw new IOException("Ex_Circular mismatch");
-                Ex_Circular.Write(s);
+                AdvCircle.Write(s);
             }
-            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.Unknown1000008))
+            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERSPHERE))
             {
-                if (Unknown1000008 == null)
+                if (AdvSphere == null)
                     throw new IOException("Unknown1000008 mismatch");
-                Unknown1000008.Write(s);
+                AdvSphere.Write(s);
             }
-            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.Unknown1000001))
+            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERPRTEMITTER))
             {
-                if (Unknown1000001 == null)
+                if (AdvEmittingEmitter == null)
                     throw new IOException("Unknown1000001 mismatch");
-                Unknown1000001.Write(s);
+                AdvEmittingEmitter.Write(s);
             }
-            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.Unknown1000002))
+            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERPRTMULTICOLOR))
             {
-                if (Unknown1000002 == null)
+                if (AdvMultiColor == null)
                     throw new IOException("Unknown1000002 mismatch");
-                Unknown1000002.Write(s);
+                AdvMultiColor.Write(s);
             }
-            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.Unknown1000003))
+            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERPRTMULTITEXCOORDS))
             {
-                if (Unknown1000003 == null)
+                if (AdvMultiTexCoords == null)
                     throw new IOException("Unknown1000003 mismatch");
-                Unknown1000003.Write(s);
+                AdvMultiTexCoords.Write(s);
             }
-            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.Unknown1000005))
+            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERPRTMULTISIZE))
             {
-                if (Unknown1000005 == null)
+                if (AdvMultiSize == null)
                     throw new IOException("Unknown1000005 mismatch");
-                Unknown1000005.Write(s);
+                AdvMultiSize.Write(s);
             }
-            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.Unknown1000004))
+            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERPRTMULTITEXCOORDSSTEP))
             {
-                if (Unknown1000004 == null)
+                if (AdvMultiTexCoordsStep == null)
                     throw new IOException("Unknown1000004 mismatch");
-                Unknown1000004.Write(s);
+                AdvMultiTexCoordsStep.Write(s);
             }
         }
     }
@@ -307,14 +307,14 @@ namespace S5Converter
             PRTVELOCITY = 7,
             PRTMATRIX = 8,
 
-            Unknown1000001 = 0x1000001,
-            Unknown1000002 = 0x1000002,
-            Unknown1000003 = 0x1000003,
-            Unknown1000004 = 0x1000004,
-            Unknown1000005 = 0x1000005,
-            Ex_FogEmitter = 0x1000006,
-            Ex_CircularEmitter = 0x1000007,
-            Unknown1000008 = 0x1000008,
+            ADVPROPERTYCODEEMITTERPRTEMITTER = 0x1000001,
+            ADVPROPERTYCODEEMITTERPRTMULTICOLOR = 0x1000002,
+            ADVPROPERTYCODEEMITTERPRTMULTITEXCOORDS = 0x1000003,
+            ADVPROPERTYCODEEMITTERPRTMULTITEXCOORDSSTEP = 0x1000004,
+            ADVPROPERTYCODEEMITTERPRTMULTISIZE = 0x1000005,
+            ADVPROPERTYCODEEMITTERPOINTLIST = 0x1000006,
+            ADVPROPERTYCODEEMITTERCIRCLE = 0x1000007,
+            ADVPROPERTYCODEEMITTERSPHERE = 0x1000008,
         };
 
         [JsonInclude]
@@ -364,6 +364,18 @@ namespace S5Converter
                 s.Write((int)i);
             foreach (int i in Data)
                 s.Write(i);
+        }
+
+        public static bool operator ==(RpPrtStdPropertyTable a, RpPrtStdPropertyTable b)
+        {
+            if (a.Id != b.Id) return false;
+            if (!a.Ids.SequenceEqual(b.Ids)) return false;
+            //return true;
+            return a.Data.SequenceEqual(b.Data);
+        }
+        public static bool operator !=(RpPrtStdPropertyTable a, RpPrtStdPropertyTable b)
+        {
+            return !(a == b);
         }
     }
 
@@ -805,67 +817,67 @@ namespace S5Converter
         }
     }
 
-    internal class Ex_FogEmitter
+    internal class RpPrtAdvEmtPointList
     {
         [JsonInclude]
-        public bool Data1;
+        public bool UseDirection;
         [JsonInclude]
-        public bool Data2;
+        public bool Random;
         [JsonInclude]
-        public Vec3[]? SpawnOffsets = [];
+        public Vec3[]? PointList = [];
         [JsonInclude]
-        public Vec3[]? Data4 = [];
+        public Vec3[]? DirectionList = [];
 
 
-        internal int Size => sizeof(int) * 5 + (SpawnOffsets?.Length ?? 0) * Vec3.Size + (Data4?.Length ?? 0) * Vec3.Size;
+        internal int Size => sizeof(int) * 5 + (PointList?.Length ?? 0) * Vec3.Size + (DirectionList?.Length ?? 0) * Vec3.Size;
 
-        internal static Ex_FogEmitter Read(BinaryReader s)
+        internal static RpPrtAdvEmtPointList Read(BinaryReader s)
         {
             int nElems = s.ReadInt32();
-            Ex_FogEmitter r = new()
+            RpPrtAdvEmtPointList r = new()
             {
-                Data1 = s.ReadInt32() != 0,
-                Data2 = s.ReadInt32() != 0,
+                UseDirection = s.ReadInt32() != 0,
+                Random = s.ReadInt32() != 0,
             };
             if (s.ReadInt32() != 0)
             {
-                r.SpawnOffsets = new Vec3[nElems];
+                r.PointList = new Vec3[nElems];
                 for (int i = 0; i < nElems; ++i)
-                    r.SpawnOffsets[i] = Vec3.Read(s);
+                    r.PointList[i] = Vec3.Read(s);
             }
             if (s.ReadInt32() != 0)
             {
-                r.Data4 = new Vec3[nElems];
+                r.DirectionList = new Vec3[nElems];
                 for (int i = 0; i < nElems; ++i)
-                    r.Data4[i] = Vec3.Read(s);
+                    r.DirectionList[i] = Vec3.Read(s);
             }
             return r;
         }
 
         internal void Write(BinaryWriter s)
         {
-            int nelems = SpawnOffsets?.Length ?? 0;
-            if (SpawnOffsets == null && Data4 != null)
-                nelems = Data4.Length;
-            if (SpawnOffsets != null && Data4 != null && SpawnOffsets.Length != Data4.Length)
+            int nelems = PointList?.Length ?? 0;
+            if (PointList == null && DirectionList != null)
+                nelems = DirectionList.Length;
+            if (PointList != null && DirectionList != null && PointList.Length != DirectionList.Length)
                 throw new IOException("fogemitter length missmatch");
             s.Write(nelems);
-            s.Write(Data1 ? 1 : 0);
-            s.Write(Data2 ? 1 : 0);
-            if (SpawnOffsets != null)
+            s.Write(UseDirection ? 1 : 0);
+            s.Write(Random ? 1 : 0);
+            if (PointList != null)
             {
                 s.Write(1);
-                foreach (Vec3 v in SpawnOffsets)
+                foreach (Vec3 v in PointList)
                     v.Write(s);
             }
             else
             {
                 s.Write(0);
             }
-            if (Data4 != null)
+            if (DirectionList != null)
             {
                 s.Write(1);
-                foreach (Vec3 v in Data4)
+                foreach (Vec3 v in DirectionList)
                     v.Write(s);
             }
             else
@@ -875,210 +887,293 @@ namespace S5Converter
         }
     }
 
-    internal class Ex_CircularEmitter
+    internal class RpPrtAdvEmtCircle
     {
         [JsonInclude]
         public float Radius;
         [JsonInclude]
-        public float InPlaneRandomnes;
+        public float RadiusGap;
         [JsonInclude]
-        public float HeightRandomnes;
+        public float Height;
         [JsonInclude]
-        public bool IsHorizontal;
+        public bool UseCircleEmission;
         [JsonInclude]
-        public float Angle;
+        public float DirRotation;
 
         internal const int Size = sizeof(int) * 5;
 
-        internal static Ex_CircularEmitter Read(BinaryReader s)
+        internal static RpPrtAdvEmtCircle Read(BinaryReader s)
         {
             return new()
             {
                 Radius = s.ReadSingle(),
-                InPlaneRandomnes = s.ReadSingle(),
-                HeightRandomnes = s.ReadSingle(),
-                IsHorizontal = s.ReadInt32() != 0,
-                Angle = float.RadiansToDegrees(s.ReadSingle()),
+                RadiusGap = s.ReadSingle(),
+                Height = s.ReadSingle(),
+                UseCircleEmission = s.ReadInt32() != 0,
+                DirRotation = float.RadiansToDegrees(s.ReadSingle()),
             };
         }
 
         internal void Write(BinaryWriter s)
         {
             s.Write(Radius);
-            s.Write(InPlaneRandomnes);
-            s.Write(HeightRandomnes);
-            s.Write(IsHorizontal ? 1 : 0);
-            s.Write(float.DegreesToRadians(Angle));
+            s.Write(RadiusGap);
+            s.Write(Height);
+            s.Write(UseCircleEmission ? 1 : 0);
+            s.Write(float.DegreesToRadians(DirRotation));
         }
     }
 
-    internal class Unknown1000008
+    internal class RpPrtAdvEmtSphere
     {
         [JsonInclude]
-        public int Data1;
+        public float Radius;
         [JsonInclude]
-        public int Data2;
+        public float RadiusGap;
         [JsonInclude]
-        public bool Data3;
+        public bool UseSphereEmission;
 
         internal const int Size = sizeof(int) * 3;
 
-        internal static Unknown1000008 Read(BinaryReader s)
+        internal static RpPrtAdvEmtSphere Read(BinaryReader s)
         {
             return new()
             {
-                Data1 = s.ReadInt32(),
-                Data2 = s.ReadInt32(),
-                Data3 = s.ReadInt32() != 0,
+                Radius = s.ReadSingle(),
+                RadiusGap = s.ReadSingle(),
+                UseSphereEmission = s.ReadInt32() != 0,
             };
         }
 
         internal void Write(BinaryWriter s)
         {
-            s.Write(Data1);
-            s.Write(Data2);
-            s.Write(Data3 ? 1 : 0);
+            s.Write(Radius);
+            s.Write(RadiusGap);
+            s.Write(UseSphereEmission ? 1 : 0);
         }
     }
 
-    internal class Unknown1000001
+    internal class RpPrtAdvEmtPrtEmt
     {
         [JsonInclude]
-        public int Data1;
+        public float Time;
         [JsonInclude]
-        public int Data2;
+        public float TimeBias;
         [JsonInclude]
-        public int Data3;
+        public float TimeGap;
         [JsonInclude]
-        public int Data4;
+        public float TimeGapBias;
 
         internal const int Size = sizeof(int) * 4;
 
-        internal static Unknown1000001 Read(BinaryReader s)
+        internal static RpPrtAdvEmtPrtEmt Read(BinaryReader s)
         {
             return new()
             {
-                Data1 = s.ReadInt32(),
-                Data2 = s.ReadInt32(),
-                Data3 = s.ReadInt32(),
-                Data4 = s.ReadInt32(),
+                Time = s.ReadSingle(),
+                TimeBias = s.ReadSingle(),
+                TimeGap = s.ReadSingle(),
+                TimeGapBias = s.ReadSingle(),
             };
         }
 
         internal void Write(BinaryWriter s)
         {
-            s.Write(Data1);
-            s.Write(Data2);
-            s.Write(Data3);
-            s.Write(Data4);
+            s.Write(Time);
+            s.Write(TimeBias);
+            s.Write(TimeGap);
+            s.Write(TimeGapBias);
         }
     }
 
-    internal class Unknown1000002
+    internal class RpPrtAdvEmtPrtMultiColor
     {
+        internal struct RpPrtAdvEmtPrtColorItem
+        {
+            [JsonInclude]
+            public float Time;
+            [JsonInclude]
+            public float TimeBias;
+            [JsonInclude]
+            public RGBAF MidColor;
+            [JsonInclude]
+            public RGBAF MidColorBias;
+
+            internal const int Size = sizeof(float) * 2 + RGBAF.Size * 2;
+
+            internal static RpPrtAdvEmtPrtColorItem Read(BinaryReader s)
+            {
+                RpPrtAdvEmtPrtColorItem r = new()
+                {
+                    Time = s.ReadSingle(),
+                    TimeBias = s.ReadSingle(),
+                    MidColor = RGBAF.Read(s),
+                    MidColorBias = RGBAF.Read(s),
+                };
+                return r;
+            }
+
+            internal readonly void Write(BinaryWriter s)
+            {
+                s.Write(Time);
+                s.Write(TimeBias);
+                MidColor.Write(s);
+                MidColorBias.Write(s);
+            }
+        }
+
         [JsonInclude]
-        public float[] Data = [];
+        public RpPrtAdvEmtPrtColorItem[] List = [];
 
-        internal int Size => sizeof(int) + sizeof(float) * Data.Length;
+        internal int Size => sizeof(int) + RpPrtAdvEmtPrtColorItem.Size * List.Length;
 
-        internal static Unknown1000002 Read(BinaryReader s)
+        internal static RpPrtAdvEmtPrtMultiColor Read(BinaryReader s)
         {
             int nElem = s.ReadInt32();
-            Unknown1000002 r = new()
+            RpPrtAdvEmtPrtMultiColor r = new()
             {
-                Data = new float[nElem * 10],
+                List = new RpPrtAdvEmtPrtColorItem[nElem],
             };
-            for (int i = 0; i < r.Data.Length; ++i)
-                r.Data[i] = s.ReadSingle();
+            for (int i = 0; i < r.List.Length; ++i)
+                r.List[i] = RpPrtAdvEmtPrtColorItem.Read(s);
             return r;
         }
 
         internal void Write(BinaryWriter s)
         {
-            s.Write(Data.Length / 10);
-            foreach (float f in Data)
-                s.Write(f);
+            s.Write(List.Length);
+            foreach (RpPrtAdvEmtPrtColorItem f in List)
+                f.Write(s);
         }
     }
 
-    internal class Unknown1000003
+    internal class RpPrtAdvEmtPrtMultiTexCoords
     {
+        internal struct RpPrtAdvEmtPrtTexCoordsItem
+        {
+            [JsonInclude]
+            public float Time;
+            [JsonInclude]
+            public float TimeBias;
+            [JsonInclude]
+            public TexCoord MidUV0;
+            [JsonInclude]
+            public TexCoord MidUV0Bias;
+            [JsonInclude]
+            public TexCoord MidUV1;
+            [JsonInclude]
+            public TexCoord MidUV1Bias;
+
+            internal const int Size = sizeof(float) * 2 + TexCoord.Size * 4;
+
+            internal static RpPrtAdvEmtPrtTexCoordsItem Read(BinaryReader s)
+            {
+                RpPrtAdvEmtPrtTexCoordsItem r = new()
+                {
+                    Time = s.ReadSingle(),
+                    TimeBias = s.ReadSingle(),
+                    MidUV0 = TexCoord.Read(s),
+                    MidUV0Bias = TexCoord.Read(s),
+                    MidUV1 = TexCoord.Read(s),
+                    MidUV1Bias = TexCoord.Read(s),
+                };
+                return r;
+            }
+
+            internal readonly void Write(BinaryWriter s)
+            {
+                s.Write(Time);
+                s.Write(TimeBias);
+                MidUV0.Write(s);
+                MidUV0Bias.Write(s);
+                MidUV1.Write(s);
+                MidUV1Bias.Write(s);
+            }
+        }
+
         [JsonInclude]
-        public float[] Data = [];
+        public RpPrtAdvEmtPrtTexCoordsItem[] List = [];
 
-        internal int Size => sizeof(int) + sizeof(float) * Data.Length;
+        internal int Size => sizeof(int) + RpPrtAdvEmtPrtTexCoordsItem.Size * List.Length;
 
-        internal static Unknown1000003 Read(BinaryReader s)
+        internal static RpPrtAdvEmtPrtMultiTexCoords Read(BinaryReader s)
         {
             int nElem = s.ReadInt32();
-            Unknown1000003 r = new()
+            RpPrtAdvEmtPrtMultiTexCoords r = new()
             {
-                Data = new float[nElem * 10],
+                List = new RpPrtAdvEmtPrtTexCoordsItem[nElem],
             };
-            for (int i = 0; i < r.Data.Length; ++i)
-                r.Data[i] = s.ReadSingle();
+            for (int i = 0; i < r.List.Length; ++i)
+                r.List[i] = RpPrtAdvEmtPrtTexCoordsItem.Read(s);
             return r;
         }
 
         internal void Write(BinaryWriter s)
         {
-            s.Write(Data.Length / 10);
-            foreach (float f in Data)
-                s.Write(f);
+            s.Write(List.Length);
+            foreach (RpPrtAdvEmtPrtTexCoordsItem f in List)
+                f.Write(s);
         }
     }
 
-    internal class Unknown1000005
+    internal class RpPrtAdvEmtPrtMultiSize
     {
+        internal struct RpPrtAdvEmtPrtSizeItem
+        {
+            [JsonInclude]
+            public float Time;
+            [JsonInclude]
+            public float TimeBias;
+            [JsonInclude]
+            public Vec2 MidSize;
+            [JsonInclude]
+            public Vec2 MidSizeBias;
+
+            internal const int Size = sizeof(float) * 2 + Vec2.Size * 2;
+
+            internal static RpPrtAdvEmtPrtSizeItem Read(BinaryReader s)
+            {
+                RpPrtAdvEmtPrtSizeItem r = new()
+                {
+                    Time = s.ReadSingle(),
+                    TimeBias = s.ReadSingle(),
+                    MidSize = Vec2.Read(s),
+                    MidSizeBias = Vec2.Read(s),
+                };
+                return r;
+            }
+
+            internal readonly void Write(BinaryWriter s)
+            {
+                s.Write(Time);
+                s.Write(TimeBias);
+                MidSize.Write(s);
+                MidSizeBias.Write(s);
+            }
+        }
+
         [JsonInclude]
-        public float[] Data = [];
+        public RpPrtAdvEmtPrtSizeItem[] List = [];
 
-        internal int Size => sizeof(int) + sizeof(float) * Data.Length;
+        internal int Size => sizeof(int) + RpPrtAdvEmtPrtSizeItem.Size * List.Length;
 
-        internal static Unknown1000005 Read(BinaryReader s)
+        internal static RpPrtAdvEmtPrtMultiSize Read(BinaryReader s)
         {
             int nElem = s.ReadInt32();
-            Unknown1000005 r = new()
+            RpPrtAdvEmtPrtMultiSize r = new()
             {
-                Data = new float[nElem * 6],
+                List = new RpPrtAdvEmtPrtSizeItem[nElem],
             };
-            for (int i = 0; i < r.Data.Length; ++i)
-                r.Data[i] = s.ReadSingle();
+            for (int i = 0; i < r.List.Length; ++i)
+                r.List[i] = RpPrtAdvEmtPrtSizeItem.Read(s);
             return r;
         }
 
         internal void Write(BinaryWriter s)
         {
-            s.Write(Data.Length / 6);
-            foreach (float f in Data)
-                s.Write(f);
-        }
-    }
-
-    internal class Unknown1000004
-    {
-        [JsonInclude]
-        public float[] Data = [];
-
-        internal int Size => sizeof(int) + sizeof(float) * Data.Length;
-
-        internal static Unknown1000004 Read(BinaryReader s)
-        {
-            int nElem = s.ReadInt32();
-            Unknown1000004 r = new()
-            {
-                Data = new float[nElem * 10],
-            };
-            for (int i = 0; i < r.Data.Length; ++i)
-                r.Data[i] = s.ReadSingle();
-            return r;
-        }
-
-        internal void Write(BinaryWriter s)
-        {
-            s.Write(Data.Length / 10);
-            foreach (float f in Data)
-                s.Write(f);
+            s.Write(List.Length / 6);
+            foreach (RpPrtAdvEmtPrtSizeItem f in List)
+                f.Write(s);
         }
     }
 }
