@@ -52,25 +52,32 @@ namespace S5Converter
         }
     }
 
-    internal class RpPrtStdEmitter // TODO build emitter/particle? props from filled options
+    internal class RpPrtStdEmitter : IJsonOnDeserialized
     {
-        [JsonInclude]
         public int EmitterClassId = 0;
         [JsonInclude]
         public int EmitterFlags = 0;
-        [JsonInclude]
         public int ParticleClassId = 0;
         [JsonInclude]
         public int MaxParticlesPerBatch = 0;
 
-        [JsonInclude]
-        public RpPrtStdPropertyTable ParticleProps = new();
-        [JsonInclude]
-        public RpPrtStdPropertyTable EmitterProps = new();
-        [JsonInclude]
+        public RpPrtStdPropertyTable<ParticleProperties> ParticleProps = new();
+        public RpPrtStdPropertyTable<EmitterProperties> EmitterProps = new();
         public RpPrtStdParticleClass ParticleClass = new();
-        [JsonInclude]
         public RpPrtStdEmitterClass EmitterClass = new();
+
+        [JsonInclude]
+        public int ParticlePropsId
+        {
+            get => ParticleClass.PropertyId;
+            set => ParticleClass.PropertyId = value;
+        }
+        [JsonInclude]
+        public int EmitterPropsId
+        {
+            get => EmitterClass.PropertyId;
+            set => EmitterClass.PropertyId = value;
+        }
 
         [JsonInclude]
         public RpPrtStdEmitterStandard? EmitterStandard;
@@ -103,6 +110,158 @@ namespace S5Converter
         [JsonInclude]
         public RpPrtAdvEmtPrtMultiTexCoords? AdvMultiTexCoordsStep;
 
+
+        public void OnDeserialized()
+        {
+            int idemit = 0;
+            int idpart = 0;
+            List<EmitterProperties> propemit = [EmitterProperties.EMITTER];
+            List<int> sizesemit = [40];
+            List<ParticleProperties> proppart = [];
+            List<int> sizespart = [];
+            if (EmitterStandard != null)
+            {
+                idemit |= RpPrtStdEmitterStandard.EmitterId;
+                propemit.Add(EmitterProperties.STANDARD);
+                sizesemit.Add(RpPrtStdEmitterStandard.EmitterPropSize);
+                idpart |= RpPrtStdEmitterStandard.ParticleId;
+                proppart.Add(ParticleProperties.STANDARD);
+                sizespart.Add(RpPrtStdEmitterStandard.ParticlePropSize);
+                idpart |= 0x00000040; // velocity
+                proppart.Add(ParticleProperties.VELOCITY);
+                sizespart.Add(12);
+            }
+            if (Color != null)
+            {
+                idemit |= RpPrtStdEmitterPrtColor.EmitterId;
+                propemit.Add(EmitterProperties.PRTCOLOR);
+                sizesemit.Add(RpPrtStdEmitterPrtColor.PropSize);
+                idpart |= RpPrtStdEmitterPrtColor.ParticleId;
+                proppart.Add(ParticleProperties.COLOR);
+                sizespart.Add(RpPrtStdEmitterPrtColor.ParticlePropSize);
+            }
+            if (TextureCoordinates != null)
+            {
+                idemit |= RpPrtStdEmitterPrtTexCoords.EmitterId;
+                propemit.Add(EmitterProperties.PRTTEXCOORDS);
+                sizesemit.Add(RpPrtStdEmitterPrtTexCoords.PropSize);
+                idpart |= RpPrtStdEmitterPrtTexCoords.ParticleId;
+                proppart.Add(ParticleProperties.TEXCOORDS);
+                sizespart.Add(RpPrtStdEmitterPrtTexCoords.ParticlePropSize);
+            }
+            if (Matrix != null)
+            {
+                idemit |= RpPrtStdEmitterPrtMatrix.EmitterId;
+                propemit.Add(EmitterProperties.PRTMATRIX);
+                sizesemit.Add(RpPrtStdEmitterPrtMatrix.PropSize);
+                idpart |= RpPrtStdEmitterPrtMatrix.ParticleId;
+                proppart.Add(ParticleProperties.MATRIX);
+                sizespart.Add(RpPrtStdEmitterPrtMatrix.ParticlePropSize);
+            }
+            if (Tank != null)
+            {
+                idemit |= RpPrtStdEmitterPTank.EmitterId;
+                propemit.Add(EmitterProperties.PTANK);
+                sizesemit.Add(RpPrtStdEmitterPTank.PropSize);
+            }
+            if (ParticleSize != null)
+            {
+                idemit |= RpPrtStdEmitterPrtSize.EmitterId;
+                propemit.Add(EmitterProperties.PRTSIZE);
+                sizesemit.Add(RpPrtStdEmitterPrtSize.PropSize);
+                idpart |= RpPrtStdEmitterPrtSize.ParticleId;
+                proppart.Add(ParticleProperties.SIZE);
+                sizespart.Add(RpPrtStdEmitterPrtSize.ParticlePropSize);
+            }
+            if (Rotate != null)
+            {
+                idemit |= RpPrtStdEmitterPrt2DRotate.EmitterId;
+                propemit.Add(EmitterProperties.PRT2DROTATE);
+                sizesemit.Add(RpPrtStdEmitterPrt2DRotate.PropSize);
+                idpart |= RpPrtStdEmitterPrt2DRotate.ParticleId;
+                proppart.Add(ParticleProperties.PRT2DROTATE);
+                sizespart.Add(RpPrtStdEmitterPrt2DRotate.ParticlePropSize);
+            }
+            if (AdvEmittingEmitter != null)
+            {
+                idemit |= RpPrtAdvEmtPrtEmt.EmitterId;
+                propemit.Add(EmitterProperties.ADVPROPERTYCODEEMITTERPRTEMITTER);
+                sizesemit.Add(RpPrtAdvEmtPrtEmt.PropSize);
+                idpart |= RpPrtAdvEmtPrtEmt.ParticleId;
+                proppart.Add(ParticleProperties.ADVPROPERTYCODEPARTICLEEMITTER);
+                sizespart.Add(RpPrtAdvEmtPrtEmt.ParticlePropSize);
+            }
+            if (AdvMultiColor != null)
+            {
+                idemit |= RpPrtAdvEmtPrtMultiColor.EmitterId;
+                propemit.Add(EmitterProperties.ADVPROPERTYCODEEMITTERPRTMULTICOLOR);
+                sizesemit.Add(AdvMultiColor.PropSize);
+                idpart |= RpPrtAdvEmtPrtMultiColor.ParticleId;
+                proppart.Add(ParticleProperties.ADVPROPERTYCODEPARTICLEMULTICOLOR);
+                sizespart.Add(AdvMultiColor.ParticlePropSize);
+            }
+            if (AdvMultiTexCoords != null)
+            {
+                idemit |= RpPrtAdvEmtPrtMultiTexCoords.EmitterId;
+                propemit.Add(EmitterProperties.ADVPROPERTYCODEEMITTERPRTMULTITEXCOORDS);
+                sizesemit.Add(AdvMultiTexCoords.PropSize);
+                idpart |= RpPrtAdvEmtPrtMultiTexCoords.ParticleId;
+                proppart.Add(ParticleProperties.ADVPROPERTYCODEPARTICLEMULTITEXCOORDS);
+                sizespart.Add(AdvMultiTexCoords.ParticlePropSize);
+            }
+            if (AdvMultiTexCoordsStep != null)
+            {
+                idemit |= RpPrtAdvEmtPrtMultiTexCoords.EmitterIdSteps;
+                propemit.Add(EmitterProperties.ADVPROPERTYCODEEMITTERPRTMULTITEXCOORDSSTEP);
+                sizesemit.Add(AdvMultiTexCoordsStep.PropSize);
+                idpart |= RpPrtAdvEmtPrtMultiTexCoords.ParticleIdSteps;
+                proppart.Add(ParticleProperties.ADVPROPERTYCODEPARTICLEMULTITEXCOORDSSTEP);
+                sizespart.Add(AdvMultiTexCoordsStep.ParticlePropSizeStep);
+            }
+            if (AdvMultiSize != null)
+            {
+                idemit |= RpPrtAdvEmtPrtMultiSize.EmitterId;
+                propemit.Add(EmitterProperties.ADVPROPERTYCODEEMITTERPRTMULTISIZE);
+                sizesemit.Add(AdvMultiSize.PropSize);
+                idpart |= RpPrtAdvEmtPrtMultiSize.ParticleId;
+                proppart.Add(ParticleProperties.ADVPROPERTYCODEPARTICLEMULTISIZE);
+                sizespart.Add(AdvMultiSize.ParticlePropSize);
+            }
+            if (AdvPointList != null)
+            {
+                idemit |= RpPrtAdvEmtPointList.EmitterId;
+                propemit.Add(EmitterProperties.ADVPROPERTYCODEEMITTERPOINTLIST);
+                sizesemit.Add(AdvPointList.PropSize);
+            }
+            if (AdvCircle != null)
+            {
+                idemit |= RpPrtAdvEmtCircle.EmitterId;
+                propemit.Add(EmitterProperties.ADVPROPERTYCODEEMITTERCIRCLE);
+                sizesemit.Add(RpPrtAdvEmtCircle.PropSize);
+            }
+            if (AdvSphere != null)
+            {
+                idemit |= RpPrtAdvEmtSphere.EmitterId;
+                propemit.Add(EmitterProperties.ADVPROPERTYCODEEMITTERSPHERE);
+                sizesemit.Add(RpPrtAdvEmtSphere.PropSize);
+            }
+            EmitterProps = new()
+            {
+                Id = EmitterClass.PropertyId,
+                Ids = [.. propemit],
+                Stride = [.. sizesemit],
+            };
+            ParticleProps = new()
+            {
+                Id = ParticleClass.PropertyId,
+                Ids = [.. proppart],
+                Stride = [.. sizespart],
+            };
+            EmitterClassId = idemit;
+            EmitterClass.Id = idemit;
+            ParticleClassId = idpart;
+            ParticleClass.Id = idpart;
+        }
 
         internal int GetSize(int flags)
         {
@@ -152,39 +311,39 @@ namespace S5Converter
             };
             if (s.ReadInt32() == 0)
                 throw new IOException("non inline particle class not supported");
-            r.ParticleProps = RpPrtStdPropertyTable.Read(s, true);
-            r.EmitterProps = RpPrtStdPropertyTable.Read(s, true);
+            r.ParticleProps = RpPrtStdPropertyTable<ParticleProperties>.Read(s, true);
+            r.EmitterProps = RpPrtStdPropertyTable<EmitterProperties>.Read(s, true);
             r.ParticleClass = RpPrtStdParticleClass.Read(s, true);
             r.EmitterClass = RpPrtStdEmitterClass.Read(s, true);
-            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.STANDARD))
+            if (r.EmitterProps.Ids.Contains(EmitterProperties.STANDARD))
                 r.EmitterStandard = RpPrtStdEmitterStandard.Read(s, flags);
-            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.PRTCOLOR))
+            if (r.EmitterProps.Ids.Contains(EmitterProperties.PRTCOLOR))
                 r.Color = RpPrtStdEmitterPrtColor.Read(s);
-            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.PRTTEXCOORDS))
+            if (r.EmitterProps.Ids.Contains(EmitterProperties.PRTTEXCOORDS))
                 r.TextureCoordinates = RpPrtStdEmitterPrtTexCoords.Read(s);
-            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.PRTMATRIX))
+            if (r.EmitterProps.Ids.Contains(EmitterProperties.PRTMATRIX))
                 r.Matrix = RpPrtStdEmitterPrtMatrix.Read(s);
-            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.PRTSIZE))
+            if (r.EmitterProps.Ids.Contains(EmitterProperties.PRTSIZE))
                 r.ParticleSize = RpPrtStdEmitterPrtSize.Read(s);
-            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.PRT2DROTATE))
+            if (r.EmitterProps.Ids.Contains(EmitterProperties.PRT2DROTATE))
                 r.Rotate = RpPrtStdEmitterPrt2DRotate.Read(s);
-            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.PTANK))
+            if (r.EmitterProps.Ids.Contains(EmitterProperties.PTANK))
                 r.Tank = RpPrtStdEmitterPTank.Read(s);
-            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERPOINTLIST))
+            if (r.EmitterProps.Ids.Contains(EmitterProperties.ADVPROPERTYCODEEMITTERPOINTLIST))
                 r.AdvPointList = RpPrtAdvEmtPointList.Read(s);
-            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERCIRCLE))
+            if (r.EmitterProps.Ids.Contains(EmitterProperties.ADVPROPERTYCODEEMITTERCIRCLE))
                 r.AdvCircle = RpPrtAdvEmtCircle.Read(s);
-            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERSPHERE))
+            if (r.EmitterProps.Ids.Contains(EmitterProperties.ADVPROPERTYCODEEMITTERSPHERE))
                 r.AdvSphere = RpPrtAdvEmtSphere.Read(s);
-            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERPRTEMITTER))
+            if (r.EmitterProps.Ids.Contains(EmitterProperties.ADVPROPERTYCODEEMITTERPRTEMITTER))
                 r.AdvEmittingEmitter = RpPrtAdvEmtPrtEmt.Read(s);
-            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERPRTMULTICOLOR))
+            if (r.EmitterProps.Ids.Contains(EmitterProperties.ADVPROPERTYCODEEMITTERPRTMULTICOLOR))
                 r.AdvMultiColor = RpPrtAdvEmtPrtMultiColor.Read(s);
-            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERPRTMULTITEXCOORDS))
+            if (r.EmitterProps.Ids.Contains(EmitterProperties.ADVPROPERTYCODEEMITTERPRTMULTITEXCOORDS))
                 r.AdvMultiTexCoords = RpPrtAdvEmtPrtMultiTexCoords.Read(s);
-            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERPRTMULTISIZE))
+            if (r.EmitterProps.Ids.Contains(EmitterProperties.ADVPROPERTYCODEEMITTERPRTMULTISIZE))
                 r.AdvMultiSize = RpPrtAdvEmtPrtMultiSize.Read(s);
-            if (r.EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERPRTMULTITEXCOORDSSTEP))
+            if (r.EmitterProps.Ids.Contains(EmitterProperties.ADVPROPERTYCODEEMITTERPRTMULTITEXCOORDSSTEP))
                 r.AdvMultiTexCoordsStep = RpPrtAdvEmtPrtMultiTexCoords.Read(s);
             return r;
         }
@@ -200,91 +359,91 @@ namespace S5Converter
             EmitterProps.Write(s, true);
             ParticleClass.Write(s, true);
             EmitterClass.Write(s, true);
-            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.STANDARD))
+            if (EmitterProps.Ids.Contains(EmitterProperties.STANDARD))
             {
                 if (EmitterStandard == null)
                     throw new IOException("EmitterStandard mismatch");
                 EmitterStandard.Write(s, flags);
             }
-            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.PRTCOLOR))
+            if (EmitterProps.Ids.Contains(EmitterProperties.PRTCOLOR))
             {
                 if (Color == null)
                     throw new IOException("Color mismatch");
                 Color.Write(s);
             }
-            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.PRTTEXCOORDS))
+            if (EmitterProps.Ids.Contains(EmitterProperties.PRTTEXCOORDS))
             {
                 if (TextureCoordinates == null)
                     throw new IOException("TextureCoordinates mismatch");
                 TextureCoordinates.Write(s);
             }
-            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.PRTMATRIX))
+            if (EmitterProps.Ids.Contains(EmitterProperties.PRTMATRIX))
             {
                 if (Matrix == null)
                     throw new IOException("Matrix mismatch");
                 Matrix.Write(s);
             }
-            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.PRTSIZE))
+            if (EmitterProps.Ids.Contains(EmitterProperties.PRTSIZE))
             {
                 if (ParticleSize == null)
                     throw new IOException("ParticleSize mismatch");
                 ParticleSize.Write(s);
             }
-            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.PRT2DROTATE))
+            if (EmitterProps.Ids.Contains(EmitterProperties.PRT2DROTATE))
             {
                 if (Rotate == null)
                     throw new IOException("Rotate mismatch");
                 Rotate.Write(s);
             }
-            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.PTANK))
+            if (EmitterProps.Ids.Contains(EmitterProperties.PTANK))
             {
                 if (Tank == null)
                     throw new IOException("Tank mismatch");
                 Tank.Write(s);
             }
-            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERPOINTLIST))
+            if (EmitterProps.Ids.Contains(EmitterProperties.ADVPROPERTYCODEEMITTERPOINTLIST))
             {
                 if (AdvPointList == null)
                     throw new IOException("Ex_Fog mismatch");
                 AdvPointList.Write(s);
             }
-            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERCIRCLE))
+            if (EmitterProps.Ids.Contains(EmitterProperties.ADVPROPERTYCODEEMITTERCIRCLE))
             {
                 if (AdvCircle == null)
                     throw new IOException("Ex_Circular mismatch");
                 AdvCircle.Write(s);
             }
-            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERSPHERE))
+            if (EmitterProps.Ids.Contains(EmitterProperties.ADVPROPERTYCODEEMITTERSPHERE))
             {
                 if (AdvSphere == null)
                     throw new IOException("Unknown1000008 mismatch");
                 AdvSphere.Write(s);
             }
-            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERPRTEMITTER))
+            if (EmitterProps.Ids.Contains(EmitterProperties.ADVPROPERTYCODEEMITTERPRTEMITTER))
             {
                 if (AdvEmittingEmitter == null)
                     throw new IOException("Unknown1000001 mismatch");
                 AdvEmittingEmitter.Write(s);
             }
-            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERPRTMULTICOLOR))
+            if (EmitterProps.Ids.Contains(EmitterProperties.ADVPROPERTYCODEEMITTERPRTMULTICOLOR))
             {
                 if (AdvMultiColor == null)
                     throw new IOException("Unknown1000002 mismatch");
                 AdvMultiColor.Write(s);
             }
-            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERPRTMULTITEXCOORDS))
+            if (EmitterProps.Ids.Contains(EmitterProperties.ADVPROPERTYCODEEMITTERPRTMULTITEXCOORDS))
             {
                 if (AdvMultiTexCoords == null)
                     throw new IOException("Unknown1000003 mismatch");
                 AdvMultiTexCoords.Write(s);
             }
-            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERPRTMULTISIZE))
+            if (EmitterProps.Ids.Contains(EmitterProperties.ADVPROPERTYCODEEMITTERPRTMULTISIZE))
             {
                 if (AdvMultiSize == null)
                     throw new IOException("Unknown1000005 mismatch");
                 AdvMultiSize.Write(s);
             }
-            if (EmitterProps.Ids.Contains(RpPrtStdPropertyTable.Properties.ADVPROPERTYCODEEMITTERPRTMULTITEXCOORDSSTEP))
+            if (EmitterProps.Ids.Contains(EmitterProperties.ADVPROPERTYCODEEMITTERPRTMULTITEXCOORDSSTEP))
             {
                 if (AdvMultiTexCoordsStep == null)
                     throw new IOException("Unknown1000004 mismatch");
@@ -293,56 +452,74 @@ namespace S5Converter
         }
     }
 
-    internal class RpPrtStdPropertyTable
+    public enum EmitterProperties : int
     {
-        public enum Properties : int
-        {
-            EMITTER = 0,
-            STANDARD = 1,
-            PRTCOLOR = 2,
-            PRTTEXCOORDS = 3,
-            PRT2DROTATE = 4,
-            PRTSIZE = 5,
-            PTANK = 6,
-            PRTVELOCITY = 7,
-            PRTMATRIX = 8,
+        EMITTER = 0,
+        STANDARD = 1,
+        PRTCOLOR = 2,
+        PRTTEXCOORDS = 3,
+        PRT2DROTATE = 4,
+        PRTSIZE = 5,
+        PTANK = 6,
+        PRTVELOCITY = 7,
+        PRTMATRIX = 8,
 
-            ADVPROPERTYCODEEMITTERPRTEMITTER = 0x1000001,
-            ADVPROPERTYCODEEMITTERPRTMULTICOLOR = 0x1000002,
-            ADVPROPERTYCODEEMITTERPRTMULTITEXCOORDS = 0x1000003,
-            ADVPROPERTYCODEEMITTERPRTMULTITEXCOORDSSTEP = 0x1000004,
-            ADVPROPERTYCODEEMITTERPRTMULTISIZE = 0x1000005,
-            ADVPROPERTYCODEEMITTERPOINTLIST = 0x1000006,
-            ADVPROPERTYCODEEMITTERCIRCLE = 0x1000007,
-            ADVPROPERTYCODEEMITTERSPHERE = 0x1000008,
-        };
+        ADVPROPERTYCODEEMITTERPRTEMITTER = 0x1000001,
+        ADVPROPERTYCODEEMITTERPRTMULTICOLOR = 0x1000002,
+        ADVPROPERTYCODEEMITTERPRTMULTITEXCOORDS = 0x1000003,
+        ADVPROPERTYCODEEMITTERPRTMULTITEXCOORDSSTEP = 0x1000004,
+        ADVPROPERTYCODEEMITTERPRTMULTISIZE = 0x1000005,
+        ADVPROPERTYCODEEMITTERPOINTLIST = 0x1000006,
+        ADVPROPERTYCODEEMITTERCIRCLE = 0x1000007,
+        ADVPROPERTYCODEEMITTERSPHERE = 0x1000008,
+    };
+    public enum ParticleProperties : int
+    {
+        STANDARD = 0,
+        POSITION = 1,
+        COLOR = 2,
+        TEXCOORDS = 3,
+        PRT2DROTATE = 4,
+        SIZE = 5,
+        VELOCITY = 6,
+        MATRIX = 7,
+
+        ADVPROPERTYCODEPARTICLECHAIN = 0x1000000,
+        ADVPROPERTYCODEPARTICLEEMITTER = 0x1000001,
+        ADVPROPERTYCODEPARTICLEMULTICOLOR = 0x1000002,
+        ADVPROPERTYCODEPARTICLEMULTITEXCOORDS = 0x1000003,
+        ADVPROPERTYCODEPARTICLEMULTITEXCOORDSSTEP = 0x1000004,
+        ADVPROPERTYCODEPARTICLEMULTISIZE = 0x1000005,
+    };
+    internal class RpPrtStdPropertyTable<Properties> where Properties : Enum
+    {
 
         [JsonInclude]
         public int Id = 0;
         [JsonInclude]
         public Properties[] Ids = [];
         [JsonInclude]
-        public int[] Data = [];
+        public int[] Stride = [];
 
 
         internal int Size => sizeof(int) * 2 + Ids.Length * 2 * sizeof(int);
         internal int SizeH => Size + ChunkHeader.Size;
 
-        internal static RpPrtStdPropertyTable Read(BinaryReader s, bool header)
+        internal static RpPrtStdPropertyTable<Properties> Read(BinaryReader s, bool header)
         {
             if (header)
                 ChunkHeader.FindChunk(s, RwCorePluginID.PRTSTDGLOBALDATA);
-            RpPrtStdPropertyTable r = new()
+            RpPrtStdPropertyTable<Properties> r = new()
             {
                 Id = s.ReadInt32(),
             };
             int nProps = s.ReadInt32();
             r.Ids = new Properties[nProps];
             for (int i = 0; i < nProps; ++i)
-                r.Ids[i] = (Properties)s.ReadInt32();
-            r.Data = new int[nProps];
+                r.Ids[i] = (Properties)(object)s.ReadInt32();
+            r.Stride = new int[nProps];
             for (int i = 0; i < nProps; ++i)
-                r.Data[i] = s.ReadInt32();
+                r.Stride[i] = s.ReadInt32();
             return r;
         }
 
@@ -356,24 +533,24 @@ namespace S5Converter
                     Type = RwCorePluginID.PRTSTDGLOBALDATA,
                 }.Write(s);
             }
-            if (Ids.Length != Data.Length)
+            if (Ids.Length != Stride.Length)
                 throw new IOException("RpPrtStdPropertyTable ids and data missmatch");
             s.Write(Id);
             s.Write(Ids.Length);
             foreach (Properties i in Ids)
-                s.Write((int)i);
-            foreach (int i in Data)
+                s.Write((int)(object)i);
+            foreach (int i in Stride)
                 s.Write(i);
         }
 
-        public static bool operator ==(RpPrtStdPropertyTable a, RpPrtStdPropertyTable b)
+        public static bool operator ==(RpPrtStdPropertyTable<Properties> a, RpPrtStdPropertyTable<Properties> b)
         {
             if (a.Id != b.Id) return false;
             if (!a.Ids.SequenceEqual(b.Ids)) return false;
             //return true;
-            return a.Data.SequenceEqual(b.Data);
+            return a.Stride.SequenceEqual(b.Stride);
         }
-        public static bool operator !=(RpPrtStdPropertyTable a, RpPrtStdPropertyTable b)
+        public static bool operator !=(RpPrtStdPropertyTable<Properties> a, RpPrtStdPropertyTable<Properties> b)
         {
             return !(a == b);
         }
@@ -496,6 +673,10 @@ namespace S5Converter
         [JsonInclude]
         public float ParticleRotation = -1;
 
+        internal const int EmitterId = 0x00000001;
+        internal const int EmitterPropSize = 172;
+        internal const int ParticleId = 0x00000001;
+        internal const int ParticlePropSize = 16;
 
         internal int GetSize(int flags)
         {
@@ -577,6 +758,11 @@ namespace S5Converter
         [JsonInclude]
         public RGBAF EndColorRandom = new();
 
+        internal const int EmitterId = 0x00000002;
+        internal const int PropSize = 64;
+        internal const int ParticleId = 0x00000004;
+        internal const int ParticlePropSize = 32;
+
         internal const int Size = RGBAF.Size * 4;
 
         internal static RpPrtStdEmitterPrtColor Read(BinaryReader s)
@@ -617,6 +803,11 @@ namespace S5Converter
         public Vec2 EndUV1 = new();
         [JsonInclude]
         public Vec2 EndUV1Random = new();
+
+        internal const int EmitterId = 0x00000004;
+        internal const int PropSize = 64;
+        internal const int ParticleId = 0x00000008;
+        internal const int ParticlePropSize = 32;
 
         internal const int Size = Vec2.Size * 8;
 
@@ -663,6 +854,10 @@ namespace S5Converter
         [JsonInclude]
         public int Flags;
 
+        internal const int EmitterId = 0x00000040;
+        internal const int PropSize = 116;
+        internal const int ParticleId = 0x00000080;
+        internal const int ParticlePropSize = 0;
 
         internal const int Size = RwMatrix.SizeH + Vec3.Size * 4 + sizeof(int);
 
@@ -701,6 +896,11 @@ namespace S5Converter
         [JsonInclude]
         public Vec2 EndSizeRandom = new();
 
+        internal const int EmitterId = 0x00000010;
+        internal const int PropSize = 32;
+        internal const int ParticleId = 0x00000020;
+        internal const int ParticlePropSize = 32;
+
         internal const int Size = Vec2.Size * 4;
 
         internal static RpPrtStdEmitterPrtSize Read(BinaryReader s)
@@ -733,6 +933,11 @@ namespace S5Converter
         public float EndRotate;
         [JsonInclude]
         public float EndRotateRandom;
+
+        internal const int EmitterId = 0x00000008;
+        internal const int PropSize = 16;
+        internal const int ParticleId = 0x00000010;
+        internal const int ParticlePropSize = 8;
 
         internal const int Size = sizeof(float) * 4;
 
@@ -793,6 +998,9 @@ namespace S5Converter
         [JsonInclude]
         public bool VertexAlphaBlending;
 
+        internal const int EmitterId = 0x00000020;
+        internal const int PropSize = 52;
+
         internal const int Size = sizeof(int) * 5;
 
         internal static RpPrtStdEmitterPTank Read(BinaryReader s)
@@ -828,6 +1036,8 @@ namespace S5Converter
         [JsonInclude]
         public Vec3[]? DirectionList = [];
 
+        internal const int EmitterId = 0x00010000;
+        internal int PropSize => 24 + ((PointList?.Length ?? 0) + (DirectionList?.Length ?? 0)) * 3 * sizeof(float);
 
         internal int Size => sizeof(int) * 5 + (PointList?.Length ?? 0) * Vec3.Size + (DirectionList?.Length ?? 0) * Vec3.Size;
 
@@ -900,6 +1110,9 @@ namespace S5Converter
         [JsonInclude]
         public float DirRotation;
 
+        internal const int EmitterId = 0x00020000;
+        internal const int PropSize = 20;
+
         internal const int Size = sizeof(int) * 5;
 
         internal static RpPrtAdvEmtCircle Read(BinaryReader s)
@@ -933,6 +1146,9 @@ namespace S5Converter
         [JsonInclude]
         public bool UseSphereEmission;
 
+        internal const int EmitterId = 0x00030000;
+        internal const int PropSize = 12;
+
         internal const int Size = sizeof(int) * 3;
 
         internal static RpPrtAdvEmtSphere Read(BinaryReader s)
@@ -963,6 +1179,11 @@ namespace S5Converter
         public float TimeGap;
         [JsonInclude]
         public float TimeGapBias;
+
+        internal const int EmitterId = 0x00000100;
+        internal const int PropSize = 40;
+        internal const int ParticleId = 0x00000100;
+        internal const int ParticlePropSize = 8;
 
         internal const int Size = sizeof(int) * 4;
 
@@ -1024,6 +1245,11 @@ namespace S5Converter
 
         [JsonInclude]
         public RpPrtAdvEmtPrtColorItem[] List = [];
+
+        internal const int EmitterId = 0x00000200;
+        internal int PropSize => 20 + 40 * List.Length;
+        internal const int ParticleId = 0x00000200;
+        internal int ParticlePropSize => 4 + 36 * List.Length;
 
         internal int Size => sizeof(int) + RpPrtAdvEmtPrtColorItem.Size * List.Length;
 
@@ -1094,6 +1320,14 @@ namespace S5Converter
         [JsonInclude]
         public RpPrtAdvEmtPrtTexCoordsItem[] List = [];
 
+        internal const int EmitterId = 0x00000400;
+        internal const int EmitterIdSteps = 0x00000800;
+        internal int PropSize => 28 + 40 * List.Length;
+        internal const int ParticleId = 0x00000400;
+        internal const int ParticleIdSteps = 0x00000800;
+        internal int ParticlePropSize => 4 + 36 * List.Length;
+        internal int ParticlePropSizeStep => 4 + 20 * List.Length;
+
         internal int Size => sizeof(int) + RpPrtAdvEmtPrtTexCoordsItem.Size * List.Length;
 
         internal static RpPrtAdvEmtPrtMultiTexCoords Read(BinaryReader s)
@@ -1154,6 +1388,11 @@ namespace S5Converter
 
         [JsonInclude]
         public RpPrtAdvEmtPrtSizeItem[] List = [];
+
+        internal const int EmitterId = 0x00001000;
+        internal int PropSize => 20 + 24 * List.Length;
+        internal const int ParticleId = 0x00001000;
+        internal int ParticlePropSize => 4 + 20 * List.Length;
 
         internal int Size => sizeof(int) + RpPrtAdvEmtPrtSizeItem.Size * List.Length;
 

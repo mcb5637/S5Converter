@@ -88,7 +88,7 @@ namespace S5Converter
                         e.ParticleStandard = ParticleStandard.Read(s, false);
                         break;
                     default:
-                        Console.Error.WriteLine($"unknown extension {(int)h.Type}, skipping");
+                        //Console.Error.WriteLine($"unknown extension {(int)h.Type}, skipping");
                         s.ReadBytes((int)h.Length);
                         break;
                 }

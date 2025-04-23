@@ -40,6 +40,13 @@ namespace S5Converter
                 }
                 return;
             }
+#if DEBUG
+            else if (args.Length == 2 && args[0] == "--searchParticles")
+            {
+                SearchParticles(args[1]);
+                return;
+            }
+#endif
             foreach (string f in args)
             {
                 if (f.EndsWith(".json"))
@@ -72,6 +79,46 @@ namespace S5Converter
                 }
             }
             Console.Read();
+        }
+
+        private static void SearchParticles(string path)
+        {
+            DirectoryInfo i = new(path);
+            Dictionary<(int, int), (string, RpPrtStdEmitter)> dict = [];
+            Search(i, dict);
+            foreach (var kv in dict)
+            {
+                //Console.WriteLine($"{kv.Key.Item1} {kv.Key.Item2} {kv.Value}");
+            }
+            Console.Read();
+
+            static void Search(DirectoryInfo i, Dictionary<(int, int), (string, RpPrtStdEmitter)> dict)
+            {
+                foreach (FileInfo f in i.GetFiles())
+                {
+                    try
+                    {
+                        using BinaryReader r = new(new FileStream(f.FullName, FileMode.Open, FileAccess.Read));
+                        RWFile d = RWFile.Read(r);
+                        foreach (Atomic a in d.Clp!.Atomics)
+                        {
+                            if (a.Extension.ParticleStandard != null)
+                            {
+                                foreach (RpPrtStdEmitter em in a.Extension.ParticleStandard.Emitters)
+                                {
+                                    
+                                }
+                            }
+                        }
+                    }
+                    catch (Exception e) when (e is IOException || e is JsonException)
+                    {
+                        //Console.Error.WriteLine(e.ToString());
+                    }
+                }
+                foreach (DirectoryInfo di in i.GetDirectories())
+                    Search(di, dict);
+            }
         }
 
         private static void Import(BinaryReader r, Stream ou)
