@@ -542,18 +542,6 @@ namespace S5Converter
             foreach (int i in Stride)
                 s.Write(i);
         }
-
-        public static bool operator ==(RpPrtStdPropertyTable<Properties> a, RpPrtStdPropertyTable<Properties> b)
-        {
-            if (a.Id != b.Id) return false;
-            if (!a.Ids.SequenceEqual(b.Ids)) return false;
-            //return true;
-            return a.Stride.SequenceEqual(b.Stride);
-        }
-        public static bool operator !=(RpPrtStdPropertyTable<Properties> a, RpPrtStdPropertyTable<Properties> b)
-        {
-            return !(a == b);
-        }
     }
 
     internal class RpPrtStdParticleClass

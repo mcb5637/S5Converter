@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using static S5Converter.RpMeshHeader;
 
 namespace S5Converter
 {
@@ -37,6 +38,10 @@ namespace S5Converter
         [JsonInclude]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public ParticleStandard? ParticleStandard;
+
+        [JsonInclude]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public RightToRender? RightToRender;
 
         internal int SizeH(RwCorePluginID src)
         {
@@ -69,7 +74,13 @@ namespace S5Converter
                 ChunkHeader h = ChunkHeader.Read(s);
                 switch ((h.Type, src))
                 {
+                    case (RwCorePluginID.USERDATAPLUGIN, RwCorePluginID.GEOMETRY):
+                    // worldsecor?
                     case (RwCorePluginID.USERDATAPLUGIN, RwCorePluginID.FRAMELIST):
+                    case (RwCorePluginID.USERDATAPLUGIN, RwCorePluginID.CAMERA):
+                    case (RwCorePluginID.USERDATAPLUGIN, RwCorePluginID.LIGHT):
+                    case (RwCorePluginID.USERDATAPLUGIN, RwCorePluginID.MATERIAL):
+                    case (RwCorePluginID.USERDATAPLUGIN, RwCorePluginID.TEXTURE):
                         e.UserDataPLG = RpUserDataArray.Read(s, false);
                         break;
                     case (RwCorePluginID.HANIMPLUGIN, RwCorePluginID.FRAMELIST):
@@ -87,9 +98,18 @@ namespace S5Converter
                     case (RwCorePluginID.PRTSTDPLUGIN, RwCorePluginID.ATOMIC):
                         e.ParticleStandard = ParticleStandard.Read(s, false);
                         break;
+                    case (RwCorePluginID.RIGHTTORENDER, RwCorePluginID.ATOMIC):
+                    case (RwCorePluginID.RIGHTTORENDER, RwCorePluginID.MATERIAL):
+                        // worldsecor?
+                        // world?
+                        e.RightToRender = RightToRender.Read(s, false);
+                        break;
+                    // skinplugin on geometry
+                    // uvanimplugin on material
+                    // morphplugin on geometry
                     default:
-                        //Console.Error.WriteLine($"unknown extension {(int)h.Type}, skipping");
-                        s.ReadBytes((int)h.Length);
+                        Console.Error.WriteLine($"unknown extension {h.Type} on {src}, skipping");
+                        s.ReadBytes(h.Length);
                         break;
                 }
                 exheader.Length -= h.Length + 12;
@@ -104,7 +124,8 @@ namespace S5Converter
                 Length = Size(src),
                 Type = RwCorePluginID.EXTENSION,
             }.Write(s);
-            if (UserDataPLG != null && src == RwCorePluginID.FRAMELIST)
+            if (UserDataPLG != null && (src == RwCorePluginID.GEOMETRY || src == RwCorePluginID.FRAMELIST || src == RwCorePluginID.CAMERA
+                || src == RwCorePluginID.LIGHT || src == RwCorePluginID.MATERIAL || src == RwCorePluginID.TEXTURE))
                 RpUserDataArray.Write(UserDataPLG, s, true);
             if (HanimPLG != null && src == RwCorePluginID.FRAMELIST)
                 HanimPLG.Write(s, true);
@@ -123,6 +144,8 @@ namespace S5Converter
                 BinMeshPLG.Write(s, true);
             if (ParticleStandard != null && src == RwCorePluginID.ATOMIC)
                 ParticleStandard.Write(s, true);
+            if (RightToRender != null && (src == RwCorePluginID.MATERIAL || src == RwCorePluginID.ATOMIC))
+                RightToRender.Write(s, true);
         }
     }
 
@@ -132,10 +155,10 @@ namespace S5Converter
         internal enum RpUserDataFormat : int
         {
             rpNAUSERDATAFORMAT = 0,
-		    rpINTUSERDATA,          /**< 32 bit int data */
-		    rpREALUSERDATA,         /**< 32 bit float data */
-		    rpSTRINGUSERDATA,       /**< unsigned byte pointer data */
-	    };
+            rpINTUSERDATA,          /**< 32 bit int data */
+            rpREALUSERDATA,         /**< 32 bit float data */
+            rpSTRINGUSERDATA,       /**< unsigned byte pointer data */
+        };
         internal class DataObj
         {
             public int I;
@@ -184,7 +207,7 @@ namespace S5Converter
                     switch (type)
                     {
                         case RpUserDataFormat.rpINTUSERDATA:
-                            o.Data[j] = new() { I = s.ReadInt32()};
+                            o.Data[j] = new() { I = s.ReadInt32() };
                             break;
                         case RpUserDataFormat.rpREALUSERDATA:
                             o.Data[j] = new() { F = s.ReadSingle() };
@@ -199,7 +222,7 @@ namespace S5Converter
             return r;
         }
 
-        internal static void Write(Dictionary<string, RpUserDataArray>  d, BinaryWriter s, bool header)
+        internal static void Write(Dictionary<string, RpUserDataArray> d, BinaryWriter s, bool header)
         {
             if (header)
             {
@@ -638,6 +661,42 @@ namespace S5Converter
                 foreach (int v in m.VertexIndices)
                     s.Write(v);
             }
+        }
+    }
+
+    internal class RightToRender
+    {
+        [JsonInclude]
+        public RwCorePluginID Identifier;
+        [JsonInclude]
+        public int ExtraData;
+
+        internal const int Size = sizeof(int) * 2;
+        internal const int SizeH = Size + ChunkHeader.Size;
+
+        internal static RightToRender Read(BinaryReader s, bool header)
+        {
+            if (header)
+                ChunkHeader.FindChunk(s, RwCorePluginID.RIGHTTORENDER);
+            return new()
+            {
+                Identifier = (RwCorePluginID)s.ReadInt32(),
+                ExtraData = s.ReadInt32(),
+            };
+        }
+
+        internal void Write(BinaryWriter s, bool header)
+        {
+            if (header)
+            {
+                new ChunkHeader()
+                {
+                    Length = Size,
+                    Type = RwCorePluginID.RIGHTTORENDER,
+                }.Write(s);
+            }
+            s.Write((int)Identifier);
+            s.Write(ExtraData);
         }
     }
 }

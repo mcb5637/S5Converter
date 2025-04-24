@@ -2,7 +2,7 @@
   "profiles": {
     "S5Converter": {
       "commandName": "Project",
-      "commandLineArgs": "\"D:\\repos\\s5\\S5Converter\\test\\xf_dariofear.dff\" \"D:\\repos\\s5\\S5Converter\\test\\xf_dariofear.json\""
+      "commandLineArgs": "--searchParticles D:\\programme\\s5\\s5complete\\graphics\\models"
     }
   }
 }

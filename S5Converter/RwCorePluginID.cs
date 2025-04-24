@@ -54,10 +54,13 @@ namespace S5Converter
         COLLTREE = 0x2C,
         ENVIRONMENT = 0x2D,
 
+        MORPHPLUGIN = 261,
+        SKINPLUGIN = 278,
         HANIMPLUGIN = 286,
         USERDATAPLUGIN = 287,
         MATERIALEFFECTSPLUGIN = 288,
         PRTSTDPLUGIN = 304,
+        UVANIMPLUGIN = 309,
 
         BINMESHPLUGIN = 1294,
     }
