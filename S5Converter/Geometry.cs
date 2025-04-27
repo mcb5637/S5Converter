@@ -411,7 +411,7 @@ namespace S5Converter
         [JsonInclude]
         public Sphere BoundingSphere;
 
-        internal int NumVerts => Verts?.Length ?? Normals?.Length ?? 0;
+        internal readonly int NumVerts => Verts?.Length ?? Normals?.Length ?? 0;
 
         internal readonly int Size => (Verts?.Length ?? 0) * Vec3.Size + (Normals?.Length ?? 0) * Vec3.Size + Sphere.Size + sizeof(int) * 2;
 

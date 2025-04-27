@@ -40,13 +40,11 @@ namespace S5Converter
                 }
                 return;
             }
-#if DEBUG
             else if (args.Length == 2 && args[0] == "--searchParticles")
             {
                 SearchParticles(args[1]);
                 return;
             }
-#endif
             foreach (string f in args)
             {
                 if (f.EndsWith(".json"))
@@ -83,6 +81,7 @@ namespace S5Converter
 
         private static void SearchParticles(string path)
         {
+            Directory.CreateDirectory("./emitters");
             DirectoryInfo i = new(path);
             Dictionary<(int, int), (string, RpPrtStdEmitter)> dict = [];
             Search(i, dict);
@@ -100,13 +99,22 @@ namespace S5Converter
                     {
                         using BinaryReader r = new(new FileStream(f.FullName, FileMode.Open, FileAccess.Read));
                         RWFile d = RWFile.Read(r);
+                        int emid = 0;
                         foreach (Atomic a in d.Clp!.Atomics)
                         {
                             if (a.Extension.ParticleStandard != null)
                             {
                                 foreach (RpPrtStdEmitter em in a.Extension.ParticleStandard.Emitters)
                                 {
-                                    
+                                    try
+                                    {
+                                        using FileStream ou = new($"./emitters/{f.Name}_emitter_{emid}.json", FileMode.Create, FileAccess.Write);
+                                        JsonSerializer.Serialize(ou, em, SourceGenerationContext.Default.RpPrtStdEmitter);
+                                    }
+                                    catch (IOException e)
+                                    {
+                                        Console.Error.WriteLine(e.ToString());
+                                    }
                                 }
                             }
                         }

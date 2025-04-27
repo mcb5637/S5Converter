@@ -651,7 +651,9 @@ namespace S5Converter
         [JsonInclude]
         public Vec3 InitialDirectionRandom = new();
         [JsonInclude]
-        public Vec3 ParticleSize = new();
+        public Vec2 ParticleSize = new();
+        [JsonInclude]
+        public int ParticleSize_SeriMisstake = 0;
         [JsonInclude]
         public RGBA Color = new();
         [JsonInclude]
@@ -697,7 +699,8 @@ namespace S5Converter
                 ParticleLifeRandom = s.ReadSingle(),
                 InitialDirection = Vec3.Read(s),
                 InitialDirectionRandom = Vec3.Read(s),
-                ParticleSize = Vec3.Read(s),
+                ParticleSize = Vec2.Read(s),
+                ParticleSize_SeriMisstake = s.ReadInt32(),
                 Color = RGBA.Read(s),
             };
             for (int i = 0; i < 4; ++i)
@@ -726,6 +729,7 @@ namespace S5Converter
             InitialDirection.Write(s);
             InitialDirectionRandom.Write(s);
             ParticleSize.Write(s);
+            s.Write(ParticleSize_SeriMisstake);
             Color.Write(s);
             for (int i = 0; i < 4; ++i)
                 TextureCoordinates[i].Write(s);
