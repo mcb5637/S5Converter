@@ -52,7 +52,7 @@ namespace S5Converter
 
         [JsonPropertyName("extension")]
         [JsonInclude]
-        public Extension Extension = new();
+        public GeometryExtension Extension = new();
 
 
         private int MaterialListSize => sizeof(int) + sizeof(int) * Materials.Length + Materials.Sum(x => x.SizeH);
@@ -78,7 +78,7 @@ namespace S5Converter
                 int r = SizeActual + ChunkHeader.Size;
                 r += ChunkHeader.Size * 2;
                 r += MaterialListSize;
-                r += Extension.SizeH(RwCorePluginID.GEOMETRY);
+                r += Extension.SizeH(this);
                 return r;
             }
         }
@@ -157,7 +157,7 @@ namespace S5Converter
                 }
             }
 
-            r.Extension = Extension.Read(s, RwCorePluginID.GEOMETRY);
+            r.Extension.Read(s, r);
 
             return r;
         }
@@ -247,7 +247,7 @@ namespace S5Converter
             foreach (Material m in Materials)
                 m.Write(s, true);
 
-            Extension.Write(s, RwCorePluginID.GEOMETRY);
+            Extension.Write(s, this);
         }
 
         public void OnDeserialized()
@@ -460,7 +460,7 @@ namespace S5Converter
         }
     }
 
-    internal struct Texture : IJsonOnDeserialized
+    internal class Texture : IJsonOnDeserialized
     {
         [JsonPropertyName("texture")]
         [JsonInclude]
@@ -475,13 +475,13 @@ namespace S5Converter
 
         [JsonPropertyName("extension")]
         [JsonInclude]
-        public Extension Extension = new();
+        public TextureExtension Extension = new();
 
         public Texture() { }
 
-        internal readonly int Size => ChunkHeader.Size + ChunkHeader.GetStringSize(Tex) + ChunkHeader.GetStringSize(TextureAlpha)
-            + 2 * sizeof(Int16) + Extension.SizeH(RwCorePluginID.TEXTURE);
-        internal readonly int SizeH => Size + ChunkHeader.Size;
+        internal int Size => ChunkHeader.Size + ChunkHeader.GetStringSize(Tex) + ChunkHeader.GetStringSize(TextureAlpha)
+            + 2 * sizeof(Int16) + Extension.SizeH(this);
+        internal int SizeH => Size + ChunkHeader.Size;
 
         internal static Texture Read(BinaryReader s, bool header)
         {
@@ -495,8 +495,8 @@ namespace S5Converter
                 UnusedInt1 = s.ReadInt16(),
                 Tex = ChunkHeader.FindAndReadString(s),
                 TextureAlpha = ChunkHeader.FindAndReadString(s),
-                Extension = Extension.Read(s, RwCorePluginID.TEXTURE),
             };
+            r.Extension.Read(s, r);
 
             return r;
         }
@@ -524,10 +524,10 @@ namespace S5Converter
             s.Write(UnusedInt1);
             ChunkHeader.WriteString(s, Tex);
             ChunkHeader.WriteString(s, TextureAlpha);
-            Extension.Write(s, RwCorePluginID.TEXTURE);
+            Extension.Write(s, this);
         }
 
-        internal static int OptTextureSize(ref readonly Texture? t)
+        internal static int OptTextureSize(Texture? t)
         {
             if (t == null)
             {
@@ -535,7 +535,7 @@ namespace S5Converter
             }
             else
             {
-                return sizeof(int) + t.Value.SizeH;
+                return sizeof(int) + t.SizeH;
             }
         }
         internal static Texture? ReadOptText(BinaryReader s)
@@ -558,7 +558,7 @@ namespace S5Converter
             else
             {
                 s.Write(1);
-                t.Value.Write(s, true);
+                t.Write(s, true);
             }
         }
 
@@ -600,9 +600,9 @@ namespace S5Converter
 
         [JsonPropertyName("extension")]
         [JsonInclude]
-        public Extension Extension = new();
+        public MaterialExtension Extension = new();
 
-        internal int Size => ChunkHeader.Size + RGBA.Size + sizeof(int) * 3 + SurfaceProperties.Size + Textures.Sum(t => t.SizeH) + Extension.SizeH(RwCorePluginID.MATERIAL);
+        internal int Size => ChunkHeader.Size + RGBA.Size + sizeof(int) * 3 + SurfaceProperties.Size + Textures.Sum(t => t.SizeH) + Extension.SizeH(this);
         internal int SizeH => Size + ChunkHeader.Size;
 
         internal static Material Read(BinaryReader s, bool header)
@@ -626,7 +626,7 @@ namespace S5Converter
                 m.Textures = [Texture.Read(s, true)];
             }
 
-            m.Extension = Extension.Read(s, RwCorePluginID.MATERIAL);
+            m.Extension.Read(s, m);
 
             return m;
         }
@@ -656,13 +656,150 @@ namespace S5Converter
             foreach (Texture t in Textures)
                 t.Write(s, true);
 
-            Extension.Write(s, RwCorePluginID.MATERIAL);
+            Extension.Write(s, this);
         }
 
         public void OnDeserialized()
         {
             Textures ??= [];
             Extension ??= new();
+        }
+    }
+
+    internal class GeometryExtension : Extension<Geometry>
+    {
+        [JsonPropertyName("userDataPLG")]
+        [JsonInclude]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public Dictionary<string, RpUserDataArray>? UserDataPLG;
+
+        [JsonInclude]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public RpMeshHeader? BinMeshPLG;
+
+
+
+        internal override int Size(Geometry obj)
+        {
+            int r = 0;
+            if (UserDataPLG != null)
+                r += RpUserDataArray.GetSizeH(UserDataPLG);
+            if (BinMeshPLG != null)
+                r += BinMeshPLG.SizeH;
+            return r;
+        }
+
+        internal override bool TryRead(BinaryReader s, ref ChunkHeader h, Geometry obj)
+        {
+            switch (h.Type)
+            {
+                case RwCorePluginID.USERDATAPLUGIN:
+                    UserDataPLG = RpUserDataArray.Read(s, false);
+                    break;
+                case RwCorePluginID.BINMESHPLUGIN:
+                    BinMeshPLG = RpMeshHeader.Read(s, false);
+                    break;
+                default:
+                    return false;
+            }
+            return true;
+        }
+
+        internal override void WriteExt(BinaryWriter s, Geometry obj)
+        {
+            if (UserDataPLG != null)
+                RpUserDataArray.Write(UserDataPLG, s, true);
+            BinMeshPLG?.Write(s, true);
+        }
+    }
+
+    internal class TextureExtension : Extension<Texture>
+    {
+        [JsonPropertyName("userDataPLG")]
+        [JsonInclude]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public Dictionary<string, RpUserDataArray>? UserDataPLG;
+
+        internal override int Size(Texture obj)
+        {
+            int r = 0;
+            if (UserDataPLG != null)
+                r += RpUserDataArray.GetSizeH(UserDataPLG);
+            return r;
+        }
+
+        internal override bool TryRead(BinaryReader s, ref ChunkHeader h, Texture obj)
+        {
+            switch (h.Type)
+            {
+                case RwCorePluginID.USERDATAPLUGIN:
+                    UserDataPLG = RpUserDataArray.Read(s, false);
+                    break;
+                default:
+                    return false;
+            }
+            return true;
+        }
+
+        internal override void WriteExt(BinaryWriter s, Texture obj)
+        {
+            if (UserDataPLG != null)
+                RpUserDataArray.Write(UserDataPLG, s, true);
+        }
+    }
+
+    internal class MaterialExtension : Extension<Material>
+    {
+        [JsonPropertyName("userDataPLG")]
+        [JsonInclude]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public Dictionary<string, RpUserDataArray>? UserDataPLG;
+
+        [JsonInclude]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public MaterialFXMaterial? MaterialFXMat;
+
+        [JsonInclude]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public RightToRender? RightToRender;
+
+        internal override int Size(Material obj)
+        {
+            int r = 0;
+            if (UserDataPLG != null)
+                r += RpUserDataArray.GetSizeH(UserDataPLG);
+            if (MaterialFXMat != null)
+                r += MaterialFXMat.SizeH;
+            if (RightToRender != null)
+                r += RightToRender.SizeH;
+            return r;
+        }
+
+        internal override bool TryRead(BinaryReader s, ref ChunkHeader h, Material obj)
+        {
+            switch (h.Type)
+            {
+                case RwCorePluginID.USERDATAPLUGIN:
+                    UserDataPLG = RpUserDataArray.Read(s, false);
+                    break;
+                case RwCorePluginID.MATERIALEFFECTSPLUGIN:
+                    MaterialFXMat = MaterialFXMaterial.Read(s, false);
+                    break;
+                case RwCorePluginID.RIGHTTORENDER:
+                    RightToRender = RightToRender.Read(s, false);
+                    break;
+                default:
+                    return false;
+            }
+            return true;
+        }
+
+        internal override void WriteExt(BinaryWriter s, Material obj)
+        {
+            if (UserDataPLG != null)
+                RpUserDataArray.Write(UserDataPLG, s, true);
+            MaterialFXMat?.Write(s, true);
+            RightToRender?.Write(s, true);
         }
     }
 }

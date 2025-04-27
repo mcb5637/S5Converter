@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace S5Converter
 {
-    internal struct Atomic : IJsonOnDeserialized
+    internal class Atomic : IJsonOnDeserialized
     {
         [JsonPropertyName("frameIndex")]
         [JsonInclude]
@@ -22,10 +22,10 @@ namespace S5Converter
 
         [JsonPropertyName("extension")]
         [JsonInclude]
-        public Extension Extension;
+        public AtomicExtension Extension = new();
 
-        internal readonly int Size => ChunkHeader.Size + sizeof(int) * 4 + Extension.SizeH(RwCorePluginID.ATOMIC);
-        internal readonly int SizeH => Size + ChunkHeader.Size;
+        internal int Size => ChunkHeader.Size + sizeof(int) * 4 + Extension.SizeH(this);
+        internal int SizeH => Size + ChunkHeader.Size;
 
 
         internal static Atomic Read(BinaryReader s, bool header)
@@ -40,8 +40,8 @@ namespace S5Converter
                 GeometryIndex = s.ReadInt32(),
                 Flags = s.ReadInt32(),
                 UnknownInt1 = s.ReadInt32(),
-                Extension = Extension.Read(s, RwCorePluginID.ATOMIC),
             };
+            a.Extension.Read(s, a);
             return a;
         }
 
@@ -64,11 +64,72 @@ namespace S5Converter
             s.Write(GeometryIndex);
             s.Write(Flags);
             s.Write(UnknownInt1);
-            Extension.Write(s, RwCorePluginID.ATOMIC);
+            Extension.Write(s, this);
         }
         public void OnDeserialized()
         {
             Extension ??= new();
+        }
+    }
+
+    internal class AtomicExtension : Extension<Atomic>
+    {
+        [JsonInclude]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public bool? MaterialFXAtomic_EffectsEnabled;
+
+        [JsonInclude]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public ParticleStandard? ParticleStandard;
+
+        [JsonInclude]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public RightToRender? RightToRender;
+
+        internal override int Size(Atomic obj)
+        {
+            int r = 0;
+            if (MaterialFXAtomic_EffectsEnabled != null)
+                r += sizeof(int) + ChunkHeader.Size;
+            if (ParticleStandard != null)
+                r += ParticleStandard.SizeH;
+            if (RightToRender != null)
+                r += RightToRender.SizeH;
+            return r;
+        }
+
+        internal override bool TryRead(BinaryReader s, ref ChunkHeader h, Atomic obj)
+        {
+            switch (h.Type)
+            {
+                case RwCorePluginID.MATERIALEFFECTSPLUGIN:
+                    MaterialFXAtomic_EffectsEnabled = s.ReadInt32() != 0;
+                    break;
+                case RwCorePluginID.PRTSTDPLUGIN:
+                    ParticleStandard = ParticleStandard.Read(s, false);
+                    break;
+                case RwCorePluginID.RIGHTTORENDER:
+                    RightToRender = RightToRender.Read(s, false);
+                    break;
+                default:
+                    return false;
+            }
+            return true;
+        }
+
+        internal override void WriteExt(BinaryWriter s, Atomic obj)
+        {
+            if (MaterialFXAtomic_EffectsEnabled != null)
+            {
+                new ChunkHeader()
+                {
+                    Length = sizeof(int),
+                    Type = RwCorePluginID.MATERIALEFFECTSPLUGIN,
+                }.Write(s);
+                s.Write(MaterialFXAtomic_EffectsEnabled.Value ? 1 : 0);
+            }
+            ParticleStandard?.Write(s, true);
+            RightToRender?.Write(s, true);
         }
     }
 }

@@ -637,7 +637,7 @@ namespace S5Converter
         [JsonInclude]
         public int NumParticlesPerEmission;
         [JsonInclude]
-        public float NumParticlesPerEmissionRandom;
+        public int NumParticlesPerEmissionRandom;
         [JsonInclude]
         public float InitialVelocity;
         [JsonInclude]
@@ -674,7 +674,7 @@ namespace S5Converter
             r += Vec3.Size * 6;
             r += RGBA.Size;
             r += Vec2.Size * TextureCoordinates.Length;
-            r += Texture.OptTextureSize(ref ParticleTexture);
+            r += Texture.OptTextureSize(ParticleTexture);
             if (flags >= 3)
                 r += sizeof(float);
             return r;
@@ -1402,7 +1402,7 @@ namespace S5Converter
 
         internal void Write(BinaryWriter s)
         {
-            s.Write(List.Length / 6);
+            s.Write(List.Length);
             foreach (RpPrtAdvEmtPrtSizeItem f in List)
                 f.Write(s);
         }

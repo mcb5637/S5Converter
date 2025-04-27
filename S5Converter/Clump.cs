@@ -21,12 +21,12 @@ namespace S5Converter
 
         [JsonPropertyName("extension")]
         [JsonInclude]
-        public Extension Extension = new();
+        public ClumpExtension Extension = new();
 
 
         private int GeometryListSize => sizeof(int) + Geometries.Sum(x => x.SizeH);
-        private int FrameListSize => sizeof(int) + Frames.Sum(x => Frame.Size + x.Extension.SizeH(RwCorePluginID.FRAMELIST));
-        internal int Size => ChunkHeader.Size * 5 + sizeof(int) * 3 + FrameListSize + GeometryListSize + Atomics.Sum(x => x.SizeH) + Extension.SizeH(RwCorePluginID.CLUMP);
+        private int FrameListSize => sizeof(int) + Frames.Sum(x => Frame.Size + x.Extension.SizeH(x.Frame));
+        internal int Size => ChunkHeader.Size * 5 + sizeof(int) * 3 + FrameListSize + GeometryListSize + Atomics.Sum(x => x.SizeH) + Extension.SizeH(this);
         internal int SizeH => Size + ChunkHeader.Size;
 
         internal static Clump Read(BinaryReader s, bool header)
@@ -54,7 +54,7 @@ namespace S5Converter
             }
             for (int i = 0; i < nframes; ++i)
             {
-                c.Frames[i].Extension = Extension.Read(s, RwCorePluginID.FRAMELIST);
+                c.Frames[i].Extension.Read(s, c.Frames[i].Frame);
             }
 
             // geometrylist
@@ -82,7 +82,7 @@ namespace S5Converter
             if (nCameras > 0)
                 throw new IOException("cameras not supported");
 
-            c.Extension = Extension.Read(s, RwCorePluginID.CLUMP);
+            c.Extension.Read(s, c);
 
             return c;
         }
@@ -120,7 +120,7 @@ namespace S5Converter
             foreach (FrameWithExt f in Frames)
                 f.Frame.Write(s);
             foreach (FrameWithExt f in Frames)
-                f.Extension.Write(s, RwCorePluginID.FRAMELIST);
+                f.Extension.Write(s, f.Frame);
 
             // geometrylist
             new ChunkHeader()
@@ -143,7 +143,7 @@ namespace S5Converter
 
 
             // extension
-            Extension.Write(s, RwCorePluginID.CLUMP);
+            Extension.Write(s, this);
         }
 
         public void OnDeserialized()
@@ -152,6 +152,24 @@ namespace S5Converter
             Geometries ??= [];
             Atomics ??= [];
             Extension ??= new();
+        }
+    }
+
+    internal class ClumpExtension : Extension<Clump>
+    {
+        internal override int Size(Clump obj)
+        {
+            return 0;
+        }
+
+        internal override bool TryRead(BinaryReader s, ref ChunkHeader h, Clump obj)
+        {
+            return false;
+        }
+
+        internal override void WriteExt(BinaryWriter s, Clump obj)
+        {
+            
         }
     }
 }

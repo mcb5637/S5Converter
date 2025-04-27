@@ -207,12 +207,58 @@ namespace S5Converter
         public Frame Frame = new();
         [JsonPropertyName("extension")]
         [JsonInclude]
-        public Extension Extension = new();
+        public FrameExtension Extension = new();
 
         public void OnDeserialized()
         {
             Frame ??= new();
             Extension ??= new();
+        }
+    }
+
+    internal class FrameExtension : Extension<Frame>
+    {
+        [JsonPropertyName("userDataPLG")]
+        [JsonInclude]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public Dictionary<string, RpUserDataArray>? UserDataPLG;
+
+        [JsonPropertyName("hanimPLG")]
+        [JsonInclude]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public RpHAnimHierarchy? HanimPLG;
+
+        internal override int Size(Frame obj)
+        {
+            int r = 0;
+            if (UserDataPLG != null)
+                r += RpUserDataArray.GetSizeH(UserDataPLG);
+            if (HanimPLG != null)
+                r += HanimPLG.SizeH;
+            return r;
+        }
+
+        internal override bool TryRead(BinaryReader s, ref ChunkHeader h, Frame obj)
+        {
+            switch (h.Type)
+            {
+                case RwCorePluginID.USERDATAPLUGIN:
+                    UserDataPLG = RpUserDataArray.Read(s, false);
+                    break;
+                case RwCorePluginID.HANIMPLUGIN:
+                    HanimPLG = RpHAnimHierarchy.Read(s, false);
+                    break;
+                default:
+                    return false;
+            }
+            return true;
+        }
+
+        internal override void WriteExt(BinaryWriter s, Frame obj)
+        {
+            if (UserDataPLG != null)
+                RpUserDataArray.Write(UserDataPLG, s, true);
+            HanimPLG?.Write(s, true);
         }
     }
 }

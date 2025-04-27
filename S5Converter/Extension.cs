@@ -10,142 +10,44 @@ using System.Threading.Tasks;
 
 namespace S5Converter
 {
-    internal class Extension
+    internal abstract class Extension<T>
     {
-        [JsonPropertyName("userDataPLG")]
-        [JsonInclude]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public Dictionary<string, RpUserDataArray>? UserDataPLG;
+        internal abstract int Size(T obj);
+        internal abstract bool TryRead(BinaryReader s, ref ChunkHeader h, T obj);
+        internal abstract void WriteExt(BinaryWriter s, T obj);
 
-        [JsonPropertyName("hanimPLG")]
-        [JsonInclude]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public RpHAnimHierarchy? HanimPLG;
-
-        [JsonInclude]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public MaterialFXMaterial? MaterialFXMat;
-
-        [JsonInclude]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public bool? MaterialFXAtomic_EffectsEnabled;
-
-        [JsonInclude]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public RpMeshHeader? BinMeshPLG;
-
-        [JsonInclude]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public ParticleStandard? ParticleStandard;
-
-        [JsonInclude]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public RightToRender? RightToRender;
-
-        internal int SizeH(RwCorePluginID src)
+        internal int SizeH(T obj)
         {
-            return ChunkHeader.Size + Size(src);
+            return ChunkHeader.Size + Size(obj);
         }
-        internal int Size(RwCorePluginID src)
-        {
-            int r = 0;
-            if (UserDataPLG != null && src == RwCorePluginID.FRAMELIST)
-                r += RpUserDataArray.GetSizeH(UserDataPLG);
-            if (HanimPLG != null && src == RwCorePluginID.FRAMELIST)
-                r += HanimPLG.SizeH;
-            if (MaterialFXMat != null && src == RwCorePluginID.MATERIAL)
-                r += MaterialFXMat.SizeH;
-            if (MaterialFXAtomic_EffectsEnabled != null && src == RwCorePluginID.ATOMIC)
-                r += sizeof(int) + ChunkHeader.Size;
-            if (BinMeshPLG != null && src == RwCorePluginID.GEOMETRY)
-                r += BinMeshPLG.SizeH;
-            if (ParticleStandard != null && src == RwCorePluginID.ATOMIC)
-                r += ParticleStandard.SizeH;
-            return r;
-        }
-
-        internal static Extension Read(BinaryReader s, RwCorePluginID src)
+        internal void Read(BinaryReader s, T obj)
         {
             ChunkHeader exheader = ChunkHeader.FindChunk(s, RwCorePluginID.EXTENSION);
-            Extension e = new();
             while (exheader.Length > 0)
             {
                 ChunkHeader h = ChunkHeader.Read(s);
-                switch ((h.Type, src))
+                if (!TryRead(s, ref h, obj))
                 {
-                    case (RwCorePluginID.USERDATAPLUGIN, RwCorePluginID.GEOMETRY):
-                    // worldsecor?
-                    case (RwCorePluginID.USERDATAPLUGIN, RwCorePluginID.FRAMELIST):
-                    case (RwCorePluginID.USERDATAPLUGIN, RwCorePluginID.CAMERA):
-                    case (RwCorePluginID.USERDATAPLUGIN, RwCorePluginID.LIGHT):
-                    case (RwCorePluginID.USERDATAPLUGIN, RwCorePluginID.MATERIAL):
-                    case (RwCorePluginID.USERDATAPLUGIN, RwCorePluginID.TEXTURE):
-                        e.UserDataPLG = RpUserDataArray.Read(s, false);
-                        break;
-                    case (RwCorePluginID.HANIMPLUGIN, RwCorePluginID.FRAMELIST):
-                        e.HanimPLG = RpHAnimHierarchy.Read(s, false);
-                        break;
-                    case (RwCorePluginID.MATERIALEFFECTSPLUGIN, RwCorePluginID.MATERIAL):
-                        e.MaterialFXMat = MaterialFXMaterial.Read(s, false);
-                        break;
-                    case (RwCorePluginID.MATERIALEFFECTSPLUGIN, RwCorePluginID.ATOMIC):
-                        e.MaterialFXAtomic_EffectsEnabled = s.ReadInt32() != 0;
-                        break;
-                    case (RwCorePluginID.BINMESHPLUGIN, RwCorePluginID.GEOMETRY):
-                        e.BinMeshPLG = RpMeshHeader.Read(s, false);
-                        break;
-                    case (RwCorePluginID.PRTSTDPLUGIN, RwCorePluginID.ATOMIC):
-                        e.ParticleStandard = ParticleStandard.Read(s, false);
-                        break;
-                    case (RwCorePluginID.RIGHTTORENDER, RwCorePluginID.ATOMIC):
-                    case (RwCorePluginID.RIGHTTORENDER, RwCorePluginID.MATERIAL):
-                        // worldsecor?
-                        // world?
-                        e.RightToRender = RightToRender.Read(s, false);
-                        break;
-                    // skinplugin on geometry
-                    // uvanimplugin on material
-                    // morphplugin on geometry
-                    default:
-                        Console.Error.WriteLine($"unknown extension {h.Type} on {src}, skipping");
-                        s.ReadBytes(h.Length);
-                        break;
+                    Console.Error.WriteLine($"unknown extension {h.Type} on {typeof(T).Name}, skipping");
+                    s.ReadBytes(h.Length);
                 }
                 exheader.Length -= h.Length + 12;
             }
-            return e;
         }
-
-        internal void Write(BinaryWriter s, RwCorePluginID src)
+        internal void Write(BinaryWriter s, T obj)
         {
             new ChunkHeader()
             {
-                Length = Size(src),
+                Length = Size(obj),
                 Type = RwCorePluginID.EXTENSION,
             }.Write(s);
-            if (UserDataPLG != null && (src == RwCorePluginID.GEOMETRY || src == RwCorePluginID.FRAMELIST || src == RwCorePluginID.CAMERA
-                || src == RwCorePluginID.LIGHT || src == RwCorePluginID.MATERIAL || src == RwCorePluginID.TEXTURE))
-                RpUserDataArray.Write(UserDataPLG, s, true);
-            if (HanimPLG != null && src == RwCorePluginID.FRAMELIST)
-                HanimPLG.Write(s, true);
-            if (MaterialFXMat != null && src == RwCorePluginID.MATERIAL)
-                MaterialFXMat.Write(s, true);
-            if (MaterialFXAtomic_EffectsEnabled != null && src == RwCorePluginID.ATOMIC)
-            {
-                new ChunkHeader()
-                {
-                    Length = sizeof(int),
-                    Type = RwCorePluginID.MATERIALEFFECTSPLUGIN,
-                }.Write(s);
-                s.Write(MaterialFXAtomic_EffectsEnabled.Value ? 1 : 0);
-            }
-            if (BinMeshPLG != null && src == RwCorePluginID.GEOMETRY)
-                BinMeshPLG.Write(s, true);
-            if (ParticleStandard != null && src == RwCorePluginID.ATOMIC)
-                ParticleStandard.Write(s, true);
-            if (RightToRender != null && (src == RwCorePluginID.MATERIAL || src == RwCorePluginID.ATOMIC))
-                RightToRender.Write(s, true);
+            WriteExt(s, obj);
         }
+
+        // extensions:
+        // camera & light: userdata
+        // geometry: skinplugin & morphplugin
+        // material: uvanim
     }
 
     [JsonConverter(typeof(RpUserDataArrayJsonConverter))]
@@ -471,7 +373,7 @@ namespace S5Converter
             [JsonInclude]
             public int? DstBlendMode;
 
-            internal int Size
+            internal readonly int Size
             {
                 get
                 {
@@ -480,16 +382,16 @@ namespace S5Converter
                     {
                         case DataType.BumpMap:
                             r += sizeof(float);
-                            r += Texture.OptTextureSize(ref Texture1);
-                            r += Texture.OptTextureSize(ref Texture2);
+                            r += Texture.OptTextureSize(Texture1);
+                            r += Texture.OptTextureSize(Texture2);
                             break;
                         case DataType.EnvMap:
                             r += sizeof(int) * 2; //float/int same size
-                            r += Texture.OptTextureSize(ref Texture1);
+                            r += Texture.OptTextureSize(Texture1);
                             break;
                         case DataType.DualTexture:
                             r += sizeof(int) * 2;
-                            r += Texture.OptTextureSize(ref Texture1);
+                            r += Texture.OptTextureSize(Texture1);
                             break;
                         default:
                             break;
