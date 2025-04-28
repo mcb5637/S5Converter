@@ -57,6 +57,19 @@ namespace S5Converter
 
         private int MaterialListSize => sizeof(int) + sizeof(int) * Materials.Length + Materials.Sum(x => x.SizeH);
 
+        internal int NVerts
+        {
+            get
+            {
+                if (TextureCoordinates.Length > 0)
+                    return TextureCoordinates[0].Length;
+                else if (MorphTargets.Length > 0)
+                    return MorphTargets[0].NumVerts;
+                else
+                    return 0;
+            }
+        }
+
         private int SizeActual
         {
             get
@@ -188,13 +201,7 @@ namespace S5Converter
             else
                 nTexCoordSets = 0;
 
-            int nVerts;
-            if (nTexCoordSets > 0)
-                nVerts = TextureCoordinates[0].Length;
-            else if (MorphTargets.Length > 0)
-                nVerts = MorphTargets[0].NumVerts;
-            else
-                nVerts = 0;
+            int nVerts = NVerts;
 
             s.Write((int)Flags);
             s.Write(Triangles.Length);
@@ -677,6 +684,10 @@ namespace S5Converter
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public RpMeshHeader? BinMeshPLG;
 
+        [JsonInclude]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public RpSkin? SkinPLG;
+
 
 
         internal override int Size(Geometry obj)
@@ -686,6 +697,8 @@ namespace S5Converter
                 r += RpUserDataArray.GetSizeH(UserDataPLG);
             if (BinMeshPLG != null)
                 r += BinMeshPLG.SizeH;
+            if (SkinPLG != null)
+                r += SkinPLG.GetSizeH(obj);
             return r;
         }
 
@@ -699,6 +712,9 @@ namespace S5Converter
                 case RwCorePluginID.BINMESHPLUGIN:
                     BinMeshPLG = RpMeshHeader.Read(s, false);
                     break;
+                case RwCorePluginID.SKINPLUGIN:
+                    SkinPLG = RpSkin.Read(s, obj, false);
+                    break;
                 default:
                     return false;
             }
@@ -710,6 +726,7 @@ namespace S5Converter
             if (UserDataPLG != null)
                 RpUserDataArray.Write(UserDataPLG, s, true);
             BinMeshPLG?.Write(s, true);
+            SkinPLG?.Write(s, obj, true);
         }
     }
 

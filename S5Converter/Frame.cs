@@ -144,7 +144,7 @@ namespace S5Converter
         }
     }
 
-    internal struct RwMatrix
+    internal class RwMatrix
     {
         [JsonInclude]
         public Vec3 Right;
@@ -177,7 +177,7 @@ namespace S5Converter
             };
         }
 
-        internal readonly void Write(BinaryWriter s, bool header)
+        internal void Write(BinaryWriter s, bool header)
         {
             if (header)
             {
@@ -197,6 +197,46 @@ namespace S5Converter
             At.Write(s);
             Pos.Write(s);
             s.Write(Flags);
+        }
+
+    }
+
+    internal class RwMatrixRaw : RwMatrix
+    {
+        [JsonInclude]
+        public int Pad1;
+        [JsonInclude]
+        public int Pad2;
+        [JsonInclude]
+        public int Pad3;
+
+        internal new const int Size = Vec3.Size * 4 + sizeof(int) * 4;
+        internal new const int SizeH = Size;
+
+        internal static RwMatrixRaw Read(BinaryReader s)
+        {
+            return new()
+            {
+                Right = Vec3.Read(s),
+                Flags = s.ReadInt32(),
+                Up = Vec3.Read(s),
+                Pad1 = s.ReadInt32(),
+                At = Vec3.Read(s),
+                Pad2 = s.ReadInt32(),
+                Pos = Vec3.Read(s),
+                Pad3 = s.ReadInt32()
+            };
+        }
+        internal void Write(BinaryWriter s)
+        {
+            Right.Write(s);
+            s.Write(Flags);
+            Up.Write(s);
+            s.Write(Pad1);
+            At.Write(s);
+            s.Write(Pad2);
+            Pos.Write(s);
+            s.Write(Pad3);
         }
     }
 

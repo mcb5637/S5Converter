@@ -2,7 +2,7 @@
   "profiles": {
     "S5Converter": {
       "commandName": "Project",
-      "commandLineArgs": "\"D:\\repos\\s5\\S5Converter\\test\\pb_residence1.dff\" \"D:\\repos\\s5\\S5Converter\\test\\pb_residence1.json\" \"D:\\repos\\s5\\S5Converter\\test\\xf_dariofear.dff\" \"D:\\repos\\s5\\S5Converter\\test\\xf_dariofear.json\" \"D:\\repos\\s5\\S5Converter\\test\\pb_farm2.dff\" \"D:\\repos\\s5\\S5Converter\\test\\pb_farm2.json\""
+      "commandLineArgs": "--searchParticles D:\\programme\\s5\\s5complete\\graphics\\models"
     }
   }
 }

@@ -119,6 +119,7 @@ namespace S5Converter
 
         internal override void WriteExt(BinaryWriter s, Atomic obj)
         {
+            RightToRender?.Write(s, true);
             if (MaterialFXAtomic_EffectsEnabled != null)
             {
                 new ChunkHeader()
@@ -129,7 +130,6 @@ namespace S5Converter
                 s.Write(MaterialFXAtomic_EffectsEnabled.Value ? 1 : 0);
             }
             ParticleStandard?.Write(s, true);
-            RightToRender?.Write(s, true);
         }
     }
 }

@@ -189,5 +189,22 @@ namespace S5Converter
         {
             return (f & check) != 0;
         }
+
+        internal static void ReadArray<T>(this T[] a, Func<T> reader)
+        {
+            for (int i = 0; i < a.Length; ++i)
+                a[i] = reader();
+        }
+        internal static void ReadArray<T>(this T[] a, BinaryReader s, Func<BinaryReader, T> reader)
+        {
+            for (int i = 0; i < a.Length; ++i)
+                a[i] = reader(s);
+        }
+        internal static void WriteAsByte(this BinaryWriter s, int d)
+        {
+            if (d > byte.MaxValue || d < byte.MinValue)
+                throw new IOException($"{d} too big for a byte");
+            s.Write((byte)d);
+        }
     }
 }
