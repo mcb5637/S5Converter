@@ -46,8 +46,6 @@ namespace S5Converter
 
         // extensions:
         // camera & light: userdata
-        // geometry: morphplugin
-        // material: uvanim
     }
 
     [JsonConverter(typeof(RpUserDataArrayJsonConverter))]
@@ -819,6 +817,80 @@ namespace S5Converter
             s.Write(Name.Length);
             foreach (string n in Name)
                 s.WriteFixedSizeString(n, FixedSizeString);
+        }
+    }
+
+    internal class RpMorphGeometry
+    {
+        internal struct RpMorphInterpolator
+        {
+            [JsonInclude]
+            public int Flags;
+            [JsonInclude]
+            public int StartMorphTarget;
+            [JsonInclude]
+            public int EndMorphTarget;
+            [JsonInclude]
+            public float Time;
+            [JsonInclude]
+            public int NextMorphTarget;
+
+            internal const int Size = sizeof(int) * 5;
+
+            internal static RpMorphInterpolator Read(BinaryReader s)
+            {
+                return new()
+                {
+                    Flags = s.ReadInt32(),
+                    StartMorphTarget = s.ReadInt32(),
+                    EndMorphTarget = s.ReadInt32(),
+                    Time = s.ReadSingle(),
+                    NextMorphTarget = s.ReadInt32(),
+                };
+            }
+
+            internal readonly void Write(BinaryWriter s)
+            {
+                s.Write(Flags);
+                s.Write(StartMorphTarget);
+                s.Write(EndMorphTarget);
+                s.Write(Time);
+                s.Write(NextMorphTarget);
+            }
+        }
+
+        [JsonInclude]
+        public RpMorphInterpolator[] Interpolators = [];
+
+        internal int Size => Interpolators.Length * RpMorphInterpolator.Size + sizeof(int);
+        internal int SizeH => Size + ChunkHeader.Size;
+
+        internal static RpMorphGeometry Read(BinaryReader s, bool header)
+        {
+            if (header)
+                ChunkHeader.FindChunk(s, RwCorePluginID.MORPHPLUGIN);
+            int nInter = s.ReadInt32();
+            RpMorphGeometry r = new()
+            {
+                Interpolators = new RpMorphInterpolator[nInter],
+            };
+            r.Interpolators.ReadArray(s, RpMorphInterpolator.Read);
+            return r;
+        }
+
+        internal void Write(BinaryWriter s, bool header)
+        {
+            if (header)
+            {
+                new ChunkHeader()
+                {
+                    Type = RwCorePluginID.MORPHPLUGIN,
+                    Length = Size,
+                }.Write(s);
+            }
+            s.Write(Interpolators.Length);
+            foreach (RpMorphInterpolator i in Interpolators)
+                i.Write(s);
         }
     }
 }

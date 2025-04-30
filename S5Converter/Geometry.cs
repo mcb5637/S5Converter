@@ -688,6 +688,10 @@ namespace S5Converter
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public RpSkin? SkinPLG;
 
+        [JsonInclude]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public RpMorphGeometry? MorphPLG;
+
 
 
         internal override int Size(Geometry obj)
@@ -699,6 +703,8 @@ namespace S5Converter
                 r += BinMeshPLG.SizeH;
             if (SkinPLG != null)
                 r += SkinPLG.GetSizeH(obj);
+            if (MorphPLG != null)
+                r += MorphPLG.SizeH;
             return r;
         }
 
@@ -715,6 +721,9 @@ namespace S5Converter
                 case RwCorePluginID.SKINPLUGIN:
                     SkinPLG = RpSkin.Read(s, obj, false);
                     break;
+                case RwCorePluginID.MORPHPLUGIN:
+                    MorphPLG = RpMorphGeometry.Read(s, false);
+                    break;
                 default:
                     return false;
             }
@@ -727,6 +736,7 @@ namespace S5Converter
                 RpUserDataArray.Write(UserDataPLG, s, true);
             BinMeshPLG?.Write(s, true);
             SkinPLG?.Write(s, obj, true);
+            MorphPLG?.Write(s, true);
         }
     }
 
