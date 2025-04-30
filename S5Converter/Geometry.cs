@@ -780,6 +780,10 @@ namespace S5Converter
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public RightToRender? RightToRender;
 
+        [JsonInclude]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public MaterialUVAnim? MaterialUVAnim;
+
         internal override int Size(Material obj)
         {
             int r = 0;
@@ -789,6 +793,8 @@ namespace S5Converter
                 r += MaterialFXMat.SizeH;
             if (RightToRender != null)
                 r += RightToRender.SizeH;
+            if (MaterialUVAnim != null)
+                r += MaterialUVAnim.SizeH;
             return r;
         }
 
@@ -805,6 +811,9 @@ namespace S5Converter
                 case RwCorePluginID.RIGHTTORENDER:
                     RightToRender = RightToRender.Read(s, false);
                     break;
+                case RwCorePluginID.UVANIMPLUGIN:
+                    MaterialUVAnim = MaterialUVAnim.Read(s, false);
+                    break;
                 default:
                     return false;
             }
@@ -817,6 +826,7 @@ namespace S5Converter
                 RpUserDataArray.Write(UserDataPLG, s, true);
             MaterialFXMat?.Write(s, true);
             RightToRender?.Write(s, true);
+            MaterialUVAnim?.Write(s, true);
         }
     }
 }

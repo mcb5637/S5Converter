@@ -206,5 +206,24 @@ namespace S5Converter
                 throw new IOException($"{d} too big for a byte");
             s.Write((byte)d);
         }
+
+        internal static string ReadFixedSizeString(this BinaryReader s, int size)
+        {
+            byte[] c = s.ReadBytes(size);
+            ReadOnlySpan<byte> r = new(c);
+            int i = Array.IndexOf(c, (byte)0);
+            if (r.Length > 1 && i < r.Length)
+                r = r[..i];
+            return Encoding.ASCII.GetString(r);
+        }
+        internal static void WriteFixedSizeString(this BinaryWriter s, string str, int size)
+        {
+            byte[] b = Encoding.ASCII.GetBytes(str);
+            if (b.Length > size - 1) // leading 0 is probably needed
+                throw new IOException($"fixed size string {str} too long {size}");
+            s.Write(b);
+            for (int i = b.Length; i < size; ++i)
+                s.Write((byte)0);
+        }
     }
 }
