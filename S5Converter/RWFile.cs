@@ -13,6 +13,10 @@ namespace S5Converter
         [JsonInclude]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public Clump? Clp;
+        [JsonInclude]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public RpUVAnim[]? UVAnimDict;
+
 
         internal static RWFile Read(BinaryReader s)
         {
@@ -23,6 +27,9 @@ namespace S5Converter
                 case RwCorePluginID.CLUMP:
                     f.Clp = Clump.Read(s, false);
                     break;
+                case RwCorePluginID.UVANIMDICT:
+                    f.UVAnimDict = RwDict.Read<RpUVAnim>(s, false);
+                    break;
                 default:
                     throw new IOException($"invalid top level type {h.Type}");
             }
@@ -31,9 +38,16 @@ namespace S5Converter
 
         internal void Write(BinaryWriter s)
         {
+            if (new object?[] { Clp, UVAnimDict }.Count(x => x != null) != 1)
+                throw new IOException("file: not exactly 1 member set");
             if (Clp != null)
             {
                 Clp.Write(s, true);
+                return;
+            }
+            if (UVAnimDict != null)
+            {
+                RwDict.Write(UVAnimDict, s, true);
                 return;
             }
             throw new IOException("empty");

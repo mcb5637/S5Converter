@@ -2,7 +2,7 @@
   "profiles": {
     "S5Converter": {
       "commandName": "Project",
-      "commandLineArgs": "--searchParticles D:\\programme\\s5\\s5complete\\graphics\\models"
+      "commandLineArgs": "\"D:\\repos\\s5\\S5Converter\\test\\pb_alchemist1.uva\" \"D:\\repos\\s5\\S5Converter\\test\\pb_alchemist1.json\""
     }
   }
 }
