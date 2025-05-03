@@ -16,6 +16,12 @@ namespace S5Converter
         [JsonInclude]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public RpUVAnim[]? UVAnimDict;
+        [JsonInclude]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public RtCompressedAnim? CompressedAnim;
+        [JsonInclude]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public RpHierarchicalAnim? HierarchicalAnim;
 
 
         internal static RWFile Read(BinaryReader s)
@@ -30,6 +36,15 @@ namespace S5Converter
                 case RwCorePluginID.UVANIMDICT:
                     f.UVAnimDict = RwDict.Read<RpUVAnim>(s, false);
                     break;
+                case RwCorePluginID.ANIMANIMATION:
+                    RtAnimAnimation a = RtAnimAnimation.ReadAnyAnim(s, false);
+                    if (a is RtCompressedAnim ca)
+                        f.CompressedAnim = ca;
+                    else if (a is RpHierarchicalAnim ha)
+                        f.HierarchicalAnim = ha;
+                    else
+                        throw new IOException($"invalid anim type");
+                    break;
                 default:
                     throw new IOException($"invalid top level type {h.Type}");
             }
@@ -38,7 +53,7 @@ namespace S5Converter
 
         internal void Write(BinaryWriter s)
         {
-            if (new object?[] { Clp, UVAnimDict }.Count(x => x != null) != 1)
+            if (new object?[] { Clp, UVAnimDict, CompressedAnim, HierarchicalAnim }.Count(x => x != null) != 1)
                 throw new IOException("file: not exactly 1 member set");
             if (Clp != null)
             {
@@ -48,6 +63,16 @@ namespace S5Converter
             if (UVAnimDict != null)
             {
                 RwDict.Write(UVAnimDict, s, true);
+                return;
+            }
+            if (CompressedAnim != null)
+            {
+                CompressedAnim.Write(s, true);
+                return;
+            }
+            if (HierarchicalAnim != null)
+            {
+                HierarchicalAnim.Write(s, true);
                 return;
             }
             throw new IOException("empty");

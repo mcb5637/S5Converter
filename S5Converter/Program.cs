@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Schema;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
@@ -45,6 +46,14 @@ namespace S5Converter
                 SearchParticles(args[1]);
                 return;
             }
+#if DEBUG
+            else if (args.Length == 1 && args[0] == "--buildSchema")
+            {
+                string d = JsonSerializerOptions.Default.GetJsonSchemaAsNode(typeof(RWFile)).ToString();
+                File.WriteAllText("./schema.json", d);
+                return;
+            }
+#endif
             foreach (string f in args)
             {
                 if (f.EndsWith(".json"))
