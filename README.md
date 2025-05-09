@@ -1,3 +1,5 @@
+# S5Converter
+
 converting renderware files from/to json.
 
 
@@ -13,7 +15,12 @@ converting renderware files from/to json.
 ## Frame:
 - parentFrame builds hierarchy
 - hanimPLG extension defines bones for animations
-- userDataPLG ?
+	- (s5: hardcoded bone ids)
+		- 200 building flag
+		- 300++ house fires (number from GD::CBuildingBehaviorProps in entity xml)
+		- 400++ construction dust clouds (number from GD::CBuildingBehaviorProps in entity xml)
+- userDataPLG
+	- (s5: holds extra data on frames)
 
 ## Atomic:
 - links to a frame (position/transformation in world) and a geometry by index
@@ -40,7 +47,7 @@ converting renderware files from/to json.
 - (s5: model xml defines, if a model/clump has uv anims, if yes, loads uv anim dict with the same filename, real time dependent?)
 - (s5: example PB_Alchemist1 called acid, green stuff)
 
-## Morph
+## Morph:
 - changes verticies of the model directly
 - defined in the morphTargets of a geometry
 - timing and order defined by MorphPLG extension on geometry
@@ -64,9 +71,9 @@ converting renderware files from/to json.
 - can be attached as extension to practically everything
 - (s5: contains varoius data)
 	- "3dsmax User Properties" array
-		- frame of particleeffect: "(srcblend=|destblend=)(zero|one|srcalpha|invsrcalpha)" sets to something particle related?
+		- frame of particleeffect (atomic): "(srcblend=|destblend=)(zero|one|srcalpha|invsrcalpha)" sets to something particle related?
 		- frame of atomic: alphablendmode=("onepass|twopass|building|ornamental|default) sets some atomic flags (0x40|0x80|0x80|0x80|0x80)
-		- frame of atomic: decal=? copied the atomic somewhere and removes it from clump
+		- frame of atomic: decal=? doodad => copied the atomic somewhere and removes it from clump?
 		- frame of atomic: effect=X sets directx effect (shader) for atomic? (ignored if set by model xml?)
 
 ## BinMesh:
