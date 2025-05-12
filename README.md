@@ -15,10 +15,12 @@ converting renderware files from/to json.
 ## Frame:
 - parentFrame builds hierarchy
 - hanimPLG extension defines bones for animations
-	- (s5: hardcoded bone ids)
-		- 200 building flag
-		- 300++ house fires (number from GD::CBuildingBehaviorProps in entity xml)
-		- 400++ construction dust clouds (number from GD::CBuildingBehaviorProps in entity xml)
+	- (s5: hardcoded bone ids, not all of them need to exist)
+		- 100-131 particle effect switch (ED::CParticleEffectSwitchBehavior + EGL::CParticleEffectSwitchBehavior)
+		- 200 building flag (GD::CBuildingBehavior + GD::CBuildingBehaviorProps)
+		- 300++ house fires (GD::CBuildingBehavior + number from GD::CBuildingBehaviorProps in entity xml)
+		- 400++ construction dust clouds (GD::CBuildingBehavior + number from GD::CBuildingBehaviorProps in entity xml)
+		- 500-502 particle attachments (ED::CParticleEffectAttachmentBehavior + EGL::CParticleEffectAttachmentBehavior)
 - userDataPLG
 	- (s5: holds extra data on frames)
 
