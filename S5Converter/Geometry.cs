@@ -11,24 +11,134 @@ namespace S5Converter
 {
     internal class Geometry : IJsonOnDeserialized
     {
-        [Flags]
-        internal enum RpGeometryFlag : int
+        public struct GeometryFlagS
         {
-            rpGEOMETRYTRISTRIP = 0x00000001,
-            rpGEOMETRYPOSITIONS = 0x00000002,
-            rpGEOMETRYTEXTURED = 0x00000004,
-            rpGEOMETRYPRELIT = 0x00000008,
-            rpGEOMETRYNORMALS = 0x00000010,
-            rpGEOMETRYLIGHT = 0x00000020,
-            rpGEOMETRYMODULATEMATERIALCOLOR = 0x00000040,
-            rpGEOMETRYTEXTURED2 = 0x00000080,
-            rpGEOMETRYNATIVE = 0x01000000,
-            rpGEOMETRYNATIVEINSTANCE = 0x02000000,
+            [Flags]
+            internal enum RpGeometryFlag : int
+            {
+                rpGEOMETRYTRISTRIP = 0x00000001,
+                rpGEOMETRYPOSITIONS = 0x00000002,
+                rpGEOMETRYTEXTURED = 0x00000004,
+                rpGEOMETRYPRELIT = 0x00000008,
+                rpGEOMETRYNORMALS = 0x00000010,
+                rpGEOMETRYLIGHT = 0x00000020,
+                rpGEOMETRYMODULATEMATERIALCOLOR = 0x00000040,
+                rpGEOMETRYTEXTURED2 = 0x00000080,
+                rpGEOMETRYNATIVE = 0x01000000,
+                rpGEOMETRYNATIVEINSTANCE = 0x02000000,
 
-            NumTexCoordSetsStoredInFlags = 0xFF0000,
-            rpGEOMETRYFLAGSMASK = 0x000000FF,
-            rpGEOMETRYNATIVEFLAGSMASK = 0x0F000000,
-        };
+                NumTexCoordSetsStoredInFlags = 0xFF0000,
+                rpGEOMETRYFLAGSMASK = 0x000000FF,
+                rpGEOMETRYNATIVEFLAGSMASK = 0x0F000000,
+            };
+            internal RpGeometryFlag Flag;
+
+            public bool TriStrip
+            {
+                readonly get => Flag.HasFlag(RpGeometryFlag.rpGEOMETRYTRISTRIP);
+                set => Flag.SetFlag(value, RpGeometryFlag.rpGEOMETRYTRISTRIP);
+            }
+            public bool Positions
+            {
+                readonly get => Flag.HasFlag(RpGeometryFlag.rpGEOMETRYPOSITIONS);
+                set => Flag.SetFlag(value, RpGeometryFlag.rpGEOMETRYPOSITIONS);
+            }
+            [JsonIgnore]
+            public bool NumberOfTexture1
+            {
+                readonly get => Flag.HasFlag(RpGeometryFlag.rpGEOMETRYTEXTURED);
+                set => Flag.SetFlag(value, RpGeometryFlag.rpGEOMETRYTEXTURED);
+            }
+            [JsonIgnore]
+            public bool NumberOfTexture2
+            {
+                readonly get => Flag.HasFlag(RpGeometryFlag.rpGEOMETRYTEXTURED2);
+                set => Flag.SetFlag(value, RpGeometryFlag.rpGEOMETRYTEXTURED2);
+            }
+            [JsonIgnore]
+            public int NumberOfTextureEncoded
+            {
+                readonly get => ((int)(Flag & RpGeometryFlag.NumTexCoordSetsStoredInFlags)) >> 16;
+                set {
+                    Flag.SetFlag(false, RpGeometryFlag.NumTexCoordSetsStoredInFlags);
+                    Flag |= (RpGeometryFlag)(value << 16);
+                }
+            }
+            public int NumTextureCoordinates
+            {
+                readonly get
+                {
+                    if (NumberOfTextureEncoded > 0)
+                        return NumberOfTextureEncoded;
+                    if (NumberOfTexture2)
+                        return 2;
+                    if (NumberOfTexture1)
+                        return 1;
+                    return 0;
+                }
+                set
+                {
+                    if (value == 0)
+                    {
+                        NumberOfTexture1 = false;
+                        NumberOfTexture2 = false;
+                        NumberOfTextureEncoded = 0;
+                    }
+                    else if (value == 1)
+                    {
+                        NumberOfTexture1 = true;
+                        NumberOfTexture2 = false;
+                        NumberOfTextureEncoded = 1;
+                    }
+                    else if (value == 2)
+                    {
+                        NumberOfTexture1 = false;
+                        NumberOfTexture2 = true;
+                        NumberOfTextureEncoded = 2;
+                    }
+                    else if (value >= 0 && value < ((int)RpGeometryFlag.NumTexCoordSetsStoredInFlags) >> 16)
+                    {
+                        NumberOfTexture1 = false;
+                        NumberOfTexture2 = false;
+                        NumberOfTextureEncoded = value;
+                    }
+                    else
+                    {
+                        throw new IOException("invalid number of textures");
+                    }
+                }
+            }
+            public bool PreLit
+            {
+                readonly get => Flag.HasFlag(RpGeometryFlag.rpGEOMETRYPRELIT);
+                set => Flag.SetFlag(value, RpGeometryFlag.rpGEOMETRYPRELIT);
+            }
+            public bool Normals
+            {
+                readonly get => Flag.HasFlag(RpGeometryFlag.rpGEOMETRYNORMALS);
+                set => Flag.SetFlag(value, RpGeometryFlag.rpGEOMETRYNORMALS);
+            }
+            public bool Light
+            {
+                readonly get => Flag.HasFlag(RpGeometryFlag.rpGEOMETRYLIGHT);
+                set => Flag.SetFlag(value, RpGeometryFlag.rpGEOMETRYLIGHT);
+            }
+            public bool ModulateMaterialColor
+            {
+                readonly get => Flag.HasFlag(RpGeometryFlag.rpGEOMETRYMODULATEMATERIALCOLOR);
+                set => Flag.SetFlag(value, RpGeometryFlag.rpGEOMETRYMODULATEMATERIALCOLOR);
+            }
+            public bool Native
+            {
+                readonly get => Flag.HasFlag(RpGeometryFlag.rpGEOMETRYNATIVE);
+                set => Flag.SetFlag(value, RpGeometryFlag.rpGEOMETRYNATIVE);
+            }
+            public bool NativeInstance
+            {
+                readonly get => Flag.HasFlag(RpGeometryFlag.rpGEOMETRYNATIVEINSTANCE);
+                set => Flag.SetFlag(value, RpGeometryFlag.rpGEOMETRYNATIVEINSTANCE);
+            }
+        }
 
         [JsonPropertyName("morphTargets")]
         [JsonInclude]
@@ -38,7 +148,7 @@ namespace S5Converter
         public TexCoord[][] TextureCoordinates = [];
         [JsonPropertyName("format")]
         [JsonInclude]
-        public RpGeometryFlag Flags;
+        public GeometryFlagS Flags = new();
         [JsonPropertyName("triangles")]
         [JsonInclude]
         public Triangle[] Triangles = [];
@@ -75,7 +185,7 @@ namespace S5Converter
             get
             {
                 int r = sizeof(int) * 4;
-                if (!Flags.IsFlagSet(RpGeometryFlag.rpGEOMETRYNATIVE))
+                if (!Flags.Native)
                 {
                     r += (PreLitLum?.Length ?? 0) * RGBA.Size + TextureCoordinates.Sum(x => x.Length) * TexCoord.Size;
                     r += Triangles.Length * Triangle.Size;
@@ -104,23 +214,18 @@ namespace S5Converter
             ChunkHeader.FindChunk(s, RwCorePluginID.STRUCT);
             Geometry r = new()
             {
-                Flags = (RpGeometryFlag)s.ReadInt32(),
+                Flags = new()
+                {
+                    Flag = (GeometryFlagS.RpGeometryFlag)s.ReadInt32(),
+                },
             };
             int nTri = s.ReadInt32();
             int nVert = s.ReadInt32();
             int nMorphT = s.ReadInt32();
-            int nTexCoordSets;
-            if (r.Flags.IsFlagSet(RpGeometryFlag.NumTexCoordSetsStoredInFlags))
-                nTexCoordSets = ((int)(r.Flags & RpGeometryFlag.NumTexCoordSetsStoredInFlags)) >> 16;
-            else if (r.Flags.IsFlagSet(RpGeometryFlag.rpGEOMETRYTEXTURED2))
-                nTexCoordSets = 2;
-            else if (r.Flags.IsFlagSet(RpGeometryFlag.rpGEOMETRYTEXTURED))
-                nTexCoordSets = 1;
-            else
-                nTexCoordSets = 0;
-            if (!r.Flags.IsFlagSet(RpGeometryFlag.rpGEOMETRYNATIVE))
+            int nTexCoordSets = r.Flags.NumTextureCoordinates;
+            if (!r.Flags.Native)
             {
-                if (r.Flags.IsFlagSet(RpGeometryFlag.rpGEOMETRYPRELIT))
+                if (r.Flags.PreLit)
                 {
                     r.PreLitLum = new RGBA[nVert];
                     for (int i = 0; i < nVert; ++i)
@@ -191,27 +296,22 @@ namespace S5Converter
                 Type = RwCorePluginID.STRUCT,
             }.Write(s);
 
-            int nTexCoordSets;
-            if (Flags.IsFlagSet(RpGeometryFlag.NumTexCoordSetsStoredInFlags))
-                nTexCoordSets = ((int)(Flags & RpGeometryFlag.NumTexCoordSetsStoredInFlags)) >> 16;
-            else if (Flags.IsFlagSet(RpGeometryFlag.rpGEOMETRYTEXTURED2))
-                nTexCoordSets = 2;
-            else if (Flags.IsFlagSet(RpGeometryFlag.rpGEOMETRYTEXTURED))
-                nTexCoordSets = 1;
-            else
-                nTexCoordSets = 0;
+            Flags.NumTextureCoordinates = TextureCoordinates.Length;
+            Flags.PreLit = PreLitLum != null;
+
+            int nTexCoordSets = Flags.NumTextureCoordinates;
 
             int nVerts = NVerts;
 
-            s.Write((int)Flags);
+            s.Write((int)Flags.Flag);
             s.Write(Triangles.Length);
             s.Write(nVerts);
             s.Write(MorphTargets.Length);
 
 
-            if (!Flags.IsFlagSet(RpGeometryFlag.rpGEOMETRYNATIVE))
+            if (!Flags.Native)
             {
-                if (Flags.IsFlagSet(RpGeometryFlag.rpGEOMETRYPRELIT))
+                if (Flags.PreLit)
                 {
                     if (PreLitLum == null)
                         throw new IOException("prelit null, but flag set");
@@ -263,7 +363,6 @@ namespace S5Converter
             TextureCoordinates ??= [];
             Triangles ??= [];
             Materials ??= [];
-            PreLitLum ??= [];
             Extension ??= new();
         }
     }

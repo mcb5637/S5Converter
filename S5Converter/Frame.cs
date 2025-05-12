@@ -146,6 +146,35 @@ namespace S5Converter
 
     internal class RwMatrix
     {
+        public struct MatrixFlagsS
+        {
+            [Flags]
+            internal enum MatrixFlags : int
+            {
+                None = 0,
+                rwMATRIXTYPENORMAL = 0x00000001,
+                rwMATRIXTYPEORTHOGONAL = 0x00000002,
+                rwMATRIXTYPEORTHONORMAL = 0x00000003,
+                rwMATRIXINTERNALIDENTITY = 0x00020000,
+            }
+            internal MatrixFlags Flags;
+
+            public bool Normal
+            {
+                readonly get => Flags.HasFlag(MatrixFlags.rwMATRIXTYPENORMAL);
+                set => Flags.SetFlag(value, MatrixFlags.rwMATRIXTYPENORMAL);
+            }
+            public bool Orthogonal
+            {
+                readonly get => Flags.HasFlag(MatrixFlags.rwMATRIXTYPEORTHOGONAL);
+                set => Flags.SetFlag(value, MatrixFlags.rwMATRIXTYPEORTHOGONAL);
+            }
+            public bool Identity
+            {
+                readonly get => Flags.HasFlag(MatrixFlags.rwMATRIXINTERNALIDENTITY);
+                set => Flags.SetFlag(value, MatrixFlags.rwMATRIXINTERNALIDENTITY);
+            }
+        }
         [JsonInclude]
         public Vec3 Right;
         [JsonInclude]
@@ -155,7 +184,7 @@ namespace S5Converter
         [JsonInclude]
         public Vec3 Pos;
         [JsonInclude]
-        public int Flags;
+        public MatrixFlagsS Flags;
 
         private const int SizeData = Vec3.Size * 4 + sizeof(int);
         internal const int Size = SizeData + ChunkHeader.Size;
@@ -173,7 +202,10 @@ namespace S5Converter
                 Up = Vec3.Read(s),
                 At = Vec3.Read(s),
                 Pos = Vec3.Read(s),
-                Flags = s.ReadInt32(),
+                Flags = new()
+                {
+                    Flags = (MatrixFlagsS.MatrixFlags)s.ReadInt32(),
+                },
             };
         }
 
@@ -196,7 +228,7 @@ namespace S5Converter
             Up.Write(s);
             At.Write(s);
             Pos.Write(s);
-            s.Write(Flags);
+            s.Write((int)Flags.Flags);
         }
 
     }
@@ -218,7 +250,10 @@ namespace S5Converter
             return new()
             {
                 Right = Vec3.Read(s),
-                Flags = s.ReadInt32(),
+                Flags = new()
+                {
+                    Flags = (MatrixFlagsS.MatrixFlags)s.ReadInt32(),
+                },
                 Up = Vec3.Read(s),
                 Pad1 = s.ReadInt32(),
                 At = Vec3.Read(s),
@@ -230,7 +265,7 @@ namespace S5Converter
         internal void Write(BinaryWriter s)
         {
             Right.Write(s);
-            s.Write(Flags);
+            s.Write((int)Flags.Flags);
             Up.Write(s);
             s.Write(Pad1);
             At.Write(s);

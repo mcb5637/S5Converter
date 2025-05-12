@@ -9,8 +9,8 @@ converting renderware files from/to json.
 - not stored directly in the object, just a filename
 
 ## Geometry:
-- native format geometry not suppoerted (s5: not used)
-- number of texture coordinate sets need to be encoded into the flags
+- native format geometry not supported (s5: not used)
+- flags: NumTextureCoordinates and PreLit are informative only, exporting overrides them.
 
 ## Frame:
 - parentFrame builds hierarchy
@@ -24,10 +24,14 @@ converting renderware files from/to json.
 
 ## Atomic:
 - links to a frame (position/transformation in world) and a geometry by index
+- flags: (s5: RenderShadow, override from model.xml?)
 
 ## Clump:
 - dff files
 - (s5: loaded as model)
+
+## Matrix:
+- flags: not sure if they get set after reading
 
 ## Standard Animation:
 - changes verticies of the model via bones

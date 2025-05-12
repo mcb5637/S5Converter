@@ -9,6 +9,35 @@ namespace S5Converter
 {
     internal class Atomic : IJsonOnDeserialized
     {
+        public struct AtomicFlagsS
+        {
+            [Flags]
+            internal enum AtomicFlags : int
+            {
+                None = 0,
+                CollisionTest = 1,
+                RenderShadow = 2,
+                Render = 4,
+            }
+
+            internal AtomicFlags Flags;
+
+            public bool CollisionTest
+            {
+                readonly get => Flags.HasFlag(AtomicFlags.CollisionTest);
+                set => Flags.SetFlag(value, AtomicFlags.CollisionTest);
+            }
+            public bool RenderShadow
+            {
+                readonly get => Flags.HasFlag(AtomicFlags.RenderShadow);
+                set => Flags.SetFlag(value, AtomicFlags.RenderShadow);
+            }
+            public bool Render
+            {
+                readonly get => Flags.HasFlag(AtomicFlags.Render);
+                set => Flags.SetFlag(value, AtomicFlags.Render);
+            }
+        }
         [JsonPropertyName("frameIndex")]
         [JsonInclude]
         public int FrameIndex;
@@ -16,7 +45,7 @@ namespace S5Converter
         [JsonInclude]
         public int GeometryIndex;
         [JsonInclude]
-        public int Flags;
+        public AtomicFlagsS Flags;
         [JsonInclude]
         public int UnknownInt1;
 
@@ -38,8 +67,11 @@ namespace S5Converter
             {
                 FrameIndex = s.ReadInt32(),
                 GeometryIndex = s.ReadInt32(),
-                Flags = s.ReadInt32(),
-                UnknownInt1 = s.ReadInt32(),
+                Flags = new()
+                {
+                    Flags = (AtomicFlagsS.AtomicFlags)s.ReadInt32(),
+                },
+                UnknownInt1 = s.ReadInt32()
             };
             a.Extension.Read(s, a);
             return a;
@@ -62,7 +94,7 @@ namespace S5Converter
             }.Write(s);
             s.Write(FrameIndex);
             s.Write(GeometryIndex);
-            s.Write(Flags);
+            s.Write((int)Flags.Flags);
             s.Write(UnknownInt1);
             Extension.Write(s, this);
         }

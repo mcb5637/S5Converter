@@ -7,6 +7,8 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using static S5Converter.MaterialFXMaterial;
+using static S5Converter.RpHAnimHierarchy.RpHAnimHierarchyFlagS;
 
 namespace S5Converter
 {
@@ -256,12 +258,54 @@ namespace S5Converter
 
     internal class RpHAnimHierarchy
     {
+        internal struct RpHAnimHierarchyFlagS
+        {
+            [Flags]
+            internal enum RpHAnimHierarchyFlag : int
+            {
+                None = 0,
+                SubHierarchy = 0x01,
+                NoMatrices = 0x02,
+                UpdateModellingMatrices = 0x1000,
+                UpdateLTMs = 0x2000,
+                LocalSpaceMatrices = 0x4000,
+            };
+
+            internal RpHAnimHierarchyFlag Flag;
+
+            public bool SubHierarchy
+            {
+                readonly get => Flag.HasFlag(RpHAnimHierarchyFlag.SubHierarchy);
+                set => Flag.SetFlag(value, RpHAnimHierarchyFlag.SubHierarchy);
+            }
+            public bool NoMatrices
+            {
+                readonly get => Flag.HasFlag(RpHAnimHierarchyFlag.NoMatrices);
+                set => Flag.SetFlag(value, RpHAnimHierarchyFlag.NoMatrices);
+            }
+            public bool UpdateModellingMatrices
+            {
+                readonly get => Flag.HasFlag(RpHAnimHierarchyFlag.UpdateModellingMatrices);
+                set => Flag.SetFlag(value, RpHAnimHierarchyFlag.UpdateModellingMatrices);
+            }
+            public bool UpdateLTMs
+            {
+                readonly get => Flag.HasFlag(RpHAnimHierarchyFlag.UpdateLTMs);
+                set => Flag.SetFlag(value, RpHAnimHierarchyFlag.UpdateLTMs);
+            }
+            public bool LocalSpaceMatrices
+            {
+                readonly get => Flag.HasFlag(RpHAnimHierarchyFlag.LocalSpaceMatrices);
+                set => Flag.SetFlag(value, RpHAnimHierarchyFlag.LocalSpaceMatrices);
+            }
+        }
+
         [JsonPropertyName("nodeID")]
         [JsonInclude]
         public int NodeID;
         [JsonPropertyName("flags")]
         [JsonInclude]
-        public int Flags;
+        public RpHAnimHierarchyFlagS Flags;
         [JsonInclude]
         [JsonPropertyName("keyFrameSize")]
         public int KeyFrameSize;
@@ -272,9 +316,16 @@ namespace S5Converter
 
         internal struct Node
         {
+            [JsonConverter(typeof(EnumJsonConverter<HAnimNodeFlags>))]
+            internal enum HAnimNodeFlags : int
+            {
+                Deformable = 0,
+                NubBone = 1,
+                Rigid = 3,
+            };
             [JsonPropertyName("flags")]
             [JsonInclude]
-            public int Flags;
+            public HAnimNodeFlags Flags;
             [JsonPropertyName("nodeID")]
             [JsonInclude]
             public int NodeID;
@@ -301,7 +352,10 @@ namespace S5Converter
             int boneCount = s.ReadInt32();
             if (boneCount > 0)
             {
-                r.Flags = s.ReadInt32();
+                r.Flags = new()
+                {
+                    Flag = (RpHAnimHierarchyFlagS.RpHAnimHierarchyFlag)s.ReadInt32(),
+                };
                 r.KeyFrameSize = s.ReadInt32();
                 r.Nodes = new Node[boneCount];
                 for (int i = 0; i < boneCount; ++i)
@@ -310,7 +364,7 @@ namespace S5Converter
                     {
                         NodeID = s.ReadInt32(),
                         NodeIndex = s.ReadInt32(),
-                        Flags = s.ReadInt32(),
+                        Flags = (Node.HAnimNodeFlags)s.ReadInt32(),
                     };
                 }
             }
@@ -332,26 +386,56 @@ namespace S5Converter
             s.Write(Nodes.Length);
             if (Nodes.Length > 0)
             {
-                s.Write(Flags);
+                s.Write((int)Flags.Flag);
                 s.Write(KeyFrameSize);
                 foreach (Node n in Nodes)
                 {
                     s.Write(n.NodeID);
                     s.Write(n.NodeIndex);
-                    s.Write(n.Flags);
+                    s.Write((int)n.Flags);
                 }
             }
         }
     }
 
+    [JsonConverter(typeof(EnumJsonConverter<RwBlendFunction>))]
+    internal enum RwBlendFunction : int
+    {
+        rwBLENDNABLEND = 0,
+        rwBLENDZERO,            /**<(0,    0,    0,    0   ) */
+        rwBLENDONE,             /**<(1,    1,    1,    1   ) */
+        rwBLENDSRCCOLOR,        /**<(Rs,   Gs,   Bs,   As  ) */
+        rwBLENDINVSRCCOLOR,     /**<(1-Rs, 1-Gs, 1-Bs, 1-As) */
+        rwBLENDSRCALPHA,        /**<(As,   As,   As,   As  ) */
+        rwBLENDINVSRCALPHA,     /**<(1-As, 1-As, 1-As, 1-As) */
+        rwBLENDDESTALPHA,       /**<(Ad,   Ad,   Ad,   Ad  ) */
+        rwBLENDINVDESTALPHA,    /**<(1-Ad, 1-Ad, 1-Ad, 1-Ad) */
+        rwBLENDDESTCOLOR,       /**<(Rd,   Gd,   Bd,   Ad  ) */
+        rwBLENDINVDESTCOLOR,    /**<(1-Rd, 1-Gd, 1-Bd, 1-Ad) */
+        rwBLENDSRCALPHASAT,     /**<(f,    f,    f,    1   )  f = min (As, 1-Ad) */
+    };
+
     internal class MaterialFXMaterial
     {
+        [JsonConverter(typeof(EnumJsonConverter<DataType>))]
         internal enum DataType : int
         {
+            None = 0,
             BumpMap = 1,
             EnvMap = 2,
             DualTexture = 4,
             UVTransformMat = 5,
+        };
+        [JsonConverter(typeof(EnumJsonConverter<RpMatFXMaterialFlags>))]
+        internal enum RpMatFXMaterialFlags : int
+        {
+            None = 0,
+            BumpMap = 1,
+            EnvMap = 2,
+            BumpEnvMap = 3,
+            DualTexture = 4,
+            UVTransform = 5,
+            DualTextureUVTransform = 6,
         };
 
         internal struct Data
@@ -367,9 +451,9 @@ namespace S5Converter
             [JsonInclude]
             public bool? FrameBufferAlpha;
             [JsonInclude]
-            public int? SrcBlendMode;
+            public RwBlendFunction? SrcBlendMode;
             [JsonInclude]
-            public int? DstBlendMode;
+            public RwBlendFunction? DstBlendMode;
 
             internal readonly int Size
             {
@@ -417,8 +501,8 @@ namespace S5Converter
                         d.Texture1 = Texture.ReadOptText(s);
                         break;
                     case DataType.DualTexture:
-                        d.SrcBlendMode = s.ReadInt32();
-                        d.DstBlendMode = s.ReadInt32();
+                        d.SrcBlendMode = (RwBlendFunction)s.ReadInt32();
+                        d.DstBlendMode = (RwBlendFunction)s.ReadInt32();
                         d.Texture1 = Texture.ReadOptText(s);
                         break;
                     default:
@@ -443,8 +527,8 @@ namespace S5Converter
                         Texture.WriteOptTexture(s, ref Texture1);
                         break;
                     case DataType.DualTexture:
-                        s.Write(SrcBlendMode!.Value);
-                        s.Write(DstBlendMode!.Value);
+                        s.Write((int)SrcBlendMode!.Value);
+                        s.Write((int)DstBlendMode!.Value);
                         Texture.WriteOptTexture(s, ref Texture1);
                         break;
                     default:
@@ -458,7 +542,7 @@ namespace S5Converter
         [JsonInclude]
         internal Data Data2;
         [JsonInclude]
-        internal int Flags;
+        internal RpMatFXMaterialFlags Flags;
 
         internal int Size => sizeof(int) + Data1.Size + Data2.Size;
         internal int SizeH => Size + ChunkHeader.Size;
@@ -469,7 +553,7 @@ namespace S5Converter
                 ChunkHeader.FindChunk(s, RwCorePluginID.MATERIALEFFECTSPLUGIN);
             MaterialFXMaterial r = new()
             {
-                Flags = s.ReadInt32(),
+                Flags = (RpMatFXMaterialFlags)s.ReadInt32(),
                 Data1 = Data.Read(s),
                 Data2 = Data.Read(s)
             };
@@ -487,7 +571,38 @@ namespace S5Converter
                     Type = RwCorePluginID.MATERIALEFFECTSPLUGIN,
                 }.Write(s);
             }
-            s.Write(Flags);
+            switch (Flags)
+            {
+                case RpMatFXMaterialFlags.None:
+                    if (Data1.Type != DataType.None || Data2.Type != DataType.None)
+                        throw new IOException("materialeffects None data type mismatch");
+                    break;
+                case RpMatFXMaterialFlags.BumpMap:
+                    if (Data1.Type != DataType.BumpMap || Data2.Type != DataType.None)
+                        throw new IOException("materialeffects BumpMap data type mismatch");
+                    break;
+                case RpMatFXMaterialFlags.EnvMap:
+                    if (Data1.Type != DataType.EnvMap || Data2.Type != DataType.None)
+                        throw new IOException("materialeffects EnvMap data type mismatch");
+                    break;
+                case RpMatFXMaterialFlags.BumpEnvMap:
+                    if (Data1.Type != DataType.BumpMap || Data2.Type != DataType.EnvMap)
+                        throw new IOException("materialeffects BumpEnvMap data type mismatch");
+                    break;
+                case RpMatFXMaterialFlags.DualTexture:
+                    if (Data1.Type != DataType.DualTexture || Data2.Type != DataType.None)
+                        throw new IOException("materialeffects DualTexture data type mismatch");
+                    break;
+                case RpMatFXMaterialFlags.UVTransform:
+                    if (Data1.Type != DataType.UVTransformMat || Data2.Type != DataType.None)
+                        throw new IOException("materialeffects UVTransform data type mismatch");
+                    break;
+                case RpMatFXMaterialFlags.DualTextureUVTransform:
+                    if (Data1.Type != DataType.DualTexture || Data2.Type != DataType.UVTransformMat)
+                        throw new IOException("materialeffects DualTextureUVTransform data type mismatch");
+                    break;
+            }
+            s.Write((int)Flags);
             Data1.Write(s);
             Data2.Write(s);
         }
@@ -495,8 +610,82 @@ namespace S5Converter
 
     internal class RpMeshHeader
     {
+        internal struct MeshHeaderFlags
+        {
+            internal enum RpMeshHeaderFlags : int
+            {
+                rpMESHHEADERTRISTRIP = 0x0001,
+                rpMESHHEADERTRIFAN = 0x0002,
+                rpMESHHEADERLINELIST = 0x0004,
+                rpMESHHEADERPOLYLINE = 0x0008,
+                rpMESHHEADERPOINTLIST = 0x0010,
+
+                rpMESHHEADERPRIMMASK = 0x00FF,
+                rpMESHHEADERUNINDEXED = 0x0100,
+            };
+            [JsonConverter(typeof(EnumJsonConverter<MeshType>))]
+            internal enum MeshType : int
+            {
+                TriList,
+                TriStrip,
+                TriFan,
+                LineList,
+                PolyLine,
+                PointList,
+            }
+
+            internal RpMeshHeaderFlags Flag;
+
+            public bool UnIndexed
+            {
+                readonly get => Flag.HasFlag(RpMeshHeaderFlags.rpMESHHEADERUNINDEXED);
+                set => Flag.SetFlag(value, RpMeshHeaderFlags.rpMESHHEADERUNINDEXED);
+            }
+            public MeshType Type
+            {
+                readonly get
+                {
+                    if (Flag.HasFlag(RpMeshHeaderFlags.rpMESHHEADERTRISTRIP))
+                        return MeshType.TriStrip;
+                    if (Flag.HasFlag(RpMeshHeaderFlags.rpMESHHEADERTRIFAN))
+                        return MeshType.TriFan;
+                    if (Flag.HasFlag(RpMeshHeaderFlags.rpMESHHEADERLINELIST))
+                        return MeshType.LineList;
+                    if (Flag.HasFlag(RpMeshHeaderFlags.rpMESHHEADERPOLYLINE))
+                        return MeshType.PolyLine;
+                    if (Flag.HasFlag(RpMeshHeaderFlags.rpMESHHEADERPOINTLIST))
+                        return MeshType.PointList;
+                    return MeshType.TriList;
+                }
+                set
+                {
+                    Flag.SetFlag(false, RpMeshHeaderFlags.rpMESHHEADERPRIMMASK);
+                    switch (value)
+                    {
+                        case MeshType.TriList:
+                            break;
+                        case MeshType.TriStrip:
+                            Flag.SetFlag(true, RpMeshHeaderFlags.rpMESHHEADERTRISTRIP);
+                            break;
+                        case MeshType.TriFan:
+                            Flag.SetFlag(true, RpMeshHeaderFlags.rpMESHHEADERTRIFAN);
+                            break;
+                        case MeshType.LineList:
+                            Flag.SetFlag(true, RpMeshHeaderFlags.rpMESHHEADERLINELIST);
+                            break;
+                        case MeshType.PolyLine:
+                            Flag.SetFlag(true, RpMeshHeaderFlags.rpMESHHEADERPOLYLINE);
+                            break;
+                        case MeshType.PointList:
+                            Flag.SetFlag(true, RpMeshHeaderFlags.rpMESHHEADERPOINTLIST);
+                            break;
+                    }
+                }
+            }
+        }
+
         [JsonInclude]
-        public int Flags;
+        public MeshHeaderFlags Flags;
         [JsonInclude]
         public RpMesh[] Meshes = [];
 
@@ -519,7 +708,10 @@ namespace S5Converter
                 ChunkHeader.FindChunk(s, RwCorePluginID.BINMESHPLUGIN);
             RpMeshHeader r = new()
             {
-                Flags = s.ReadInt32(),
+                Flags = new()
+                {
+                    Flag = (MeshHeaderFlags.RpMeshHeaderFlags)s.ReadInt32(),
+                },
             };
             int numMeshes = s.ReadInt32();
             _ = s.ReadInt32(); // total indices
@@ -550,7 +742,7 @@ namespace S5Converter
                     Type = RwCorePluginID.BINMESHPLUGIN,
                 }.Write(s);
             }
-            s.Write(Flags);
+            s.Write((int)Flags.Flag);
             s.Write(Meshes.Length);
             s.Write(Meshes.Sum(x => x.VertexIndices.Length));
             foreach (RpMesh m in Meshes)
@@ -659,7 +851,7 @@ namespace S5Converter
 
         internal int GetSize(Geometry g)
         {
-            if (g.Flags.HasFlag(Geometry.RpGeometryFlag.rpGEOMETRYNATIVE))
+            if (g.Flags.Native)
                 throw new IOException("geometry skin native not supported");
             int r = sizeof(byte) * 4;
             r += UsedBones.Length * sizeof(byte);
@@ -676,7 +868,7 @@ namespace S5Converter
 
         internal static RpSkin Read(BinaryReader s, Geometry g, bool header)
         {
-            if (g.Flags.HasFlag(Geometry.RpGeometryFlag.rpGEOMETRYNATIVE)) // seems to not be used
+            if (g.Flags.Native) // seems to not be used
                 throw new IOException("geometry skin native not supported");
             if (header)
                 ChunkHeader.FindChunk(s, RwCorePluginID.SKINPLUGIN);
@@ -718,7 +910,7 @@ namespace S5Converter
 
         internal void Write(BinaryWriter s, Geometry g, bool header)
         {
-            if (g.Flags.HasFlag(Geometry.RpGeometryFlag.rpGEOMETRYNATIVE))
+            if (g.Flags.Native)
                 throw new IOException("geometry skin native not supported");
             if (header)
             {

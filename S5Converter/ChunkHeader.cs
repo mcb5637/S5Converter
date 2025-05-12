@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
+using System.Text.Json.Serialization;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace S5Converter
@@ -231,11 +234,6 @@ namespace S5Converter
             return Encoding.ASCII.GetByteCount(s) + 1 + sizeof(int);
         }
 
-        internal static bool IsFlagSet(this Geometry.RpGeometryFlag f, Geometry.RpGeometryFlag check)
-        {
-            return (f & check) != 0;
-        }
-
         internal static void ReadArray<T>(this T[] a, Func<T> reader)
         {
             for (int i = 0; i < a.Length; ++i)
@@ -270,6 +268,57 @@ namespace S5Converter
             s.Write(b);
             for (int i = b.Length; i < size; ++i)
                 s.Write((byte)0);
+        }
+        // binary ops on enums dont work on generics
+        internal static void SetFlag(this ref RwMatrix.MatrixFlagsS.MatrixFlags e, bool v, RwMatrix.MatrixFlagsS.MatrixFlags f)
+        {
+            if (v)
+                e |= f;
+            else
+                e &= ~f;
+        }
+        internal static void SetFlag(this ref Atomic.AtomicFlagsS.AtomicFlags e, bool v, Atomic.AtomicFlagsS.AtomicFlags f)
+        {
+            if (v)
+                e |= f;
+            else
+                e &= ~f;
+        }
+        internal static void SetFlag(this ref Geometry.GeometryFlagS.RpGeometryFlag e, bool v, Geometry.GeometryFlagS.RpGeometryFlag f)
+        {
+            if (v)
+                e |= f;
+            else
+                e &= ~f;
+        }
+        internal static void SetFlag(this ref RpHAnimHierarchy.RpHAnimHierarchyFlagS.RpHAnimHierarchyFlag e, bool v, RpHAnimHierarchy.RpHAnimHierarchyFlagS.RpHAnimHierarchyFlag f)
+        {
+            if (v)
+                e |= f;
+            else
+                e &= ~f;
+        }
+        internal static void SetFlag(this ref RpMeshHeader.MeshHeaderFlags.RpMeshHeaderFlags e, bool v, RpMeshHeader.MeshHeaderFlags.RpMeshHeaderFlags f)
+        {
+            if (v)
+                e |= f;
+            else
+                e &= ~f;
+        }
+    }
+    internal class EnumJsonConverter<T> : JsonConverter<T>
+        where T : struct, Enum
+    {
+        public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            string? s = reader.GetString();
+            if (Enum.TryParse<T>(s, out var r))
+                return r;
+            throw new JsonException($"invalid enum value {s}");
+        }
+        public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
+        {
+            writer.WriteStringValue(value.ToString());
         }
     }
 }
