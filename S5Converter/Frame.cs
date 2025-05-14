@@ -209,7 +209,7 @@ namespace S5Converter
             };
         }
 
-        internal void Write(BinaryWriter s, bool header)
+        internal void Write(BinaryWriter s, bool header, UInt32 buildNum)
         {
             if (header)
             {
@@ -217,12 +217,14 @@ namespace S5Converter
                 {
                     Length = Size,
                     Type = RwCorePluginID.MATRIX,
+                    BuildNum = buildNum,
                 }.Write(s);
             }
             new ChunkHeader()
             {
                 Length = SizeData,
                 Type = RwCorePluginID.STRUCT,
+                BuildNum = buildNum,
             }.Write(s);
             Right.Write(s);
             Up.Write(s);
@@ -329,11 +331,11 @@ namespace S5Converter
             return true;
         }
 
-        internal override void WriteExt(BinaryWriter s, Frame obj)
+        internal override void WriteExt(BinaryWriter s, Frame obj, UInt32 buildNum)
         {
             if (UserDataPLG != null)
-                RpUserDataArray.Write(UserDataPLG, s, true);
-            HanimPLG?.Write(s, true);
+                RpUserDataArray.Write(UserDataPLG, s, true, buildNum);
+            HanimPLG?.Write(s, true, buildNum);
         }
     }
 }

@@ -2,7 +2,7 @@
   "profiles": {
     "S5Converter": {
       "commandName": "Project",
-      "commandLineArgs": "\"D:\\repos\\s5\\S5Converter\\test\\pb_residence1.dff\" \"D:\\repos\\s5\\S5Converter\\test\\pb_residence1.json\""
+      "commandLineArgs": "--checkRoundTrip D:\\programme\\s5\\s5complete\\graphics\\models"
     }
   }
 }

@@ -280,7 +280,7 @@ namespace S5Converter
             return r;
         }
 
-        internal void Write(BinaryWriter s, bool header)
+        internal void Write(BinaryWriter s, bool header, UInt32 buildNum)
         {
             if (header)
             {
@@ -288,12 +288,14 @@ namespace S5Converter
                 {
                     Length = Size,
                     Type = RwCorePluginID.GEOMETRY,
+                    BuildNum = buildNum,
                 }.Write(s);
             }
             new ChunkHeader()
             {
                 Length = SizeActual,
                 Type = RwCorePluginID.STRUCT,
+                BuildNum = buildNum,
             }.Write(s);
 
             Flags.NumTextureCoordinates = TextureCoordinates.Length;
@@ -342,19 +344,21 @@ namespace S5Converter
             {
                 Length = MaterialListSize + ChunkHeader.Size,
                 Type = RwCorePluginID.MATLIST,
+                BuildNum = buildNum,
             }.Write(s);
             new ChunkHeader()
             {
                 Length = sizeof(int) + sizeof(int) * Materials.Length,
                 Type = RwCorePluginID.STRUCT,
+                BuildNum = buildNum,
             }.Write(s);
             s.Write(Materials.Length);
             for (int i = 0; i < Materials.Length; ++i)
                 s.Write(-1);
             foreach (Material m in Materials)
-                m.Write(s, true);
+                m.Write(s, true, buildNum);
 
-            Extension.Write(s, this);
+            Extension.Write(s, this, buildNum);
         }
 
         public void OnDeserialized()
@@ -571,9 +575,13 @@ namespace S5Converter
         [JsonPropertyName("texture")]
         [JsonInclude]
         public string Tex = "";
+        [JsonInclude]
+        public int[]? TexPadding;
         [JsonPropertyName("textureAlpha")]
         [JsonInclude]
         public string TextureAlpha = "";
+        [JsonInclude]
+        public int[]? TextureAlphaPadding;
         [JsonInclude]
         public Int16 FilterAddressing;
         [JsonInclude]
@@ -599,15 +607,15 @@ namespace S5Converter
             {
                 FilterAddressing = s.ReadInt16(),
                 UnusedInt1 = s.ReadInt16(),
-                Tex = ChunkHeader.FindAndReadString(s),
-                TextureAlpha = ChunkHeader.FindAndReadString(s),
             };
+            (r.Tex, r.TexPadding) = ChunkHeader.FindAndReadString(s);
+            (r.TextureAlpha, r.TextureAlphaPadding) = ChunkHeader.FindAndReadString(s);
             r.Extension.Read(s, r);
 
             return r;
         }
 
-        internal void Write(BinaryWriter s, bool header)
+        internal void Write(BinaryWriter s, bool header, UInt32 buildNum)
         {
             if (ChunkHeader.GetStringSize(Tex) > 0x80)
                 throw new IOException("Texture name too long");
@@ -619,18 +627,20 @@ namespace S5Converter
                 {
                     Length = Size,
                     Type = RwCorePluginID.TEXTURE,
+                    BuildNum = buildNum,
                 }.Write(s);
             }
             new ChunkHeader()
             {
                 Length = 2 * sizeof(Int16),
                 Type = RwCorePluginID.STRUCT,
+                BuildNum = buildNum,
             }.Write(s);
             s.Write(FilterAddressing);
             s.Write(UnusedInt1);
-            ChunkHeader.WriteString(s, Tex);
-            ChunkHeader.WriteString(s, TextureAlpha);
-            Extension.Write(s, this);
+            ChunkHeader.WriteString(s, Tex, TexPadding, buildNum);
+            ChunkHeader.WriteString(s, TextureAlpha, TextureAlphaPadding, buildNum);
+            Extension.Write(s, this, buildNum);
         }
 
         internal static int OptTextureSize(Texture? t)
@@ -655,7 +665,7 @@ namespace S5Converter
                 return Texture.Read(s, true);
             }
         }
-        internal static void WriteOptTexture(BinaryWriter s, ref Texture? t)
+        internal static void WriteOptTexture(BinaryWriter s, ref Texture? t, UInt32 buildNum)
         {
             if (t == null)
             {
@@ -664,7 +674,7 @@ namespace S5Converter
             else
             {
                 s.Write(1);
-                t.Write(s, true);
+                t.Write(s, true, buildNum);
             }
         }
 
@@ -737,7 +747,7 @@ namespace S5Converter
             return m;
         }
 
-        internal void Write(BinaryWriter s, bool header)
+        internal void Write(BinaryWriter s, bool header, UInt32 buildNum)
         {
             if (header)
             {
@@ -745,12 +755,14 @@ namespace S5Converter
                 {
                     Length = Size,
                     Type = RwCorePluginID.MATERIAL,
+                    BuildNum = buildNum,
                 }.Write(s);
             }
             new ChunkHeader()
             {
                 Length = 7 * sizeof(int),
                 Type = RwCorePluginID.STRUCT,
+                BuildNum = buildNum,
             }.Write(s);
             s.Write(UnknownInt1);
             Color.Write(s);
@@ -760,9 +772,9 @@ namespace S5Converter
             s.Write(SurfaceProps.Specular);
             s.Write(SurfaceProps.Diffuse);
             foreach (Texture t in Textures)
-                t.Write(s, true);
+                t.Write(s, true, buildNum);
 
-            Extension.Write(s, this);
+            Extension.Write(s, this, buildNum);
         }
 
         public void OnDeserialized()
@@ -829,13 +841,13 @@ namespace S5Converter
             return true;
         }
 
-        internal override void WriteExt(BinaryWriter s, Geometry obj)
+        internal override void WriteExt(BinaryWriter s, Geometry obj, UInt32 buildNum)
         {
             if (UserDataPLG != null)
-                RpUserDataArray.Write(UserDataPLG, s, true);
-            BinMeshPLG?.Write(s, true);
-            SkinPLG?.Write(s, obj, true);
-            MorphPLG?.Write(s, true);
+                RpUserDataArray.Write(UserDataPLG, s, true, buildNum);
+            BinMeshPLG?.Write(s, true, buildNum);
+            SkinPLG?.Write(s, obj, true, buildNum);
+            MorphPLG?.Write(s, true, buildNum);
         }
     }
 
@@ -867,10 +879,10 @@ namespace S5Converter
             return true;
         }
 
-        internal override void WriteExt(BinaryWriter s, Texture obj)
+        internal override void WriteExt(BinaryWriter s, Texture obj, UInt32 buildNum)
         {
             if (UserDataPLG != null)
-                RpUserDataArray.Write(UserDataPLG, s, true);
+                RpUserDataArray.Write(UserDataPLG, s, true, buildNum);
         }
     }
 
@@ -929,13 +941,13 @@ namespace S5Converter
             return true;
         }
 
-        internal override void WriteExt(BinaryWriter s, Material obj)
+        internal override void WriteExt(BinaryWriter s, Material obj, UInt32 buildNum)
         {
             if (UserDataPLG != null)
-                RpUserDataArray.Write(UserDataPLG, s, true);
-            MaterialFXMat?.Write(s, true);
-            RightToRender?.Write(s, true);
-            MaterialUVAnim?.Write(s, true);
+                RpUserDataArray.Write(UserDataPLG, s, true, buildNum);
+            MaterialFXMat?.Write(s, true, buildNum);
+            RightToRender?.Write(s, true, buildNum);
+            MaterialUVAnim?.Write(s, true, buildNum);
         }
     }
 }

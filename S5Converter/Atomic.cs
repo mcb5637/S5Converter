@@ -77,7 +77,7 @@ namespace S5Converter
             return a;
         }
 
-        internal void Write(BinaryWriter s, bool header)
+        internal void Write(BinaryWriter s, bool header, UInt32 buildNum)
         {
             if (header)
             {
@@ -85,18 +85,20 @@ namespace S5Converter
                 {
                     Length = Size,
                     Type = RwCorePluginID.ATOMIC,
+                    BuildNum = buildNum,
                 }.Write(s);
             }
             new ChunkHeader()
             {
                 Length = 4 * sizeof(int),
                 Type = RwCorePluginID.STRUCT,
+                BuildNum = buildNum,
             }.Write(s);
             s.Write(FrameIndex);
             s.Write(GeometryIndex);
             s.Write((int)Flags.Flags);
             s.Write(UnknownInt1);
-            Extension.Write(s, this);
+            Extension.Write(s, this, buildNum);
         }
         public void OnDeserialized()
         {
@@ -149,19 +151,20 @@ namespace S5Converter
             return true;
         }
 
-        internal override void WriteExt(BinaryWriter s, Atomic obj)
+        internal override void WriteExt(BinaryWriter s, Atomic obj, UInt32 buildNum)
         {
-            RightToRender?.Write(s, true);
+            RightToRender?.Write(s, true, buildNum);
             if (MaterialFXAtomic_EffectsEnabled != null)
             {
                 new ChunkHeader()
                 {
                     Length = sizeof(int),
                     Type = RwCorePluginID.MATERIALEFFECTSPLUGIN,
+                    BuildNum = buildNum,
                 }.Write(s);
                 s.Write(MaterialFXAtomic_EffectsEnabled.Value ? 1 : 0);
             }
-            ParticleStandard?.Write(s, true);
+            ParticleStandard?.Write(s, true, buildNum);
         }
     }
 }

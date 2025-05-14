@@ -11,13 +11,14 @@ namespace S5Converter
 {
     internal struct ChunkHeader
     {
-        internal RwCorePluginID Type;
-        internal int Length;
+        internal required RwCorePluginID Type;
+        internal required int Length;
         internal UInt32 Version = rwLIBRARYCURRENTVERSION;
-        internal UInt32 BuildNum = 10;
+        internal required UInt32 BuildNum;
 
         internal const UInt32 rwLIBRARYCURRENTVERSION = 0x37002;
         internal const UInt32 rwLIBRARYBASEVERSION = 0x35000;
+        internal const UInt32 DefaultBuildNum = 10;
 
         internal const int Size = 3 * sizeof(int);
 
@@ -31,6 +32,7 @@ namespace S5Converter
             {
                 Type = (RwCorePluginID)s.ReadUInt32(),
                 Length = s.ReadInt32(),
+                BuildNum = 0,
             };
             UInt32 lib = s.ReadUInt32();
 
@@ -66,11 +68,11 @@ namespace S5Converter
                     return h;
                 }
                 Console.Error.WriteLine($"warning: skipping chunk {h.Type}, searching for {type}");
-                s.ReadBytes((int)h.Length);
+                s.ReadBytes(h.Length);
             }
         }
 
-        internal static string FindAndReadString(BinaryReader s)
+        internal static (string, int[]) FindAndReadString(BinaryReader s)
         {
             while (true)
             {
@@ -79,28 +81,30 @@ namespace S5Converter
                     throw new IOException($"{h.Version} bad version for string header");
                 if (h.Type == RwCorePluginID.STRING)
                 {
-                    byte[] c = s.ReadBytes((int)h.Length);
+                    byte[] c = s.ReadBytes(h.Length);
                     ReadOnlySpan<byte> r = new(c);
                     int i = Array.IndexOf(c, (byte)0);
+                    int[] p = r[i..].ToArray().Select(x => (int)x).ToArray();
                     if (r.Length > 1 && i < r.Length)
                         r = r[..i];
-                    return Encoding.ASCII.GetString(r);
+                    return (Encoding.ASCII.GetString(r), p);
                 }
                 else if (h.Type == RwCorePluginID.UNICODESTRING) // is there a difference?
                 {
-                    byte[] c = s.ReadBytes((int)h.Length);
+                    byte[] c = s.ReadBytes(h.Length);
                     ReadOnlySpan<byte> r = new(c);
                     int i = Array.IndexOf(c, (byte)0);
+                    int[] p = r[i..].ToArray().Select(x => (int)x).ToArray();
                     if (r.Length > 1 && i < r.Length)
                         r = r[..i];
-                    return Encoding.UTF8.GetString(r);
+                    return (Encoding.UTF8.GetString(r), p);
                 }
                 Console.Error.WriteLine($"warning: skipping chunk {h.Type}, searching for string/unicode string");
-                s.ReadBytes((int)h.Length);
+                s.ReadBytes(h.Length);
             }
         }
 
-        internal static void WriteString(BinaryWriter s, string str)
+        internal static void WriteString(BinaryWriter s, string str, int[]? padding, UInt32 buildNum)
         {
             if (str.Contains('\0'))
                 throw new IOException("string contains \\0");
@@ -113,6 +117,7 @@ namespace S5Converter
                 {
                     Type = RwCorePluginID.STRING,
                     Length = b.Length + 1,
+                    BuildNum = buildNum,
                 };
             }
             else
@@ -122,6 +127,7 @@ namespace S5Converter
                 {
                     Type = RwCorePluginID.UNICODESTRING,
                     Length = b.Length + 1,
+                    BuildNum = buildNum,
                 };
             }
             int extra0 = 0;
@@ -130,8 +136,15 @@ namespace S5Converter
             h.Length += extra0;
             h.Write(s);
             s.Write(b);
+            if (padding != null && padding.Length >= 1)
+                padding[0] = 0;
             for (int i = 0; i < (extra0 + 1); ++i)
-                s.Write((byte)0);
+            {
+                int p = 0;
+                if (padding != null && i < padding.Length)
+                    p = padding[i];
+                s.Write((byte)p);
+            }
         }
 
         internal static int GetStringSize(string str)
@@ -157,7 +170,7 @@ namespace S5Converter
         static abstract RwCorePluginID DictId { get; }
         abstract int SizeH { get; }
         static abstract T Read(BinaryReader s, bool header);
-        void Write(BinaryWriter s, bool header);
+        void Write(BinaryWriter s, bool header, UInt32 buildNum);
     }
 
     internal static class RwDict
@@ -177,7 +190,7 @@ namespace S5Converter
             r.ReadArray(() => T.Read(s, true));
             return r;
         }
-        internal static void Write<T>(T[] data, BinaryWriter s, bool header) where T : IDictEntry<T>
+        internal static void Write<T>(T[] data, BinaryWriter s, bool header, UInt32 buildNum) where T : IDictEntry<T>
         {
             if (header)
             {
@@ -185,16 +198,18 @@ namespace S5Converter
                 {
                     Type = T.DictId,
                     Length = GetSize(data),
+                    BuildNum = buildNum,
                 }.Write(s);
             }
             new ChunkHeader()
             {
                 Type = RwCorePluginID.STRUCT,
                 Length = sizeof(int),
+                BuildNum = buildNum,
             }.Write(s);
             s.Write(data.Length);
             foreach (T e in data)
-                e.Write(s, true);
+                e.Write(s, true, buildNum);
         }
     }
 

@@ -36,7 +36,7 @@ namespace S5Converter
             return r;
         }
 
-        internal void Write(BinaryWriter s, bool header)
+        internal void Write(BinaryWriter s, bool header, UInt32 buildNum)
         {
             if (header)
             {
@@ -44,11 +44,12 @@ namespace S5Converter
                 {
                     Length = Size,
                     Type = RwCorePluginID.PRTSTDPLUGIN,
+                    BuildNum = buildNum,
                 }.Write(s);
             }
             s.Write(Flags << 24 | Emitters.Length);
             foreach (RpPrtStdEmitter e in Emitters)
-                e.Write(s, Flags);
+                e.Write(s, Flags, buildNum);
         }
     }
 
@@ -348,22 +349,22 @@ namespace S5Converter
             return r;
         }
 
-        internal void Write(BinaryWriter s, int flags)
+        internal void Write(BinaryWriter s, int flags, UInt32 buildNum)
         {
             s.Write(EmitterClassId);
             s.Write(EmitterFlags);
             s.Write(ParticleClassId);
             s.Write(MaxParticlesPerBatch);
             s.Write(1);
-            ParticleProps.Write(s, true);
-            EmitterProps.Write(s, true);
-            ParticleClass.Write(s, true);
-            EmitterClass.Write(s, true);
+            ParticleProps.Write(s, true, buildNum);
+            EmitterProps.Write(s, true, buildNum);
+            ParticleClass.Write(s, true, buildNum);
+            EmitterClass.Write(s, true, buildNum);
             if (EmitterProps.Ids.Contains(EmitterProperties.STANDARD))
             {
                 if (EmitterStandard == null)
                     throw new IOException("EmitterStandard mismatch");
-                EmitterStandard.Write(s, flags);
+                EmitterStandard.Write(s, flags, buildNum);
             }
             if (EmitterProps.Ids.Contains(EmitterProperties.PRTCOLOR))
             {
@@ -381,7 +382,7 @@ namespace S5Converter
             {
                 if (Matrix == null)
                     throw new IOException("Matrix mismatch");
-                Matrix.Write(s);
+                Matrix.Write(s, buildNum);
             }
             if (EmitterProps.Ids.Contains(EmitterProperties.PRTSIZE))
             {
@@ -523,7 +524,7 @@ namespace S5Converter
             return r;
         }
 
-        internal void Write(BinaryWriter s, bool header)
+        internal void Write(BinaryWriter s, bool header, UInt32 buildNum)
         {
             if (header)
             {
@@ -531,6 +532,7 @@ namespace S5Converter
                 {
                     Length = Size,
                     Type = RwCorePluginID.PRTSTDGLOBALDATA,
+                    BuildNum = buildNum,
                 }.Write(s);
             }
             if (Ids.Length != Stride.Length)
@@ -566,7 +568,7 @@ namespace S5Converter
             return r;
         }
 
-        internal void Write(BinaryWriter s, bool header)
+        internal void Write(BinaryWriter s, bool header, UInt32 buildNum)
         {
             if (header)
             {
@@ -574,6 +576,7 @@ namespace S5Converter
                 {
                     Length = Size,
                     Type = RwCorePluginID.PRTSTDGLOBALDATA,
+                    BuildNum = buildNum,
                 }.Write(s);
             }
             s.Write(Id);
@@ -603,7 +606,7 @@ namespace S5Converter
             return r;
         }
 
-        internal void Write(BinaryWriter s, bool header)
+        internal void Write(BinaryWriter s, bool header, UInt32 buildNum)
         {
             if (header)
             {
@@ -611,6 +614,7 @@ namespace S5Converter
                 {
                     Length = Size,
                     Type = RwCorePluginID.PRTSTDGLOBALDATA,
+                    BuildNum = buildNum,
                 }.Write(s);
             }
             s.Write(Id);
@@ -711,7 +715,7 @@ namespace S5Converter
             return r;
         }
 
-        internal void Write(BinaryWriter s, int flags)
+        internal void Write(BinaryWriter s, int flags, UInt32 buildNum)
         {
             s.Write(Seed);
             s.Write(MaxParticles);
@@ -733,7 +737,7 @@ namespace S5Converter
             Color.Write(s);
             for (int i = 0; i < 4; ++i)
                 TextureCoordinates[i].Write(s);
-            Texture.WriteOptTexture(s, ref ParticleTexture);
+            Texture.WriteOptTexture(s, ref ParticleTexture, buildNum);
             if (flags >= 3)
                 s.Write(float.DegreesToRadians(ParticleRotation));
         }
@@ -866,9 +870,9 @@ namespace S5Converter
             };
         }
 
-        internal void Write(BinaryWriter s)
+        internal void Write(BinaryWriter s, UInt32 buildNum)
         {
-            Matrix.Write(s, true);
+            Matrix.Write(s, true, buildNum);
             LookAt.Write(s);
             LookAtRandom.Write(s);
             Up.Write(s);

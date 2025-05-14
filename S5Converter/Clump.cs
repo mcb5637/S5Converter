@@ -86,7 +86,7 @@ namespace S5Converter
 
             return c;
         }
-        internal void Write(BinaryWriter s, bool header)
+        internal void Write(BinaryWriter s, bool header, UInt32 buildNum)
         {
             if (header)
             {
@@ -94,12 +94,14 @@ namespace S5Converter
                 {
                     Length = Size,
                     Type = RwCorePluginID.CLUMP,
+                    BuildNum = buildNum,
                 }.Write(s);
             }
             new ChunkHeader()
             {
                 Length = 3 * sizeof(int),
                 Type = RwCorePluginID.STRUCT,
+                BuildNum = buildNum,
             }.Write(s);
             s.Write(Atomics.Length);
             s.Write(0);
@@ -110,40 +112,44 @@ namespace S5Converter
             {
                 Length = FrameListSize + ChunkHeader.Size,
                 Type = RwCorePluginID.FRAMELIST,
+                BuildNum = buildNum,
             }.Write(s);
             new ChunkHeader()
             {
                 Length = Frame.Size * Frames.Length + sizeof(int),
                 Type = RwCorePluginID.STRUCT,
+                BuildNum = buildNum,
             }.Write(s);
             s.Write(Frames.Length);
             foreach (FrameWithExt f in Frames)
                 f.Frame.Write(s);
             foreach (FrameWithExt f in Frames)
-                f.Extension.Write(s, f.Frame);
+                f.Extension.Write(s, f.Frame, buildNum);
 
             // geometrylist
             new ChunkHeader()
             {
                 Length = GeometryListSize + ChunkHeader.Size,
                 Type = RwCorePluginID.GEOMETRYLIST,
+                BuildNum = buildNum,
             }.Write(s);
             new ChunkHeader()
             {
                 Length = sizeof(int),
                 Type = RwCorePluginID.STRUCT,
+                BuildNum = buildNum,
             }.Write(s);
             s.Write(Geometries.Length);
             foreach (Geometry g in Geometries)
-                g.Write(s, true);
+                g.Write(s, true, buildNum);
 
             // atomics
             foreach (Atomic a in Atomics)
-                a.Write(s, true);
+                a.Write(s, true, buildNum);
 
 
             // extension
-            Extension.Write(s, this);
+            Extension.Write(s, this, buildNum);
         }
 
         public void OnDeserialized()
@@ -167,7 +173,7 @@ namespace S5Converter
             return false;
         }
 
-        internal override void WriteExt(BinaryWriter s, Clump obj)
+        internal override void WriteExt(BinaryWriter s, Clump obj, UInt32 buildNum)
         {
             
         }

@@ -22,6 +22,8 @@ namespace S5Converter
         [JsonInclude]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public RpHierarchicalAnim? HierarchicalAnim;
+        [JsonInclude]
+        public UInt32 BuildNum = ChunkHeader.DefaultBuildNum;
 
 
         internal static RWFile Read(BinaryReader s)
@@ -48,6 +50,7 @@ namespace S5Converter
                 default:
                     throw new IOException($"invalid top level type {h.Type}");
             }
+            f.BuildNum = h.BuildNum;
             return f;
         }
 
@@ -57,22 +60,22 @@ namespace S5Converter
                 throw new IOException("file: not exactly 1 member set");
             if (Clp != null)
             {
-                Clp.Write(s, true);
+                Clp.Write(s, true, BuildNum);
                 return;
             }
             if (UVAnimDict != null)
             {
-                RwDict.Write(UVAnimDict, s, true);
+                RwDict.Write(UVAnimDict, s, true, BuildNum);
                 return;
             }
             if (CompressedAnim != null)
             {
-                CompressedAnim.Write(s, true);
+                CompressedAnim.Write(s, true, BuildNum);
                 return;
             }
             if (HierarchicalAnim != null)
             {
-                HierarchicalAnim.Write(s, true);
+                HierarchicalAnim.Write(s, true, BuildNum);
                 return;
             }
             throw new IOException("empty");

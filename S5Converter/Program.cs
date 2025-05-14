@@ -53,6 +53,11 @@ namespace S5Converter
                 File.WriteAllText("./schema.json", d);
                 return;
             }
+            else if (args.Length == 2 && args[0] == "--checkRoundTrip")
+            {
+                CheckRoundTrip(args[1]);
+                return;
+            }
 #endif
             foreach (string f in args)
             {
@@ -85,6 +90,7 @@ namespace S5Converter
                     }
                 }
             }
+            Console.Error.WriteLine("done, press enter to exit");
             Console.Read();
         }
 
@@ -98,6 +104,7 @@ namespace S5Converter
             {
                 //Console.WriteLine($"{kv.Key.Item1} {kv.Key.Item2} {kv.Value}");
             }
+            Console.Error.WriteLine("done, press enter to exit");
             Console.Read();
 
             static void Search(DirectoryInfo i, Dictionary<(int, int), (string, RpPrtStdEmitter)> dict)
@@ -135,6 +142,43 @@ namespace S5Converter
                 }
                 foreach (DirectoryInfo di in i.GetDirectories())
                     Search(di, dict);
+            }
+        }
+
+        private static void CheckRoundTrip(string path)
+        {
+            DirectoryInfo i = new(path);
+            Search(i);
+            Console.Error.WriteLine("done, press enter to exit");
+            Console.Read();
+
+            static void Search(DirectoryInfo i)
+            {
+                foreach (FileInfo f in i.GetFiles())
+                {
+                    try
+                    {
+                        using BinaryReader r = new(new FileStream(f.FullName, FileMode.Open, FileAccess.Read));
+                        using MemoryStream json = new();
+                        Import(r, json);
+                        if (r.PeekChar() >= 0)
+                            throw new IOException("not full input read");
+                        json.Position = 0;
+                        using DebugWriteCheckStream o = new() { BytesToWrite = File.ReadAllBytes(f.FullName) };
+                        {
+                            using BinaryWriter w = new(o);
+                            Export(json, w);
+                        }
+                        o.CheckEnd();
+                    }
+                    catch (Exception e) when (e is IOException || e is JsonException)
+                    {
+                        Console.Error.WriteLine($"on {f.FullName}:");
+                        Console.Error.WriteLine(e.ToString());
+                    }
+                }
+                foreach (DirectoryInfo di in i.GetDirectories())
+                    Search(di);
             }
         }
 
