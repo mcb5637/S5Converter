@@ -321,6 +321,7 @@ namespace S5Converter
             {
                 Deformable = 0,
                 NubBone = 1,
+                Unknown = 2,
                 Rigid = 3,
             };
             [JsonPropertyName("flags")]
