@@ -14,7 +14,7 @@ namespace S5Converter
     {
         internal abstract int Size(T obj);
         internal abstract bool TryRead(BinaryReader s, ref ChunkHeader h, T obj);
-        internal abstract void WriteExt(BinaryWriter s, T obj, UInt32 buildNum);
+        internal abstract void WriteExt(BinaryWriter s, T obj, UInt32 versionNum, UInt32 buildNum);
 
         internal int SizeH(T obj)
         {
@@ -34,15 +34,16 @@ namespace S5Converter
                 exheader.Length -= h.Length + 12;
             }
         }
-        internal void Write(BinaryWriter s, T obj, UInt32 buildNum)
+        internal void Write(BinaryWriter s, T obj, UInt32 versionNum, UInt32 buildNum)
         {
             new ChunkHeader()
             {
                 Length = Size(obj),
                 Type = RwCorePluginID.EXTENSION,
                 BuildNum = buildNum,
+                Version = versionNum,
             }.Write(s);
-            WriteExt(s, obj, buildNum);
+            WriteExt(s, obj, versionNum, buildNum);
         }
 
         // extensions:
@@ -122,7 +123,7 @@ namespace S5Converter
             return r;
         }
 
-        internal static void Write(Dictionary<string, RpUserDataArray> d, BinaryWriter s, bool header, UInt32 buildNum)
+        internal static void Write(Dictionary<string, RpUserDataArray> d, BinaryWriter s, bool header, UInt32 versionNum, UInt32 buildNum)
         {
             if (header)
             {
@@ -131,6 +132,7 @@ namespace S5Converter
                     Length = GetSize(d),
                     Type = RwCorePluginID.USERDATAPLUGIN,
                     BuildNum = buildNum,
+                    Version = versionNum,
                 }.Write(s);
             }
             s.Write(d.Count);
@@ -372,7 +374,7 @@ namespace S5Converter
             return r;
         }
 
-        internal void Write(BinaryWriter s, bool header, UInt32 buildNum)
+        internal void Write(BinaryWriter s, bool header, UInt32 versionNum, UInt32 buildNum)
         {
             if (header)
             {
@@ -381,6 +383,7 @@ namespace S5Converter
                     Length = Size,
                     Type = RwCorePluginID.HANIMPLUGIN,
                     BuildNum = buildNum,
+                    Version = versionNum,
                 }.Write(s);
             }
             s.Write(256);
@@ -513,25 +516,25 @@ namespace S5Converter
                 return d;
             }
 
-            internal void Write(BinaryWriter s, UInt32 buildNum)
+            internal void Write(BinaryWriter s, UInt32 versionNum, UInt32 buildNum)
             {
                 s.Write((int)Type);
                 switch (Type)
                 {
                     case DataType.BumpMap:
                         s.Write(Coefficient!.Value);
-                        Texture.WriteOptTexture(s, ref Texture1, buildNum);
-                        Texture.WriteOptTexture(s, ref Texture2, buildNum);
+                        Texture.WriteOptTexture(s, ref Texture1, versionNum, buildNum);
+                        Texture.WriteOptTexture(s, ref Texture2, versionNum, buildNum);
                         break;
                     case DataType.EnvMap:
                         s.Write(Coefficient!.Value);
                         s.Write(FrameBufferAlpha!.Value ? 1 : 0);
-                        Texture.WriteOptTexture(s, ref Texture1, buildNum);
+                        Texture.WriteOptTexture(s, ref Texture1, versionNum, buildNum);
                         break;
                     case DataType.DualTexture:
                         s.Write((int)SrcBlendMode!.Value);
                         s.Write((int)DstBlendMode!.Value);
-                        Texture.WriteOptTexture(s, ref Texture1, buildNum);
+                        Texture.WriteOptTexture(s, ref Texture1, versionNum, buildNum);
                         break;
                     default:
                         break;
@@ -563,7 +566,7 @@ namespace S5Converter
             return r;
         }
 
-        internal void Write(BinaryWriter s, bool header, UInt32 buildNum)
+        internal void Write(BinaryWriter s, bool header, UInt32 versionNum, UInt32 buildNum)
         {
             if (header)
             {
@@ -572,6 +575,7 @@ namespace S5Converter
                     Length = Size,
                     Type = RwCorePluginID.MATERIALEFFECTSPLUGIN,
                     BuildNum = buildNum,
+                    Version = versionNum,
                 }.Write(s);
             }
             switch (Flags)
@@ -606,8 +610,8 @@ namespace S5Converter
                     break;
             }
             s.Write((int)Flags);
-            Data1.Write(s, buildNum);
-            Data2.Write(s, buildNum);
+            Data1.Write(s, versionNum, buildNum);
+            Data2.Write(s, versionNum, buildNum);
         }
     }
 
@@ -735,7 +739,7 @@ namespace S5Converter
             return r;
         }
 
-        internal void Write(BinaryWriter s, bool header, UInt32 buildNum)
+        internal void Write(BinaryWriter s, bool header, UInt32 versionNum, UInt32 buildNum)
         {
             if (header)
             {
@@ -744,6 +748,7 @@ namespace S5Converter
                     Length = Size,
                     Type = RwCorePluginID.BINMESHPLUGIN,
                     BuildNum = buildNum,
+                    Version = versionNum,
                 }.Write(s);
             }
             s.Write((int)Flags.Flag);
@@ -780,7 +785,7 @@ namespace S5Converter
             };
         }
 
-        internal void Write(BinaryWriter s, bool header, UInt32 buildNum)
+        internal void Write(BinaryWriter s, bool header, UInt32 versionNum, UInt32 buildNum)
         {
             if (header)
             {
@@ -789,6 +794,7 @@ namespace S5Converter
                     Length = Size,
                     Type = RwCorePluginID.RIGHTTORENDER,
                     BuildNum = buildNum,
+                    Version = versionNum,
                 }.Write(s);
             }
             s.Write((int)Identifier);
@@ -913,7 +919,7 @@ namespace S5Converter
             return r;
         }
 
-        internal void Write(BinaryWriter s, Geometry g, bool header, UInt32 buildNum)
+        internal void Write(BinaryWriter s, Geometry g, bool header, UInt32 versionNum, UInt32 buildNum)
         {
             if (g.Flags.Native)
                 throw new IOException("geometry skin native not supported");
@@ -924,6 +930,7 @@ namespace S5Converter
                     Length = GetSize(g),
                     Type = RwCorePluginID.SKINPLUGIN,
                     BuildNum = buildNum,
+                    Version = versionNum,
                 }.Write(s);
             }
 
@@ -997,7 +1004,7 @@ namespace S5Converter
             return r;
         }
 
-        internal void Write(BinaryWriter s, bool header, UInt32 buildNum)
+        internal void Write(BinaryWriter s, bool header, UInt32 versionNum, UInt32 buildNum)
         {
             if (header)
             {
@@ -1006,6 +1013,7 @@ namespace S5Converter
                     Type = RwCorePluginID.UVANIMPLUGIN,
                     Length = Size,
                     BuildNum = buildNum,
+                    Version = versionNum,
                 }.Write(s);
             }
             new ChunkHeader()
@@ -1013,6 +1021,7 @@ namespace S5Converter
                 Type = RwCorePluginID.STRUCT,
                 Length = DataSize,
                 BuildNum = buildNum,
+                Version = versionNum,
             }.Write(s);
             s.Write(Name.Length);
             foreach (string n in Name)
@@ -1078,7 +1087,7 @@ namespace S5Converter
             return r;
         }
 
-        internal void Write(BinaryWriter s, bool header, UInt32 buildNum)
+        internal void Write(BinaryWriter s, bool header, UInt32 versionNum, UInt32 buildNum)
         {
             if (header)
             {
@@ -1087,6 +1096,7 @@ namespace S5Converter
                     Type = RwCorePluginID.MORPHPLUGIN,
                     Length = Size,
                     BuildNum = buildNum,
+                    Version = versionNum,
                 }.Write(s);
             }
             s.Write(Interpolators.Length);

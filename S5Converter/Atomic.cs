@@ -77,7 +77,7 @@ namespace S5Converter
             return a;
         }
 
-        internal void Write(BinaryWriter s, bool header, UInt32 buildNum)
+        internal void Write(BinaryWriter s, bool header, UInt32 versionNum, UInt32 buildNum)
         {
             if (header)
             {
@@ -86,6 +86,7 @@ namespace S5Converter
                     Length = Size,
                     Type = RwCorePluginID.ATOMIC,
                     BuildNum = buildNum,
+                    Version = versionNum,
                 }.Write(s);
             }
             new ChunkHeader()
@@ -93,12 +94,13 @@ namespace S5Converter
                 Length = 4 * sizeof(int),
                 Type = RwCorePluginID.STRUCT,
                 BuildNum = buildNum,
+                Version = versionNum,
             }.Write(s);
             s.Write(FrameIndex);
             s.Write(GeometryIndex);
             s.Write((int)Flags.Flags);
             s.Write(UnknownInt1);
-            Extension.Write(s, this, buildNum);
+            Extension.Write(s, this, versionNum, buildNum);
         }
         public void OnDeserialized()
         {
@@ -151,9 +153,9 @@ namespace S5Converter
             return true;
         }
 
-        internal override void WriteExt(BinaryWriter s, Atomic obj, UInt32 buildNum)
+        internal override void WriteExt(BinaryWriter s, Atomic obj, UInt32 versionNum, UInt32 buildNum)
         {
-            RightToRender?.Write(s, true, buildNum);
+            RightToRender?.Write(s, true, versionNum, buildNum);
             if (MaterialFXAtomic_EffectsEnabled != null)
             {
                 new ChunkHeader()
@@ -161,10 +163,11 @@ namespace S5Converter
                     Length = sizeof(int),
                     Type = RwCorePluginID.MATERIALEFFECTSPLUGIN,
                     BuildNum = buildNum,
+                    Version = versionNum,
                 }.Write(s);
                 s.Write(MaterialFXAtomic_EffectsEnabled.Value ? 1 : 0);
             }
-            ParticleStandard?.Write(s, true, buildNum);
+            ParticleStandard?.Write(s, true, versionNum, buildNum);
         }
     }
 }

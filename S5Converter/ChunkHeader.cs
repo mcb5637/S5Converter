@@ -13,7 +13,7 @@ namespace S5Converter
     {
         internal required RwCorePluginID Type;
         internal required int Length;
-        internal UInt32 Version = rwLIBRARYCURRENTVERSION;
+        internal required UInt32 Version;
         internal required UInt32 BuildNum;
 
         internal const UInt32 rwLIBRARYCURRENTVERSION = 0x37002;
@@ -33,6 +33,7 @@ namespace S5Converter
                 Type = (RwCorePluginID)s.ReadUInt32(),
                 Length = s.ReadInt32(),
                 BuildNum = 0,
+                Version = 0,
             };
             UInt32 lib = s.ReadUInt32();
 
@@ -104,7 +105,7 @@ namespace S5Converter
             }
         }
 
-        internal static void WriteString(BinaryWriter s, string str, int[]? padding, UInt32 buildNum)
+        internal static void WriteString(BinaryWriter s, string str, int[]? padding, UInt32 versionNum, UInt32 buildNum)
         {
             if (str.Contains('\0'))
                 throw new IOException("string contains \\0");
@@ -118,6 +119,7 @@ namespace S5Converter
                     Type = RwCorePluginID.STRING,
                     Length = b.Length + 1,
                     BuildNum = buildNum,
+                    Version = versionNum,
                 };
             }
             else
@@ -128,6 +130,7 @@ namespace S5Converter
                     Type = RwCorePluginID.UNICODESTRING,
                     Length = b.Length + 1,
                     BuildNum = buildNum,
+                    Version = versionNum,
                 };
             }
             int extra0 = 0;
@@ -170,7 +173,7 @@ namespace S5Converter
         static abstract RwCorePluginID DictId { get; }
         abstract int SizeH { get; }
         static abstract T Read(BinaryReader s, bool header);
-        void Write(BinaryWriter s, bool header, UInt32 buildNum);
+        void Write(BinaryWriter s, bool header, UInt32 versionNum, UInt32 buildNum);
     }
 
     internal static class RwDict
@@ -190,7 +193,7 @@ namespace S5Converter
             r.ReadArray(() => T.Read(s, true));
             return r;
         }
-        internal static void Write<T>(T[] data, BinaryWriter s, bool header, UInt32 buildNum) where T : IDictEntry<T>
+        internal static void Write<T>(T[] data, BinaryWriter s, bool header, UInt32 versionNum, UInt32 buildNum) where T : IDictEntry<T>
         {
             if (header)
             {
@@ -199,6 +202,7 @@ namespace S5Converter
                     Type = T.DictId,
                     Length = GetSize(data),
                     BuildNum = buildNum,
+                    Version = versionNum,
                 }.Write(s);
             }
             new ChunkHeader()
@@ -206,10 +210,11 @@ namespace S5Converter
                 Type = RwCorePluginID.STRUCT,
                 Length = sizeof(int),
                 BuildNum = buildNum,
+                Version = versionNum,
             }.Write(s);
             s.Write(data.Length);
             foreach (T e in data)
-                e.Write(s, true, buildNum);
+                e.Write(s, true, versionNum, buildNum);
         }
     }
 

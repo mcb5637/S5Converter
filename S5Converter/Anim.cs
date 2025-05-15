@@ -40,7 +40,7 @@ namespace S5Converter
             Duration = s.ReadSingle();
             return nframes;
         }
-        internal void WriteA(BinaryWriter s, int nKeyFrames, int headerSize, UInt32 buildNum)
+        internal void WriteA(BinaryWriter s, int nKeyFrames, int headerSize, UInt32 versionNum, UInt32 buildNum)
         {
             if (headerSize > 0)
             {
@@ -49,6 +49,7 @@ namespace S5Converter
                     Type = RwCorePluginID.ANIMANIMATION,
                     Length = headerSize,
                     BuildNum = buildNum,
+                    Version = versionNum,
                 }.Write(s);
             }
             s.Write(256);
@@ -232,10 +233,10 @@ namespace S5Converter
             return r;
         }
 
-        public void Write(BinaryWriter s, bool header, UInt32 buildNum)
+        public void Write(BinaryWriter s, bool header, UInt32 versionNum, UInt32 buildNum)
         {
             CheckType();
-            WriteA(s, NKeyFrames, header ? Size : -1, buildNum);
+            WriteA(s, NKeyFrames, header ? Size : -1, versionNum, buildNum);
             s.Write(0);
             s.WriteFixedSizeString(Name, NameFixedStringSize);
             if (NodeToUVChannelMap.Length != NodeToUVChannelMapSize)
@@ -396,10 +397,10 @@ namespace S5Converter
             Scalar = Vec3.Read(s);
         }
 
-        internal void Write(BinaryWriter s, bool header, UInt32 buildNum)
+        internal void Write(BinaryWriter s, bool header, UInt32 versionNum, UInt32 buildNum)
         {
             CheckType();
-            WriteA(s, KeyFrames.Length, header ? Size : -1, buildNum);
+            WriteA(s, KeyFrames.Length, header ? Size : -1, versionNum, buildNum);
 
             foreach (RtCompressedKeyFrame kf in KeyFrames)
                 kf.Write(s);
@@ -496,10 +497,10 @@ namespace S5Converter
             KeyFrames.ReadArray(s, RpHAnimKeyFrame.Read);
         }
 
-        internal void Write(BinaryWriter s, bool header, UInt32 buildNum)
+        internal void Write(BinaryWriter s, bool header, UInt32 versionNum, UInt32 buildNum)
         {
             CheckType();
-            WriteA(s, KeyFrames.Length, header ? Size : -1, buildNum);
+            WriteA(s, KeyFrames.Length, header ? Size : -1, versionNum, buildNum);
 
             foreach (RpHAnimKeyFrame kf in KeyFrames)
                 kf.Write(s);
