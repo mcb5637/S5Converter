@@ -13,13 +13,24 @@ namespace S5Converter
     {
         internal static void Main(string[] args)
         {
+            JsonSerializerOptions opt = new(JsonSerializerDefaults.General)
+            {
+                TypeInfoResolver = SourceGenerationContext.Default,
+                WriteIndented = true,
+            };
+            if (args.Length >= 1 && args[0] == "--encodeFloatAsInt")
+            {
+                opt.Converters.Add(new EncodedFloatConverter());
+                args = args[1..];
+            }
+
             if (args.Length == 1 && args[0] == "--import")
             {
                 try
                 {
                     using BinaryReader r = new(Console.OpenStandardInput());
                     using Stream ou = Console.OpenStandardOutput();
-                    Import(r, ou);
+                    Import(r, ou, opt);
                 }
                 catch (Exception e) when (e is IOException || e is JsonException)
                 {
@@ -33,7 +44,7 @@ namespace S5Converter
                 {
                     using Stream r = Console.OpenStandardInput();
                     using BinaryWriter ou = new(Console.OpenStandardOutput());
-                    Export(r, ou);
+                    Export(r, ou, opt);
                 }
                 catch (Exception e) when (e is IOException || e is JsonException)
                 {
@@ -55,7 +66,7 @@ namespace S5Converter
             }
             else if (args.Length == 2 && args[0] == "--checkRoundTrip")
             {
-                CheckRoundTrip(args[1]);
+                CheckRoundTrip(args[1], opt);
                 return;
             }
 #endif
@@ -68,7 +79,7 @@ namespace S5Converter
                         Console.Error.WriteLine($"converting {f}");
                         using FileStream r = new(f, FileMode.Open, FileAccess.Read);
                         using BinaryWriter ou = new(new FileStream(Path.ChangeExtension(f, ".out"), FileMode.Create, FileAccess.Write));
-                        Export(r, ou);
+                        Export(r, ou, opt);
                     }
                     catch (Exception e) when (e is IOException || e is JsonException)
                     {
@@ -82,7 +93,7 @@ namespace S5Converter
                         Console.Error.WriteLine($"converting {f}");
                         using BinaryReader r = new(new FileStream(f, FileMode.Open, FileAccess.Read));
                         using FileStream ou = new(Path.ChangeExtension(f, ".json"), FileMode.Create, FileAccess.Write);
-                        Import(r, ou);
+                        Import(r, ou, opt);
                     }
                     catch (Exception e) when (e is IOException || e is JsonException)
                     {
@@ -145,14 +156,14 @@ namespace S5Converter
             }
         }
 
-        private static void CheckRoundTrip(string path)
+        private static void CheckRoundTrip(string path, JsonSerializerOptions opt)
         {
             DirectoryInfo i = new(path);
-            Search(i);
+            Search(i, opt);
             Console.Error.WriteLine("done, press enter to exit");
             Console.Read();
 
-            static void Search(DirectoryInfo i)
+            static void Search(DirectoryInfo i, JsonSerializerOptions opt)
             {
                 foreach (FileInfo f in i.GetFiles())
                 {
@@ -160,14 +171,14 @@ namespace S5Converter
                     {
                         using BinaryReader r = new(new FileStream(f.FullName, FileMode.Open, FileAccess.Read));
                         using MemoryStream json = new();
-                        Import(r, json);
+                        Import(r, json, opt);
                         if (r.PeekChar() >= 0)
                             throw new IOException("not full input read");
                         json.Position = 0;
                         using DebugWriteCheckStream o = new() { BytesToWrite = File.ReadAllBytes(f.FullName) };
                         {
                             using BinaryWriter w = new(o);
-                            Export(json, w);
+                            Export(json, w, opt);
                         }
                         o.CheckEnd();
                     }
@@ -178,19 +189,19 @@ namespace S5Converter
                     }
                 }
                 foreach (DirectoryInfo di in i.GetDirectories())
-                    Search(di);
+                    Search(di, opt);
             }
         }
 
-        private static void Import(BinaryReader r, Stream ou)
+        private static void Import(BinaryReader r, Stream ou, JsonSerializerOptions opt)
         {
             RWFile d = RWFile.Read(r);
-            JsonSerializer.Serialize(ou, d, SourceGenerationContext.Default.RWFile);
+            JsonSerializer.Serialize(ou, d, opt);
         }
 
-        private static void Export(Stream r, BinaryWriter ou)
+        private static void Export(Stream r, BinaryWriter ou, JsonSerializerOptions opt)
         {
-            RWFile d = JsonSerializer.Deserialize(r, SourceGenerationContext.Default.RWFile) ?? throw new IOException("failed to parse file");
+            RWFile d = JsonSerializer.Deserialize<RWFile>(r, opt) ?? throw new IOException("failed to parse file");
             d.Write(ou);
         }
     }
@@ -198,5 +209,20 @@ namespace S5Converter
     [JsonSerializable(typeof(RWFile))]
     internal partial class SourceGenerationContext : JsonSerializerContext
     {
+    }
+
+    internal class EncodedFloatConverter : JsonConverter<float>
+    {
+        public unsafe override float Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            if (!reader.TryGetInt32(out int v))
+                throw new JsonException();
+            return *(float*)&v;
+        }
+
+        public unsafe override void Write(Utf8JsonWriter writer, float value, JsonSerializerOptions options)
+        {
+            writer.WriteNumberValue(*(int*)&value);
+        }
     }
 }
