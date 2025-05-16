@@ -64,9 +64,10 @@ namespace S5Converter
                 File.WriteAllText("./schema.json", d);
                 return;
             }
-            else if (args.Length == 2 && args[0] == "--checkRoundTrip")
+            else if (args.Length >= 2 && args[0] == "--checkRoundTrip")
             {
-                CheckRoundTrip(args[1], opt);
+                for (int i = 1; i < args.Length; ++i)
+                    CheckRoundTrip(args[i], opt);
                 return;
             }
 #endif

@@ -334,7 +334,7 @@ namespace S5Converter
 
             internal static RtCompressedKeyFrame Read(BinaryReader s)
             {
-                return new RtCompressedKeyFrame()
+                RtCompressedKeyFrame r = new()
                 {
                     Time = s.ReadSingle(),
                     QX = Uncompress(s.ReadUInt16()),
@@ -344,8 +344,11 @@ namespace S5Converter
                     TX = Uncompress(s.ReadUInt16()),
                     TY = Uncompress(s.ReadUInt16()),
                     TZ = Uncompress(s.ReadUInt16()),
-                    PrevKeyFrame = s.ReadInt32() / Size,
+                    PrevKeyFrame = s.ReadInt32(),
                 };
+                if (r.Time > 0)
+                    r.PrevKeyFrame /= 24;
+                return r;
             }
             internal readonly void Write(BinaryWriter s)
             {
@@ -357,7 +360,7 @@ namespace S5Converter
                 s.Write(Compress(TX));
                 s.Write(Compress(TY));
                 s.Write(Compress(TZ));
-                s.Write(PrevKeyFrame * Size);
+                s.Write(PrevKeyFrame * (Time > 0 ? 24 : 1));
             }
         }
 
@@ -450,20 +453,25 @@ namespace S5Converter
 
             internal static RpHAnimKeyFrame Read(BinaryReader s)
             {
-                return new RpHAnimKeyFrame()
+                RpHAnimKeyFrame r = new()
                 {
                     Time = s.ReadSingle(),
                     Q = RtQuat.Read(s),
                     T = Vec3.Read(s),
-                    PrevKeyFrame = s.ReadInt32() / 36,
+                    PrevKeyFrame = s.ReadInt32(),
                 };
+                if (r.Time > 0)
+                {
+                    r.PrevKeyFrame /= Size;
+                }
+                return r;
             }
             internal readonly void Write(BinaryWriter s)
             {
                 s.Write(Time);
                 Q.Write(s);
                 T.Write(s);
-                s.Write(PrevKeyFrame * 36);
+                s.Write(PrevKeyFrame * (Time > 0 ? Size : 1));
             }
         }
 
