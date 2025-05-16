@@ -227,7 +227,7 @@ namespace S5Converter
                 return null;
             byte[] c = s.ReadBytes(l);
             ReadOnlySpan<byte> r = new(c);
-            if (r.Length > 1 && r[^1] == '\0')
+            if (r.Length >= 1 && r[^1] == '\0')
                 r = r[..^1];
             return Encoding.ASCII.GetString(r);
         }
@@ -269,6 +269,21 @@ namespace S5Converter
             if (d > byte.MaxValue || d < byte.MinValue)
                 throw new IOException($"{d} too big for a byte");
             s.Write((byte)d);
+        }
+
+        internal static float RadToDegOpt(this float v, bool a)
+        {
+            if (a)
+                return float.RadiansToDegrees(v);
+            else
+                return v;
+        }
+        internal static float DegToRadOpt(this float v, bool a)
+        {
+            if (a)
+                return float.DegreesToRadians(v);
+            else
+                return v;
         }
 
         internal static string ReadFixedSizeString(this BinaryReader s, int size)

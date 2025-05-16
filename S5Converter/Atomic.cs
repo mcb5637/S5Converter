@@ -57,7 +57,7 @@ namespace S5Converter
         internal int SizeH => Size + ChunkHeader.Size;
 
 
-        internal static Atomic Read(BinaryReader s, bool header)
+        internal static Atomic Read(BinaryReader s, bool header, bool convertRad)
         {
             if (header)
                 ChunkHeader.FindChunk(s, RwCorePluginID.ATOMIC);
@@ -73,11 +73,12 @@ namespace S5Converter
                 },
                 UnknownInt1 = s.ReadInt32()
             };
+            a.Extension.ConvertRadians = convertRad;
             a.Extension.Read(s, a);
             return a;
         }
 
-        internal void Write(BinaryWriter s, bool header, UInt32 versionNum, UInt32 buildNum)
+        internal void Write(BinaryWriter s, bool header, bool convertRad, UInt32 versionNum, UInt32 buildNum)
         {
             if (header)
             {
@@ -100,6 +101,7 @@ namespace S5Converter
             s.Write(GeometryIndex);
             s.Write((int)Flags.Flags);
             s.Write(UnknownInt1);
+            Extension.ConvertRadians = convertRad;
             Extension.Write(s, this, versionNum, buildNum);
         }
         public void OnDeserialized()
@@ -122,6 +124,8 @@ namespace S5Converter
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public RightToRender? RightToRender;
 
+        internal bool ConvertRadians;
+
         internal override int Size(Atomic obj)
         {
             int r = 0;
@@ -142,7 +146,7 @@ namespace S5Converter
                     MaterialFXAtomic_EffectsEnabled = s.ReadInt32() != 0;
                     break;
                 case RwCorePluginID.PRTSTDPLUGIN:
-                    ParticleStandard = ParticleStandard.Read(s, false);
+                    ParticleStandard = ParticleStandard.Read(s, false, ConvertRadians);
                     break;
                 case RwCorePluginID.RIGHTTORENDER:
                     RightToRender = RightToRender.Read(s, false);
@@ -167,7 +171,7 @@ namespace S5Converter
                 }.Write(s);
                 s.Write(MaterialFXAtomic_EffectsEnabled.Value ? 1 : 0);
             }
-            ParticleStandard?.Write(s, true, versionNum, buildNum);
+            ParticleStandard?.Write(s, true, ConvertRadians, versionNum, buildNum);
         }
     }
 }

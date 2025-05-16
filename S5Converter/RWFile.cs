@@ -26,16 +26,20 @@ namespace S5Converter
         public UInt32 BuildNum = ChunkHeader.DefaultBuildNum;
         [JsonInclude]
         public UInt32 VersionNum = ChunkHeader.rwLIBRARYCURRENTVERSION;
+        [JsonInclude]
+        public bool ConvertRadians;
 
-
-        internal static RWFile Read(BinaryReader s)
+        internal static RWFile Read(BinaryReader s, bool convertRad)
         {
             ChunkHeader h = ChunkHeader.Read(s);
-            RWFile f = new();
+            RWFile f = new()
+            {
+                ConvertRadians = convertRad,
+            };
             switch(h.Type)
             {
                 case RwCorePluginID.CLUMP:
-                    f.Clp = Clump.Read(s, false);
+                    f.Clp = Clump.Read(s, false, convertRad);
                     break;
                 case RwCorePluginID.UVANIMDICT:
                     f.UVAnimDict = RwDict.Read<RpUVAnim>(s, false);
@@ -63,7 +67,7 @@ namespace S5Converter
                 throw new IOException("file: not exactly 1 member set");
             if (Clp != null)
             {
-                Clp.Write(s, true, VersionNum, BuildNum);
+                Clp.Write(s, true, ConvertRadians, VersionNum, BuildNum);
                 return;
             }
             if (UVAnimDict != null)

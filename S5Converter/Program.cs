@@ -30,7 +30,7 @@ namespace S5Converter
                 {
                     using BinaryReader r = new(Console.OpenStandardInput());
                     using Stream ou = Console.OpenStandardOutput();
-                    Import(r, ou, opt);
+                    Import(r, ou, opt, true);
                 }
                 catch (Exception e) when (e is IOException || e is JsonException)
                 {
@@ -93,7 +93,7 @@ namespace S5Converter
                         Console.Error.WriteLine($"converting {f}");
                         using BinaryReader r = new(new FileStream(f, FileMode.Open, FileAccess.Read));
                         using FileStream ou = new(Path.ChangeExtension(f, ".json"), FileMode.Create, FileAccess.Write);
-                        Import(r, ou, opt);
+                        Import(r, ou, opt, true);
                     }
                     catch (Exception e) when (e is IOException || e is JsonException)
                     {
@@ -125,7 +125,7 @@ namespace S5Converter
                     try
                     {
                         using BinaryReader r = new(new FileStream(f.FullName, FileMode.Open, FileAccess.Read));
-                        RWFile d = RWFile.Read(r);
+                        RWFile d = RWFile.Read(r, true);
                         int emid = 0;
                         foreach (Atomic a in d.Clp!.Atomics)
                         {
@@ -159,19 +159,22 @@ namespace S5Converter
         private static void CheckRoundTrip(string path, JsonSerializerOptions opt)
         {
             DirectoryInfo i = new(path);
-            Search(i, opt);
+            string[] exclude = ["xd_gold1.dff", "zxdummy.dff", "heads", "piles"];
+            Search(i, opt, exclude);
             Console.Error.WriteLine("done, press enter to exit");
             Console.Read();
 
-            static void Search(DirectoryInfo i, JsonSerializerOptions opt)
+            static void Search(DirectoryInfo i, JsonSerializerOptions opt, string[] exclude)
             {
                 foreach (FileInfo f in i.GetFiles())
                 {
+                    if (exclude.Contains(f.Name))
+                        continue;
                     try
                     {
                         using BinaryReader r = new(new FileStream(f.FullName, FileMode.Open, FileAccess.Read));
                         using MemoryStream json = new();
-                        Import(r, json, opt);
+                        Import(r, json, opt, false);
                         if (r.PeekChar() >= 0)
                             throw new IOException("not full input read");
                         json.Position = 0;
@@ -181,6 +184,8 @@ namespace S5Converter
                             Export(json, w, opt);
                         }
                         o.CheckEnd();
+                        // File.WriteAllBytes("./out.json", json.ToArray())
+                        // Export(json, new BinaryWriter(new FileStream("./out.dff", FileMode.Create, FileAccess.Write)), opt)
                     }
                     catch (Exception e) when (e is IOException || e is JsonException)
                     {
@@ -189,13 +194,17 @@ namespace S5Converter
                     }
                 }
                 foreach (DirectoryInfo di in i.GetDirectories())
-                    Search(di, opt);
+                {
+                    if (exclude.Contains(di.Name))
+                        continue;
+                    Search(di, opt, exclude);
+                }
             }
         }
 
-        private static void Import(BinaryReader r, Stream ou, JsonSerializerOptions opt)
+        private static void Import(BinaryReader r, Stream ou, JsonSerializerOptions opt, bool convertRad)
         {
-            RWFile d = RWFile.Read(r);
+            RWFile d = RWFile.Read(r, convertRad);
             JsonSerializer.Serialize(ou, d, opt);
         }
 

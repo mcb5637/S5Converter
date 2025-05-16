@@ -605,7 +605,7 @@ namespace S5Converter
                         throw new IOException("materialeffects UVTransform data type mismatch");
                     break;
                 case RpMatFXMaterialFlags.DualTextureUVTransform:
-                    if (Data1.Type != DataType.DualTexture || Data2.Type != DataType.UVTransformMat)
+                    if (Data1.Type != DataType.UVTransformMat || Data2.Type != DataType.DualTexture)
                         throw new IOException("materialeffects DualTextureUVTransform data type mismatch");
                     break;
             }
@@ -955,8 +955,8 @@ namespace S5Converter
 
             {
                 s.Write(SplitData.BoneLimit);
-                s.Write(SplitData.MeshBoneRLECount?.Length ?? 0 / 2);
-                s.Write(SplitData.MeshBoneRLE?.Length ?? 0 / 2);
+                s.Write((SplitData.MeshBoneRLECount?.Length ?? 0) / 2);
+                s.Write((SplitData.MeshBoneRLE?.Length ?? 0) / 2);
                 if (SplitData.MeshBoneRLECount != null)
                 {
                     if (SplitData.MeshBoneRemapIndices == null || SplitData.MeshBoneRLE == null)

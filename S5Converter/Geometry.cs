@@ -851,11 +851,11 @@ namespace S5Converter
 
         internal override void WriteExt(BinaryWriter s, Geometry obj, UInt32 versionNum, UInt32 buildNum)
         {
-            if (UserDataPLG != null)
-                RpUserDataArray.Write(UserDataPLG, s, true, versionNum, buildNum);
             BinMeshPLG?.Write(s, true, versionNum, buildNum);
             SkinPLG?.Write(s, obj, true, versionNum, buildNum);
             MorphPLG?.Write(s, true, versionNum, buildNum);
+            if (UserDataPLG != null)
+                RpUserDataArray.Write(UserDataPLG, s, true, versionNum, buildNum);
         }
     }
 

@@ -20,7 +20,7 @@ namespace S5Converter
         internal int Size => sizeof(int) + Emitters.Sum(x => x.GetSize(Flags));
         internal int SizeH => Size + ChunkHeader.Size;
 
-        internal static ParticleStandard Read(BinaryReader s, bool header)
+        internal static ParticleStandard Read(BinaryReader s, bool header, bool convertRad)
         {
             if (header)
                 ChunkHeader.FindChunk(s, RwCorePluginID.PRTSTDPLUGIN);
@@ -32,11 +32,11 @@ namespace S5Converter
                 Emitters = new RpPrtStdEmitter[nEmitters],
             };
             for (int i = 0; i < nEmitters; ++i)
-                r.Emitters[i] = RpPrtStdEmitter.Read(s, r.Flags);
+                r.Emitters[i] = RpPrtStdEmitter.Read(s, r.Flags, convertRad);
             return r;
         }
 
-        internal void Write(BinaryWriter s, bool header, UInt32 versionNum, UInt32 buildNum)
+        internal void Write(BinaryWriter s, bool header, bool convertRad, UInt32 versionNum, UInt32 buildNum)
         {
             if (header)
             {
@@ -50,7 +50,7 @@ namespace S5Converter
             }
             s.Write(Flags << 24 | Emitters.Length);
             foreach (RpPrtStdEmitter e in Emitters)
-                e.Write(s, Flags, versionNum, buildNum);
+                e.Write(s, Flags, convertRad, versionNum, buildNum);
         }
     }
 
@@ -302,7 +302,7 @@ namespace S5Converter
             return r;
         }
 
-        internal static RpPrtStdEmitter Read(BinaryReader s, int flags)
+        internal static RpPrtStdEmitter Read(BinaryReader s, int flags, bool convertRad)
         {
             RpPrtStdEmitter r = new()
             {
@@ -318,7 +318,7 @@ namespace S5Converter
             r.ParticleClass = RpPrtStdParticleClass.Read(s, true);
             r.EmitterClass = RpPrtStdEmitterClass.Read(s, true);
             if (r.EmitterProps.Ids.Contains(EmitterProperties.STANDARD))
-                r.EmitterStandard = RpPrtStdEmitterStandard.Read(s, flags);
+                r.EmitterStandard = RpPrtStdEmitterStandard.Read(s, flags, convertRad);
             if (r.EmitterProps.Ids.Contains(EmitterProperties.PRTCOLOR))
                 r.Color = RpPrtStdEmitterPrtColor.Read(s);
             if (r.EmitterProps.Ids.Contains(EmitterProperties.PRTTEXCOORDS))
@@ -328,13 +328,13 @@ namespace S5Converter
             if (r.EmitterProps.Ids.Contains(EmitterProperties.PRTSIZE))
                 r.ParticleSize = RpPrtStdEmitterPrtSize.Read(s);
             if (r.EmitterProps.Ids.Contains(EmitterProperties.PRT2DROTATE))
-                r.Rotate = RpPrtStdEmitterPrt2DRotate.Read(s);
+                r.Rotate = RpPrtStdEmitterPrt2DRotate.Read(s, convertRad);
             if (r.EmitterProps.Ids.Contains(EmitterProperties.PTANK))
                 r.Tank = RpPrtStdEmitterPTank.Read(s);
             if (r.EmitterProps.Ids.Contains(EmitterProperties.ADVPROPERTYCODEEMITTERPOINTLIST))
                 r.AdvPointList = RpPrtAdvEmtPointList.Read(s);
             if (r.EmitterProps.Ids.Contains(EmitterProperties.ADVPROPERTYCODEEMITTERCIRCLE))
-                r.AdvCircle = RpPrtAdvEmtCircle.Read(s);
+                r.AdvCircle = RpPrtAdvEmtCircle.Read(s, convertRad);
             if (r.EmitterProps.Ids.Contains(EmitterProperties.ADVPROPERTYCODEEMITTERSPHERE))
                 r.AdvSphere = RpPrtAdvEmtSphere.Read(s);
             if (r.EmitterProps.Ids.Contains(EmitterProperties.ADVPROPERTYCODEEMITTERPRTEMITTER))
@@ -350,7 +350,7 @@ namespace S5Converter
             return r;
         }
 
-        internal void Write(BinaryWriter s, int flags, UInt32 versionNum, UInt32 buildNum)
+        internal void Write(BinaryWriter s, int flags, bool convertRad, UInt32 versionNum, UInt32 buildNum)
         {
             s.Write(EmitterClassId);
             s.Write(EmitterFlags);
@@ -365,7 +365,7 @@ namespace S5Converter
             {
                 if (EmitterStandard == null)
                     throw new IOException("EmitterStandard mismatch");
-                EmitterStandard.Write(s, flags, versionNum, buildNum);
+                EmitterStandard.Write(s, flags, convertRad, versionNum, buildNum);
             }
             if (EmitterProps.Ids.Contains(EmitterProperties.PRTCOLOR))
             {
@@ -395,7 +395,7 @@ namespace S5Converter
             {
                 if (Rotate == null)
                     throw new IOException("Rotate mismatch");
-                Rotate.Write(s);
+                Rotate.Write(s, convertRad);
             }
             if (EmitterProps.Ids.Contains(EmitterProperties.PTANK))
             {
@@ -413,7 +413,7 @@ namespace S5Converter
             {
                 if (AdvCircle == null)
                     throw new IOException("Ex_Circular mismatch");
-                AdvCircle.Write(s);
+                AdvCircle.Write(s, convertRad);
             }
             if (EmitterProps.Ids.Contains(EmitterProperties.ADVPROPERTYCODEEMITTERSPHERE))
             {
@@ -688,7 +688,7 @@ namespace S5Converter
             return r;
         }
 
-        internal static RpPrtStdEmitterStandard Read(BinaryReader s, int flags)
+        internal static RpPrtStdEmitterStandard Read(BinaryReader s, int flags, bool convertRad)
         {
             RpPrtStdEmitterStandard r = new()
             {
@@ -715,11 +715,11 @@ namespace S5Converter
                 r.TextureCoordinates[i] = Vec2.Read(s);
             r.ParticleTexture = Texture.ReadOptText(s);
             if (flags >= 3)
-                r.ParticleRotation = float.RadiansToDegrees(s.ReadSingle());
+                r.ParticleRotation = s.ReadSingle().RadToDegOpt(convertRad);
             return r;
         }
 
-        internal void Write(BinaryWriter s, int flags, UInt32 versionNum, UInt32 buildNum)
+        internal void Write(BinaryWriter s, int flags, bool convertRad, UInt32 versionNum, UInt32 buildNum)
         {
             s.Write(Seed);
             s.Write(MaxParticles);
@@ -743,7 +743,7 @@ namespace S5Converter
                 TextureCoordinates[i].Write(s);
             Texture.WriteOptTexture(s, ref ParticleTexture, versionNum, buildNum);
             if (flags >= 3)
-                s.Write(float.DegreesToRadians(ParticleRotation));
+                s.Write(ParticleRotation.DegToRadOpt(convertRad));
         }
     }
 
@@ -941,23 +941,23 @@ namespace S5Converter
 
         internal const int Size = sizeof(float) * 4;
 
-        internal static RpPrtStdEmitterPrt2DRotate Read(BinaryReader s)
+        internal static RpPrtStdEmitterPrt2DRotate Read(BinaryReader s, bool convertRad)
         {
             return new()
             {
-                StartRotate = float.RadiansToDegrees(s.ReadSingle()),
-                StartRotateRandom = float.RadiansToDegrees(s.ReadSingle()),
-                EndRotate = float.RadiansToDegrees(s.ReadSingle()),
-                EndRotateRandom = float.RadiansToDegrees(s.ReadSingle()),
+                StartRotate = s.ReadSingle().RadToDegOpt(convertRad),
+                StartRotateRandom = s.ReadSingle().RadToDegOpt(convertRad),
+                EndRotate = s.ReadSingle().RadToDegOpt(convertRad),
+                EndRotateRandom = s.ReadSingle().RadToDegOpt(convertRad),
             };
         }
 
-        internal void Write(BinaryWriter s)
+        internal void Write(BinaryWriter s, bool convertRad)
         {
-            s.Write(float.DegreesToRadians(StartRotate));
-            s.Write(float.DegreesToRadians(StartRotateRandom));
-            s.Write(float.DegreesToRadians(EndRotate));
-            s.Write(float.DegreesToRadians(EndRotateRandom));
+            s.Write(StartRotate.DegToRadOpt(convertRad));
+            s.Write(StartRotateRandom.DegToRadOpt(convertRad));
+            s.Write(EndRotate.DegToRadOpt(convertRad));
+            s.Write(EndRotateRandom.DegToRadOpt(convertRad));
         }
     }
 
@@ -1115,7 +1115,7 @@ namespace S5Converter
 
         internal const int Size = sizeof(int) * 5;
 
-        internal static RpPrtAdvEmtCircle Read(BinaryReader s)
+        internal static RpPrtAdvEmtCircle Read(BinaryReader s, bool convertRad)
         {
             return new()
             {
@@ -1123,17 +1123,17 @@ namespace S5Converter
                 RadiusGap = s.ReadSingle(),
                 Height = s.ReadSingle(),
                 UseCircleEmission = s.ReadInt32() != 0,
-                DirRotation = float.RadiansToDegrees(s.ReadSingle()),
+                DirRotation = s.ReadSingle().RadToDegOpt(convertRad),
             };
         }
 
-        internal void Write(BinaryWriter s)
+        internal void Write(BinaryWriter s, bool convertRad)
         {
             s.Write(Radius);
             s.Write(RadiusGap);
             s.Write(Height);
             s.Write(UseCircleEmission ? 1 : 0);
-            s.Write(float.DegreesToRadians(DirRotation));
+            s.Write(DirRotation.DegToRadOpt(convertRad));
         }
     }
 
