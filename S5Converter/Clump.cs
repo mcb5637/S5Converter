@@ -110,6 +110,7 @@ namespace S5Converter
             s.Write(0);
 
             // framelist
+            RpHAnimHierarchy.RebuildNodeHierarchy(Frames);
             new ChunkHeader()
             {
                 Length = FrameListSize + ChunkHeader.Size,

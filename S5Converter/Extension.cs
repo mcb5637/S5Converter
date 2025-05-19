@@ -7,6 +7,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using static S5Converter.RpHAnimHierarchy.Node;
 
 namespace S5Converter
 {
@@ -314,21 +315,48 @@ namespace S5Converter
         [JsonPropertyName("nodes")]
         [JsonInclude]
         public Node[] Nodes = [];
-        // TODO check what parents does and where it comes from
+        [JsonPropertyName("parents")]
+        [JsonInclude]
+        public int[] Parents = [];
 
-        internal struct Node
+        internal class Node
         {
-            [JsonConverter(typeof(EnumJsonConverter<HAnimNodeFlags>))]
+            internal struct HAnimNodeFlagsS
+            {
+                [JsonInclude]
+                public bool HasChildren;
+                [JsonInclude]
+                public bool LastSibling;
+
+                [JsonIgnore]
+                internal HAnimNodeFlags Flags
+                {
+                    readonly get
+                    {
+                        HAnimNodeFlags f = HAnimNodeFlags.None;
+                        if (!LastSibling)
+                            f |= HAnimNodeFlags.Push;
+                        if (!HasChildren)
+                            f |= HAnimNodeFlags.Pop;
+                        return f;
+                    }
+                    set
+                    {
+                        LastSibling = !value.HasFlag(HAnimNodeFlags.Push);
+                        HasChildren = !value.HasFlag(HAnimNodeFlags.Pop);
+                    }
+                }
+            }
+            [Flags]
             internal enum HAnimNodeFlags : int
             {
-                Deformable = 0,
-                NubBone = 1,
-                Unknown = 2,
-                Rigid = 3,
+                None = 0,
+                Pop = 0x01,
+                Push = 0x02,
             };
             [JsonPropertyName("flags")]
             [JsonInclude]
-            public HAnimNodeFlags Flags;
+            public HAnimNodeFlagsS Flags;
             [JsonPropertyName("nodeID")]
             [JsonInclude]
             public int NodeID;
@@ -361,17 +389,38 @@ namespace S5Converter
                 };
                 r.KeyFrameSize = s.ReadInt32();
                 r.Nodes = new Node[boneCount];
+                r.Parents = new int[boneCount];
                 for (int i = 0; i < boneCount; ++i)
                 {
                     r.Nodes[i] = new Node()
                     {
                         NodeID = s.ReadInt32(),
                         NodeIndex = s.ReadInt32(),
-                        Flags = (Node.HAnimNodeFlags)s.ReadInt32(),
+                        Flags = new()
+                        {
+                            Flags = (Node.HAnimNodeFlags)s.ReadInt32(),
+                        },
                     };
                 }
+                int last = BuildParents(r.Nodes, r.Parents, 0, -1);
+                if (last != boneCount-1)
+                    r.Parents[boneCount - 1] = 0;
             }
             return r;
+
+            static int BuildParents(Node[] n, int[] p, int i, int c)
+            {
+                for (; i < n.Length; ++i)
+                {
+                    p[i] = c;
+                    bool lsib = n[i].Flags.LastSibling;
+                    if (n[i].Flags.HasChildren)
+                        i = BuildParents(n, p, i + 1, i);
+                    if (lsib)
+                        return i;
+                }
+                return i;
+            }
         }
 
         internal void Write(BinaryWriter s, bool header, UInt32 versionNum, UInt32 buildNum)
@@ -397,8 +446,83 @@ namespace S5Converter
                 {
                     s.Write(n.NodeID);
                     s.Write(n.NodeIndex);
-                    s.Write((int)n.Flags);
+                    s.Write((int)n.Flags.Flags);
                 }
+            }
+        }
+
+        private class HInfo
+        {
+            internal required FrameWithExt F;
+            internal required Node? N;
+            internal required int FrameIndex;
+            internal required int? NodeId;
+            internal List<HInfo> Children = [];
+            internal HInfo? Parent = null;
+        }
+        internal static void RebuildNodeHierarchy(FrameWithExt[] frames)
+        {
+            FrameWithExt? hierlist = frames.SingleOrDefault(x => (x.Extension.HanimPLG?.Nodes?.Length ?? 0) > 0);
+            if (hierlist == null || hierlist.Extension.HanimPLG == null)
+                return;
+            RpHAnimHierarchy hlist = hierlist.Extension.HanimPLG;
+
+            if (hlist.Parents != null && hlist.Parents.Length != hlist.Nodes.Length)
+                throw new IOException("hanim parents length missmatch");
+
+            for (int i = 0; i < hlist.Nodes.Length; i++)
+            {
+                hlist.Nodes[i].Flags.HasChildren = false;
+                hlist.Nodes[i].Flags.LastSibling = false;
+                hlist.Nodes[i].NodeIndex = i;
+            }
+
+            List<HInfo> hier = [];
+            for (int i = 0; i < frames.Length; ++i)
+            {
+                var f = frames[i];
+                Node? n = null;
+                if (f.Extension.HanimPLG != null)
+                    n = hlist.Nodes.FirstOrDefault(x => x.NodeID == f.Extension.HanimPLG.NodeID);
+                hier.Add(new()
+                {
+                    F = f,
+                    N = n,
+                    FrameIndex = i,
+                    NodeId = f.Extension.HanimPLG?.NodeID,
+                });
+            }
+            foreach (HInfo i in hier)
+            {
+                if (i.NodeId == null)
+                    continue;
+                HInfo? p;
+                if (hlist.Parents != null && i.N != null)
+                    p = hier.FirstOrDefault(x => x.N?.NodeIndex == hlist.Parents[i.N.NodeIndex]);
+                else
+                    p = hier.FirstOrDefault(x => x.FrameIndex == i.F.Frame.ParentFrameIndex);
+                if (p == null)
+                    continue;
+                if (p.NodeId == null)
+                    continue;
+                i.Parent = p;
+                p.Children.Add(i);
+            }
+            foreach (HInfo i in hier)
+            {
+                if (i.N == null)
+                    continue;
+                if (i.Children.Count > 0)
+                {
+                    i.N.Flags.HasChildren = true;
+                    HInfo lastch = i.Children.OrderBy(x => x.N?.NodeIndex ?? -1).Last();
+                    lastch.N!.Flags.LastSibling = true;
+                }
+            }
+            foreach (HInfo i in hier)
+            {
+                if (i.Parent == null && i.N != null)
+                    i.N.Flags.LastSibling = true;
             }
         }
     }

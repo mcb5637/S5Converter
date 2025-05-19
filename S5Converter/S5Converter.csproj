@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Extension.cs~RF1ac8bfa3.TMP" />
     <None Remove="Frame.cs~RF51ddd80.TMP" />
   </ItemGroup>
 

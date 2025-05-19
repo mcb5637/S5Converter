@@ -1,6 +1,7 @@
 # S5Converter
 
 converting renderware files from/to json.
+https://github.com/Novator12/s5_BlenderPlugin
 
 
 # Notes for datatypes:
@@ -15,12 +16,6 @@ converting renderware files from/to json.
 ## Frame:
 - parentFrame builds hierarchy
 - hanimPLG extension defines bones for animations
-	- (s5: hardcoded bone ids, not all of them need to exist)
-		- 100-131 particle effect switch (ED::CParticleEffectSwitchBehavior + EGL::CParticleEffectSwitchBehavior)
-		- 200 building flag (GD::CBuildingBehavior + GD::CBuildingBehaviorProps)
-		- 300++ house fires (GD::CBuildingBehavior + number from GD::CBuildingBehaviorProps in entity xml)
-		- 400++ construction dust clouds (GD::CBuildingBehavior + number from GD::CBuildingBehaviorProps in entity xml)
-		- 500-502 particle attachments (ED::CParticleEffectAttachmentBehavior + EGL::CParticleEffectAttachmentBehavior)
 - userDataPLG
 	- (s5: holds extra data on frames)
 
@@ -52,6 +47,20 @@ converting renderware files from/to json.
 - attached to cumps via Material UVAnim extension. lookup by name in the curretly active uv anim dict
 - (s5: model xml defines, if a model/clump has uv anims, if yes, loads uv anim dict with the same filename, real time dependent?)
 - (s5: example PB_Alchemist1 called acid, green stuff)
+
+## Hierachical Anim (HAnim)
+- bones connected to frames
+-  frame at index 0 has no bone, index 1 holds node info, all others have just a bone id
+- `nodes[i].flags` is informational only, gets rebuild on export
+- `nodes[i].nodeIndex` is informational only, gets rebuild on export
+- node info may contain parent array to override hierarchy
+	- if it does not exist, builds hierarchy from frames
+- (s5: hardcoded bone ids, not all of them need to exist)
+	- 100-131 particle effect switch (ED::CParticleEffectSwitchBehavior + EGL::CParticleEffectSwitchBehavior)
+	- 200 building flag (GD::CBuildingBehavior + GD::CBuildingBehaviorProps)
+	- 300++ house fires (GD::CBuildingBehavior + number from GD::CBuildingBehaviorProps in entity xml)
+	- 400++ construction dust clouds (GD::CBuildingBehavior + number from GD::CBuildingBehaviorProps in entity xml)
+	- 500-502 particle attachments (ED::CParticleEffectAttachmentBehavior + EGL::CParticleEffectAttachmentBehavior)
 
 ## Morph:
 - changes verticies of the model directly

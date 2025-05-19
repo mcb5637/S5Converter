@@ -68,6 +68,8 @@ namespace S5Converter
             {
                 for (int i = 1; i < args.Length; ++i)
                     CheckRoundTrip(args[i], opt);
+                Console.Error.WriteLine("done, press enter to exit");
+                Console.Read();
                 return;
             }
 #endif
@@ -157,13 +159,12 @@ namespace S5Converter
             }
         }
 
+        // --encodeFloatAsInt --checkRoundTrip D:\programme\s5\s5complete\graphics\models D:\programme\s5\s5complete\graphics\animations
         private static void CheckRoundTrip(string path, JsonSerializerOptions opt)
         {
             DirectoryInfo i = new(path);
             string[] exclude = ["xd_gold1.dff", "zxdummy.dff", "heads", "piles"];
             Search(i, opt, exclude);
-            Console.Error.WriteLine("done, press enter to exit");
-            Console.Read();
 
             static void Search(DirectoryInfo i, JsonSerializerOptions opt, string[] exclude)
             {

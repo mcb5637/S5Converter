@@ -2,7 +2,7 @@
   "profiles": {
     "S5Converter": {
       "commandName": "Project",
-      "commandLineArgs": "--encodeFloatAsInt --checkRoundTrip D:\\programme\\s5\\s5complete\\graphics\\animations D:\\programme\\s5\\s5complete\\graphics\\models"
+      "commandLineArgs": "--encodeFloatAsInt --checkRoundTrip D:\\programme\\s5\\s5complete\\graphics\\models D:\\programme\\s5\\s5complete\\graphics\\animations"
     }
   }
 }
