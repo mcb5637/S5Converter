@@ -403,8 +403,8 @@ namespace S5Converter
                     };
                 }
                 int last = BuildParents(r.Nodes, r.Parents, 0, -1);
-                if (last != boneCount-1)
-                    r.Parents[boneCount - 1] = 0;
+                if (last != boneCount - 1)
+                    Console.Error.WriteLine("hanim hierarchy messed up, check before using");
             }
             return r;
 
