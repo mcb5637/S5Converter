@@ -9,6 +9,12 @@ namespace S5Converter
 {
     internal class RWFile
     {
+        [JsonPropertyName("$schema")]
+        public string Schema
+        {
+            get => "https://github.com/mcb5637/S5Converter/raw/refs/heads/master/schema.json";
+            set { }
+        }
         [JsonPropertyName("clump")]
         [JsonInclude]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
