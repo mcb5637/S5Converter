@@ -1,0 +1,2031 @@
+{
+  "type": [
+    "object",
+    "null"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "clump": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "frames": {
+          "type": "array",
+          "items": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "frame": {
+                "type": "object",
+                "properties": {
+                  "parentFrameIndex": {
+                    "type": "integer"
+                  },
+                  "position": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      },
+                      "z": {
+                        "type": "number"
+                      }
+                    }
+                  },
+                  "rotationMatrix": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        },
+                        "z": {
+                          "type": "number"
+                        }
+                      }
+                    }
+                  },
+                  "UnknownIntProbablyUnused": {
+                    "type": "integer"
+                  }
+                }
+              },
+              "extension": {
+                "type": "object",
+                "properties": {
+                  "userDataPLG": {
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "hanimPLG": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "nodeID": {
+                        "type": "integer"
+                      },
+                      "flags": {
+                        "type": "object",
+                        "properties": {
+                          "SubHierarchy": {
+                            "type": "boolean"
+                          },
+                          "NoMatrices": {
+                            "type": "boolean"
+                          },
+                          "UpdateModellingMatrices": {
+                            "type": "boolean"
+                          },
+                          "UpdateLTMs": {
+                            "type": "boolean"
+                          },
+                          "LocalSpaceMatrices": {
+                            "type": "boolean"
+                          }
+                        }
+                      },
+                      "keyFrameSize": {
+                        "type": "integer"
+                      },
+                      "nodes": {
+                        "type": "array",
+                        "items": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "flags": {
+                              "type": "object",
+                              "properties": {
+                                "HasChildren": {
+                                  "type": "boolean"
+                                },
+                                "LastSibling": {
+                                  "type": "boolean"
+                                }
+                              }
+                            },
+                            "nodeID": {
+                              "type": "integer"
+                            },
+                            "nodeIndex": {
+                              "type": "integer"
+                            }
+                          }
+                        }
+                      },
+                      "parents": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "atomics": {
+          "type": "array",
+          "items": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "frameIndex": {
+                "type": "integer"
+              },
+              "geometryIndex": {
+                "type": "integer"
+              },
+              "Flags": {
+                "type": "object",
+                "properties": {
+                  "CollisionTest": {
+                    "type": "boolean"
+                  },
+                  "RenderShadow": {
+                    "type": "boolean"
+                  },
+                  "Render": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "UnknownInt1": {
+                "type": "integer"
+              },
+              "extension": {
+                "type": "object",
+                "properties": {
+                  "MaterialFXAtomic_EffectsEnabled": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  "ParticleStandard": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "Flags": {
+                        "type": "integer"
+                      },
+                      "Emitters": {
+                        "type": "array",
+                        "items": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "ParticlePropsId": {
+                              "type": "integer"
+                            },
+                            "EmitterPropsId": {
+                              "type": "integer"
+                            },
+                            "EmitterFlags": {
+                              "type": "integer"
+                            },
+                            "MaxParticlesPerBatch": {
+                              "type": "integer"
+                            },
+                            "EmitterStandard": {
+                              "type": [
+                                "object",
+                                "null"
+                              ],
+                              "properties": {
+                                "Seed": {
+                                  "type": "integer"
+                                },
+                                "MaxParticles": {
+                                  "type": "integer"
+                                },
+                                "Force": {
+                                  "type": "object",
+                                  "properties": {
+                                    "x": {
+                                      "type": "number"
+                                    },
+                                    "y": {
+                                      "type": "number"
+                                    },
+                                    "z": {
+                                      "type": "number"
+                                    }
+                                  }
+                                },
+                                "EmitterPosition": {
+                                  "type": "object",
+                                  "properties": {
+                                    "x": {
+                                      "type": "number"
+                                    },
+                                    "y": {
+                                      "type": "number"
+                                    },
+                                    "z": {
+                                      "type": "number"
+                                    }
+                                  }
+                                },
+                                "EmitterSize": {
+                                  "type": "object",
+                                  "properties": {
+                                    "x": {
+                                      "type": "number"
+                                    },
+                                    "y": {
+                                      "type": "number"
+                                    },
+                                    "z": {
+                                      "type": "number"
+                                    }
+                                  }
+                                },
+                                "TimeBetweenEmissions": {
+                                  "type": "number"
+                                },
+                                "TimeBetweenEmissionsRandom": {
+                                  "type": "number"
+                                },
+                                "NumParticlesPerEmission": {
+                                  "type": "integer"
+                                },
+                                "NumParticlesPerEmissionRandom": {
+                                  "type": "integer"
+                                },
+                                "InitialVelocity": {
+                                  "type": "number"
+                                },
+                                "InitialVelocityRandom": {
+                                  "type": "number"
+                                },
+                                "ParticleLife": {
+                                  "type": "number"
+                                },
+                                "ParticleLifeRandom": {
+                                  "type": "number"
+                                },
+                                "InitialDirection": {
+                                  "type": "object",
+                                  "properties": {
+                                    "x": {
+                                      "type": "number"
+                                    },
+                                    "y": {
+                                      "type": "number"
+                                    },
+                                    "z": {
+                                      "type": "number"
+                                    }
+                                  }
+                                },
+                                "InitialDirectionRandom": {
+                                  "type": "object",
+                                  "properties": {
+                                    "x": {
+                                      "type": "number"
+                                    },
+                                    "y": {
+                                      "type": "number"
+                                    },
+                                    "z": {
+                                      "type": "number"
+                                    }
+                                  }
+                                },
+                                "ParticleSize": {
+                                  "type": "object",
+                                  "properties": {
+                                    "x": {
+                                      "type": "number"
+                                    },
+                                    "y": {
+                                      "type": "number"
+                                    }
+                                  }
+                                },
+                                "ParticleSize_SeriMisstake": {
+                                  "type": "integer"
+                                },
+                                "Color": {
+                                  "type": "object",
+                                  "properties": {
+                                    "red": {
+                                      "type": "integer"
+                                    },
+                                    "green": {
+                                      "type": "integer"
+                                    },
+                                    "blue": {
+                                      "type": "integer"
+                                    },
+                                    "alpha": {
+                                      "type": "integer"
+                                    }
+                                  }
+                                },
+                                "TextureCoordinates": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "x": {
+                                        "type": "number"
+                                      },
+                                      "y": {
+                                        "type": "number"
+                                      }
+                                    }
+                                  }
+                                },
+                                "ParticleTexture": {
+                                  "type": [
+                                    "object",
+                                    "null"
+                                  ],
+                                  "properties": {
+                                    "texture": {
+                                      "type": "string"
+                                    },
+                                    "TexPadding": {
+                                      "type": [
+                                        "array",
+                                        "null"
+                                      ],
+                                      "items": {
+                                        "type": "integer"
+                                      }
+                                    },
+                                    "textureAlpha": {
+                                      "type": "string"
+                                    },
+                                    "TextureAlphaPadding": {
+                                      "type": [
+                                        "array",
+                                        "null"
+                                      ],
+                                      "items": {
+                                        "type": "integer"
+                                      }
+                                    },
+                                    "FilterAddressing": {
+                                      "type": "integer"
+                                    },
+                                    "UnusedInt1": {
+                                      "type": "integer"
+                                    },
+                                    "extension": {
+                                      "type": "object",
+                                      "properties": {
+                                        "userDataPLG": {
+                                          "type": [
+                                            "object",
+                                            "null"
+                                          ]
+                                        }
+                                      }
+                                    }
+                                  }
+                                },
+                                "ParticleRotation": {
+                                  "type": "number"
+                                }
+                              }
+                            },
+                            "Color": {
+                              "type": [
+                                "object",
+                                "null"
+                              ],
+                              "properties": {
+                                "StartColor": {
+                                  "type": "object",
+                                  "properties": {
+                                    "red": {
+                                      "type": "number"
+                                    },
+                                    "green": {
+                                      "type": "number"
+                                    },
+                                    "blue": {
+                                      "type": "number"
+                                    },
+                                    "alpha": {
+                                      "type": "number"
+                                    }
+                                  }
+                                },
+                                "StartColorRandom": {
+                                  "type": "object",
+                                  "properties": {
+                                    "red": {
+                                      "type": "number"
+                                    },
+                                    "green": {
+                                      "type": "number"
+                                    },
+                                    "blue": {
+                                      "type": "number"
+                                    },
+                                    "alpha": {
+                                      "type": "number"
+                                    }
+                                  }
+                                },
+                                "EndColor": {
+                                  "type": "object",
+                                  "properties": {
+                                    "red": {
+                                      "type": "number"
+                                    },
+                                    "green": {
+                                      "type": "number"
+                                    },
+                                    "blue": {
+                                      "type": "number"
+                                    },
+                                    "alpha": {
+                                      "type": "number"
+                                    }
+                                  }
+                                },
+                                "EndColorRandom": {
+                                  "type": "object",
+                                  "properties": {
+                                    "red": {
+                                      "type": "number"
+                                    },
+                                    "green": {
+                                      "type": "number"
+                                    },
+                                    "blue": {
+                                      "type": "number"
+                                    },
+                                    "alpha": {
+                                      "type": "number"
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "TextureCoordinates": {
+                              "type": [
+                                "object",
+                                "null"
+                              ],
+                              "properties": {
+                                "StartUV0": {
+                                  "type": "object",
+                                  "properties": {
+                                    "x": {
+                                      "type": "number"
+                                    },
+                                    "y": {
+                                      "type": "number"
+                                    }
+                                  }
+                                },
+                                "StartUV0Random": {
+                                  "type": "object",
+                                  "properties": {
+                                    "x": {
+                                      "type": "number"
+                                    },
+                                    "y": {
+                                      "type": "number"
+                                    }
+                                  }
+                                },
+                                "EndUV0": {
+                                  "type": "object",
+                                  "properties": {
+                                    "x": {
+                                      "type": "number"
+                                    },
+                                    "y": {
+                                      "type": "number"
+                                    }
+                                  }
+                                },
+                                "EndUV0Random": {
+                                  "type": "object",
+                                  "properties": {
+                                    "x": {
+                                      "type": "number"
+                                    },
+                                    "y": {
+                                      "type": "number"
+                                    }
+                                  }
+                                },
+                                "StartUV1": {
+                                  "type": "object",
+                                  "properties": {
+                                    "x": {
+                                      "type": "number"
+                                    },
+                                    "y": {
+                                      "type": "number"
+                                    }
+                                  }
+                                },
+                                "StartUV1Random": {
+                                  "type": "object",
+                                  "properties": {
+                                    "x": {
+                                      "type": "number"
+                                    },
+                                    "y": {
+                                      "type": "number"
+                                    }
+                                  }
+                                },
+                                "EndUV1": {
+                                  "type": "object",
+                                  "properties": {
+                                    "x": {
+                                      "type": "number"
+                                    },
+                                    "y": {
+                                      "type": "number"
+                                    }
+                                  }
+                                },
+                                "EndUV1Random": {
+                                  "type": "object",
+                                  "properties": {
+                                    "x": {
+                                      "type": "number"
+                                    },
+                                    "y": {
+                                      "type": "number"
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "Matrix": {
+                              "type": [
+                                "object",
+                                "null"
+                              ],
+                              "properties": {
+                                "Matrix": {
+                                  "type": "object",
+                                  "properties": {
+                                    "Right": {
+                                      "type": "object",
+                                      "properties": {
+                                        "x": {
+                                          "type": "number"
+                                        },
+                                        "y": {
+                                          "type": "number"
+                                        },
+                                        "z": {
+                                          "type": "number"
+                                        }
+                                      }
+                                    },
+                                    "Up": {
+                                      "type": "object",
+                                      "properties": {
+                                        "x": {
+                                          "type": "number"
+                                        },
+                                        "y": {
+                                          "type": "number"
+                                        },
+                                        "z": {
+                                          "type": "number"
+                                        }
+                                      }
+                                    },
+                                    "At": {
+                                      "type": "object",
+                                      "properties": {
+                                        "x": {
+                                          "type": "number"
+                                        },
+                                        "y": {
+                                          "type": "number"
+                                        },
+                                        "z": {
+                                          "type": "number"
+                                        }
+                                      }
+                                    },
+                                    "Pos": {
+                                      "type": "object",
+                                      "properties": {
+                                        "x": {
+                                          "type": "number"
+                                        },
+                                        "y": {
+                                          "type": "number"
+                                        },
+                                        "z": {
+                                          "type": "number"
+                                        }
+                                      }
+                                    },
+                                    "Flags": {
+                                      "type": "object",
+                                      "properties": {
+                                        "Normal": {
+                                          "type": "boolean"
+                                        },
+                                        "Orthogonal": {
+                                          "type": "boolean"
+                                        },
+                                        "Identity": {
+                                          "type": "boolean"
+                                        }
+                                      }
+                                    }
+                                  }
+                                },
+                                "LookAt": {
+                                  "type": "object",
+                                  "properties": {
+                                    "x": {
+                                      "type": "number"
+                                    },
+                                    "y": {
+                                      "type": "number"
+                                    },
+                                    "z": {
+                                      "type": "number"
+                                    }
+                                  }
+                                },
+                                "LookAtRandom": {
+                                  "type": "object",
+                                  "properties": {
+                                    "x": {
+                                      "type": "number"
+                                    },
+                                    "y": {
+                                      "type": "number"
+                                    },
+                                    "z": {
+                                      "type": "number"
+                                    }
+                                  }
+                                },
+                                "Up": {
+                                  "type": "object",
+                                  "properties": {
+                                    "x": {
+                                      "type": "number"
+                                    },
+                                    "y": {
+                                      "type": "number"
+                                    },
+                                    "z": {
+                                      "type": "number"
+                                    }
+                                  }
+                                },
+                                "UpRandom": {
+                                  "type": "object",
+                                  "properties": {
+                                    "x": {
+                                      "type": "number"
+                                    },
+                                    "y": {
+                                      "type": "number"
+                                    },
+                                    "z": {
+                                      "type": "number"
+                                    }
+                                  }
+                                },
+                                "Flags": {
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            "ParticleSize": {
+                              "type": [
+                                "object",
+                                "null"
+                              ],
+                              "properties": {
+                                "StartSize": {
+                                  "type": "object",
+                                  "properties": {
+                                    "x": {
+                                      "type": "number"
+                                    },
+                                    "y": {
+                                      "type": "number"
+                                    }
+                                  }
+                                },
+                                "StartSizeRandom": {
+                                  "type": "object",
+                                  "properties": {
+                                    "x": {
+                                      "type": "number"
+                                    },
+                                    "y": {
+                                      "type": "number"
+                                    }
+                                  }
+                                },
+                                "EndSize": {
+                                  "type": "object",
+                                  "properties": {
+                                    "x": {
+                                      "type": "number"
+                                    },
+                                    "y": {
+                                      "type": "number"
+                                    }
+                                  }
+                                },
+                                "EndSizeRandom": {
+                                  "type": "object",
+                                  "properties": {
+                                    "x": {
+                                      "type": "number"
+                                    },
+                                    "y": {
+                                      "type": "number"
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "Rotate": {
+                              "type": [
+                                "object",
+                                "null"
+                              ],
+                              "properties": {
+                                "StartRotate": {
+                                  "type": "number"
+                                },
+                                "StartRotateRandom": {
+                                  "type": "number"
+                                },
+                                "EndRotate": {
+                                  "type": "number"
+                                },
+                                "EndRotateRandom": {
+                                  "type": "number"
+                                }
+                              }
+                            },
+                            "Tank": {
+                              "type": [
+                                "object",
+                                "null"
+                              ],
+                              "properties": {
+                                "UpdateFlags": {
+                                  "type": "integer"
+                                },
+                                "EmitterFlags": {
+                                  "type": "integer"
+                                },
+                                "SourceBlend": {
+                                  "type": "integer"
+                                },
+                                "DestinationBlend": {
+                                  "type": "integer"
+                                },
+                                "VertexAlphaBlending": {
+                                  "type": "boolean"
+                                }
+                              }
+                            },
+                            "AdvPointList": {
+                              "type": [
+                                "object",
+                                "null"
+                              ],
+                              "properties": {
+                                "UseDirection": {
+                                  "type": "boolean"
+                                },
+                                "Random": {
+                                  "type": "boolean"
+                                },
+                                "PointList": {
+                                  "type": [
+                                    "array",
+                                    "null"
+                                  ],
+                                  "items": {
+                                    "$ref": "#/properties/clump/properties/frames/items/properties/frame/properties/rotationMatrix/items"
+                                  }
+                                },
+                                "DirectionList": {
+                                  "type": [
+                                    "array",
+                                    "null"
+                                  ],
+                                  "items": {
+                                    "$ref": "#/properties/clump/properties/frames/items/properties/frame/properties/rotationMatrix/items"
+                                  }
+                                }
+                              }
+                            },
+                            "AdvCircle": {
+                              "type": [
+                                "object",
+                                "null"
+                              ],
+                              "properties": {
+                                "Radius": {
+                                  "type": "number"
+                                },
+                                "RadiusGap": {
+                                  "type": "number"
+                                },
+                                "Height": {
+                                  "type": "number"
+                                },
+                                "UseCircleEmission": {
+                                  "type": "boolean"
+                                },
+                                "DirRotation": {
+                                  "type": "number"
+                                }
+                              }
+                            },
+                            "AdvSphere": {
+                              "type": [
+                                "object",
+                                "null"
+                              ],
+                              "properties": {
+                                "Radius": {
+                                  "type": "number"
+                                },
+                                "RadiusGap": {
+                                  "type": "number"
+                                },
+                                "UseSphereEmission": {
+                                  "type": "boolean"
+                                }
+                              }
+                            },
+                            "AdvEmittingEmitter": {
+                              "type": [
+                                "object",
+                                "null"
+                              ],
+                              "properties": {
+                                "Time": {
+                                  "type": "number"
+                                },
+                                "TimeBias": {
+                                  "type": "number"
+                                },
+                                "TimeGap": {
+                                  "type": "number"
+                                },
+                                "TimeGapBias": {
+                                  "type": "number"
+                                }
+                              }
+                            },
+                            "AdvMultiColor": {
+                              "type": [
+                                "object",
+                                "null"
+                              ],
+                              "properties": {
+                                "List": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "Time": {
+                                        "type": "number"
+                                      },
+                                      "TimeBias": {
+                                        "type": "number"
+                                      },
+                                      "MidColor": {
+                                        "type": "object",
+                                        "properties": {
+                                          "red": {
+                                            "type": "number"
+                                          },
+                                          "green": {
+                                            "type": "number"
+                                          },
+                                          "blue": {
+                                            "type": "number"
+                                          },
+                                          "alpha": {
+                                            "type": "number"
+                                          }
+                                        }
+                                      },
+                                      "MidColorBias": {
+                                        "type": "object",
+                                        "properties": {
+                                          "red": {
+                                            "type": "number"
+                                          },
+                                          "green": {
+                                            "type": "number"
+                                          },
+                                          "blue": {
+                                            "type": "number"
+                                          },
+                                          "alpha": {
+                                            "type": "number"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "AdvMultiTexCoords": {
+                              "type": [
+                                "object",
+                                "null"
+                              ],
+                              "properties": {
+                                "List": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "Time": {
+                                        "type": "number"
+                                      },
+                                      "TimeBias": {
+                                        "type": "number"
+                                      },
+                                      "MidUV0": {
+                                        "type": "object",
+                                        "properties": {
+                                          "u": {
+                                            "type": "number"
+                                          },
+                                          "v": {
+                                            "type": "number"
+                                          }
+                                        }
+                                      },
+                                      "MidUV0Bias": {
+                                        "type": "object",
+                                        "properties": {
+                                          "u": {
+                                            "type": "number"
+                                          },
+                                          "v": {
+                                            "type": "number"
+                                          }
+                                        }
+                                      },
+                                      "MidUV1": {
+                                        "type": "object",
+                                        "properties": {
+                                          "u": {
+                                            "type": "number"
+                                          },
+                                          "v": {
+                                            "type": "number"
+                                          }
+                                        }
+                                      },
+                                      "MidUV1Bias": {
+                                        "type": "object",
+                                        "properties": {
+                                          "u": {
+                                            "type": "number"
+                                          },
+                                          "v": {
+                                            "type": "number"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "AdvMultiSize": {
+                              "type": [
+                                "object",
+                                "null"
+                              ],
+                              "properties": {
+                                "List": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "Time": {
+                                        "type": "number"
+                                      },
+                                      "TimeBias": {
+                                        "type": "number"
+                                      },
+                                      "MidSize": {
+                                        "type": "object",
+                                        "properties": {
+                                          "x": {
+                                            "type": "number"
+                                          },
+                                          "y": {
+                                            "type": "number"
+                                          }
+                                        }
+                                      },
+                                      "MidSizeBias": {
+                                        "type": "object",
+                                        "properties": {
+                                          "x": {
+                                            "type": "number"
+                                          },
+                                          "y": {
+                                            "type": "number"
+                                          }
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "AdvMultiTexCoordsStep": {
+                              "type": [
+                                "object",
+                                "null"
+                              ],
+                              "properties": {
+                                "List": {
+                                  "$ref": "#/properties/clump/properties/atomics/items/properties/extension/properties/ParticleStandard/properties/Emitters/items/properties/AdvMultiTexCoords/properties/List"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "RightToRender": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "Identifier": {
+                        "type": "integer"
+                      },
+                      "ExtraData": {
+                        "type": "integer"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "geometries": {
+          "type": "array",
+          "items": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "morphTargets": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "vertices": {
+                      "type": [
+                        "array",
+                        "null"
+                      ],
+                      "items": {
+                        "$ref": "#/properties/clump/properties/frames/items/properties/frame/properties/rotationMatrix/items"
+                      }
+                    },
+                    "normals": {
+                      "type": [
+                        "array",
+                        "null"
+                      ],
+                      "items": {
+                        "$ref": "#/properties/clump/properties/frames/items/properties/frame/properties/rotationMatrix/items"
+                      }
+                    },
+                    "sphere": {
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        },
+                        "z": {
+                          "type": "number"
+                        },
+                        "radius": {
+                          "type": "number"
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "textureCoordinates": {
+                "type": "array",
+                "items": {
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "u": {
+                        "type": "number"
+                      },
+                      "v": {
+                        "type": "number"
+                      }
+                    }
+                  }
+                }
+              },
+              "format": {
+                "type": "object",
+                "properties": {
+                  "TriStrip": {
+                    "type": "boolean"
+                  },
+                  "Positions": {
+                    "type": "boolean"
+                  },
+                  "NumTextureCoordinates": {
+                    "type": "integer"
+                  },
+                  "PreLit": {
+                    "type": "boolean"
+                  },
+                  "Normals": {
+                    "type": "boolean"
+                  },
+                  "Light": {
+                    "type": "boolean"
+                  },
+                  "ModulateMaterialColor": {
+                    "type": "boolean"
+                  },
+                  "Native": {
+                    "type": "boolean"
+                  },
+                  "NativeInstance": {
+                    "type": "boolean"
+                  }
+                }
+              },
+              "triangles": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "v1": {
+                      "type": "integer"
+                    },
+                    "v2": {
+                      "type": "integer"
+                    },
+                    "v3": {
+                      "type": "integer"
+                    },
+                    "materialId": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              },
+              "materials": {
+                "type": "array",
+                "items": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "UnknownInt1": {
+                      "type": "integer"
+                    },
+                    "color": {
+                      "type": "object",
+                      "properties": {
+                        "red": {
+                          "type": "integer"
+                        },
+                        "green": {
+                          "type": "integer"
+                        },
+                        "blue": {
+                          "type": "integer"
+                        },
+                        "alpha": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "UnknownInt2": {
+                      "type": "integer"
+                    },
+                    "SurfaceProps": {
+                      "type": "object",
+                      "properties": {
+                        "ambient": {
+                          "type": "number"
+                        },
+                        "specular": {
+                          "type": "number"
+                        },
+                        "diffuse": {
+                          "type": "number"
+                        }
+                      }
+                    },
+                    "textures": {
+                      "type": "array",
+                      "items": {
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "texture": {
+                            "type": "string"
+                          },
+                          "TexPadding": {
+                            "$ref": "#/properties/clump/properties/atomics/items/properties/extension/properties/ParticleStandard/properties/Emitters/items/properties/EmitterStandard/properties/ParticleTexture/properties/TexPadding"
+                          },
+                          "textureAlpha": {
+                            "type": "string"
+                          },
+                          "TextureAlphaPadding": {
+                            "$ref": "#/properties/clump/properties/atomics/items/properties/extension/properties/ParticleStandard/properties/Emitters/items/properties/EmitterStandard/properties/ParticleTexture/properties/TextureAlphaPadding"
+                          },
+                          "FilterAddressing": {
+                            "type": "integer"
+                          },
+                          "UnusedInt1": {
+                            "type": "integer"
+                          },
+                          "extension": {
+                            "$ref": "#/properties/clump/properties/atomics/items/properties/extension/properties/ParticleStandard/properties/Emitters/items/properties/EmitterStandard/properties/ParticleTexture/properties/extension"
+                          }
+                        }
+                      }
+                    },
+                    "extension": {
+                      "type": "object",
+                      "properties": {
+                        "userDataPLG": {
+                          "type": [
+                            "object",
+                            "null"
+                          ]
+                        },
+                        "MaterialFXMat": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "Data1": {
+                              "type": "object",
+                              "properties": {
+                                "Type": true,
+                                "Texture1": {
+                                  "type": [
+                                    "object",
+                                    "null"
+                                  ],
+                                  "properties": {
+                                    "texture": {
+                                      "type": "string"
+                                    },
+                                    "TexPadding": {
+                                      "$ref": "#/properties/clump/properties/atomics/items/properties/extension/properties/ParticleStandard/properties/Emitters/items/properties/EmitterStandard/properties/ParticleTexture/properties/TexPadding"
+                                    },
+                                    "textureAlpha": {
+                                      "type": "string"
+                                    },
+                                    "TextureAlphaPadding": {
+                                      "$ref": "#/properties/clump/properties/atomics/items/properties/extension/properties/ParticleStandard/properties/Emitters/items/properties/EmitterStandard/properties/ParticleTexture/properties/TextureAlphaPadding"
+                                    },
+                                    "FilterAddressing": {
+                                      "type": "integer"
+                                    },
+                                    "UnusedInt1": {
+                                      "type": "integer"
+                                    },
+                                    "extension": {
+                                      "$ref": "#/properties/clump/properties/atomics/items/properties/extension/properties/ParticleStandard/properties/Emitters/items/properties/EmitterStandard/properties/ParticleTexture/properties/extension"
+                                    }
+                                  }
+                                },
+                                "Texture2": {
+                                  "type": [
+                                    "object",
+                                    "null"
+                                  ],
+                                  "properties": {
+                                    "texture": {
+                                      "type": "string"
+                                    },
+                                    "TexPadding": {
+                                      "$ref": "#/properties/clump/properties/atomics/items/properties/extension/properties/ParticleStandard/properties/Emitters/items/properties/EmitterStandard/properties/ParticleTexture/properties/TexPadding"
+                                    },
+                                    "textureAlpha": {
+                                      "type": "string"
+                                    },
+                                    "TextureAlphaPadding": {
+                                      "$ref": "#/properties/clump/properties/atomics/items/properties/extension/properties/ParticleStandard/properties/Emitters/items/properties/EmitterStandard/properties/ParticleTexture/properties/TextureAlphaPadding"
+                                    },
+                                    "FilterAddressing": {
+                                      "type": "integer"
+                                    },
+                                    "UnusedInt1": {
+                                      "type": "integer"
+                                    },
+                                    "extension": {
+                                      "$ref": "#/properties/clump/properties/atomics/items/properties/extension/properties/ParticleStandard/properties/Emitters/items/properties/EmitterStandard/properties/ParticleTexture/properties/extension"
+                                    }
+                                  }
+                                },
+                                "Coefficient": {
+                                  "type": [
+                                    "number",
+                                    "null"
+                                  ]
+                                },
+                                "FrameBufferAlpha": {
+                                  "type": [
+                                    "boolean",
+                                    "null"
+                                  ]
+                                },
+                                "SrcBlendMode": true,
+                                "DstBlendMode": true
+                              }
+                            },
+                            "Data2": {
+                              "type": "object",
+                              "properties": {
+                                "Type": true,
+                                "Texture1": {
+                                  "$ref": "#/properties/clump/properties/geometries/items/properties/materials/items/properties/extension/properties/MaterialFXMat/properties/Data1/properties/Texture1"
+                                },
+                                "Texture2": {
+                                  "$ref": "#/properties/clump/properties/geometries/items/properties/materials/items/properties/extension/properties/MaterialFXMat/properties/Data1/properties/Texture2"
+                                },
+                                "Coefficient": {
+                                  "type": [
+                                    "number",
+                                    "null"
+                                  ]
+                                },
+                                "FrameBufferAlpha": {
+                                  "type": [
+                                    "boolean",
+                                    "null"
+                                  ]
+                                },
+                                "SrcBlendMode": true,
+                                "DstBlendMode": true
+                              }
+                            },
+                            "Flags": true
+                          }
+                        },
+                        "RightToRender": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "Identifier": {
+                              "type": "integer"
+                            },
+                            "ExtraData": {
+                              "type": "integer"
+                            }
+                          }
+                        },
+                        "MaterialUVAnim": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "Name": {
+                              "type": "array",
+                              "items": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "preLitLum": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "red": {
+                      "type": "integer"
+                    },
+                    "green": {
+                      "type": "integer"
+                    },
+                    "blue": {
+                      "type": "integer"
+                    },
+                    "alpha": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              },
+              "extension": {
+                "type": "object",
+                "properties": {
+                  "userDataPLG": {
+                    "type": [
+                      "object",
+                      "null"
+                    ]
+                  },
+                  "BinMeshPLG": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "Flags": {
+                        "type": "object",
+                        "properties": {
+                          "UnIndexed": {
+                            "type": "boolean"
+                          },
+                          "Type": true
+                        }
+                      },
+                      "Meshes": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "MaterialIndex": {
+                              "type": "integer"
+                            },
+                            "VertexIndices": {
+                              "type": "array",
+                              "items": {
+                                "type": "integer"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "SkinPLG": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "MaxWeight": {
+                        "type": "integer"
+                      },
+                      "UsedBones": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer"
+                        }
+                      },
+                      "VertexBoneIndices": {
+                        "type": "array",
+                        "items": {
+                          "type": "integer"
+                        }
+                      },
+                      "VertexBoneWeights": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "w0": {
+                              "type": "number"
+                            },
+                            "w1": {
+                              "type": "number"
+                            },
+                            "w2": {
+                              "type": "number"
+                            },
+                            "w3": {
+                              "type": "number"
+                            }
+                          }
+                        }
+                      },
+                      "SkinToBoneMatrices": {
+                        "type": "array",
+                        "items": {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "Pad1": {
+                              "type": "integer"
+                            },
+                            "Pad2": {
+                              "type": "integer"
+                            },
+                            "Pad3": {
+                              "type": "integer"
+                            },
+                            "Right": {
+                              "type": "object",
+                              "properties": {
+                                "x": {
+                                  "type": "number"
+                                },
+                                "y": {
+                                  "type": "number"
+                                },
+                                "z": {
+                                  "type": "number"
+                                }
+                              }
+                            },
+                            "Up": {
+                              "type": "object",
+                              "properties": {
+                                "x": {
+                                  "type": "number"
+                                },
+                                "y": {
+                                  "type": "number"
+                                },
+                                "z": {
+                                  "type": "number"
+                                }
+                              }
+                            },
+                            "At": {
+                              "type": "object",
+                              "properties": {
+                                "x": {
+                                  "type": "number"
+                                },
+                                "y": {
+                                  "type": "number"
+                                },
+                                "z": {
+                                  "type": "number"
+                                }
+                              }
+                            },
+                            "Pos": {
+                              "type": "object",
+                              "properties": {
+                                "x": {
+                                  "type": "number"
+                                },
+                                "y": {
+                                  "type": "number"
+                                },
+                                "z": {
+                                  "type": "number"
+                                }
+                              }
+                            },
+                            "Flags": {
+                              "type": "object",
+                              "properties": {
+                                "Normal": {
+                                  "type": "boolean"
+                                },
+                                "Orthogonal": {
+                                  "type": "boolean"
+                                },
+                                "Identity": {
+                                  "type": "boolean"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      "SplitData": {
+                        "type": "object",
+                        "properties": {
+                          "BoneLimit": {
+                            "type": "integer"
+                          },
+                          "MeshBoneRemapIndices": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "items": {
+                              "type": "integer"
+                            }
+                          },
+                          "MeshBoneRLECount": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "items": {
+                              "type": "integer"
+                            }
+                          },
+                          "MeshBoneRLE": {
+                            "type": [
+                              "array",
+                              "null"
+                            ],
+                            "items": {
+                              "type": "integer"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "MorphPLG": {
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "Interpolators": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "Flags": {
+                              "type": "integer"
+                            },
+                            "StartMorphTarget": {
+                              "type": "integer"
+                            },
+                            "EndMorphTarget": {
+                              "type": "integer"
+                            },
+                            "Time": {
+                              "type": "number"
+                            },
+                            "NextMorphTarget": {
+                              "type": "integer"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "extension": {
+          "type": "object"
+        }
+      }
+    },
+    "UVAnimDict": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "Name": {
+            "type": "string"
+          },
+          "NodeToUVChannelMap": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "ParamKeyFrames": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "object",
+              "properties": {
+                "Time": {
+                  "type": "number"
+                },
+                "Thetha": {
+                  "type": "number"
+                },
+                "S0": {
+                  "type": "number"
+                },
+                "S1": {
+                  "type": "number"
+                },
+                "Skew": {
+                  "type": "number"
+                },
+                "X": {
+                  "type": "number"
+                },
+                "Y": {
+                  "type": "number"
+                },
+                "PrevKeyFrame": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "LinearKeyFrames": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "object",
+              "properties": {
+                "Time": {
+                  "type": "number"
+                },
+                "Right": {
+                  "type": "object",
+                  "properties": {
+                    "x": {
+                      "type": "number"
+                    },
+                    "y": {
+                      "type": "number"
+                    }
+                  }
+                },
+                "Up": {
+                  "type": "object",
+                  "properties": {
+                    "x": {
+                      "type": "number"
+                    },
+                    "y": {
+                      "type": "number"
+                    }
+                  }
+                },
+                "Pos": {
+                  "type": "object",
+                  "properties": {
+                    "x": {
+                      "type": "number"
+                    },
+                    "y": {
+                      "type": "number"
+                    }
+                  }
+                },
+                "PrevKeyFrame": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "InterpolatorTypeId": {
+            "type": "integer"
+          },
+          "Flags": {
+            "type": "integer"
+          },
+          "Duration": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "CompressedAnim": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "Offset": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "z": {
+              "type": "number"
+            }
+          }
+        },
+        "Scalar": {
+          "type": "object",
+          "properties": {
+            "x": {
+              "type": "number"
+            },
+            "y": {
+              "type": "number"
+            },
+            "z": {
+              "type": "number"
+            }
+          }
+        },
+        "KeyFrames": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "Time": {
+                "type": "number"
+              },
+              "QX": {
+                "type": "number"
+              },
+              "QY": {
+                "type": "number"
+              },
+              "QZ": {
+                "type": "number"
+              },
+              "QR": {
+                "type": "number"
+              },
+              "TX": {
+                "type": "number"
+              },
+              "TY": {
+                "type": "number"
+              },
+              "TZ": {
+                "type": "number"
+              },
+              "PrevKeyFrame": {
+                "type": "integer"
+              }
+            }
+          }
+        },
+        "InterpolatorTypeId": {
+          "type": "integer"
+        },
+        "Flags": {
+          "type": "integer"
+        },
+        "Duration": {
+          "type": "number"
+        }
+      }
+    },
+    "HierarchicalAnim": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "KeyFrames": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "Time": {
+                "type": "number"
+              },
+              "Q": {
+                "type": "object",
+                "properties": {
+                  "Imaginary": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "number"
+                      },
+                      "y": {
+                        "type": "number"
+                      },
+                      "z": {
+                        "type": "number"
+                      }
+                    }
+                  },
+                  "Real": {
+                    "type": "number"
+                  }
+                }
+              },
+              "T": {
+                "type": "object",
+                "properties": {
+                  "x": {
+                    "type": "number"
+                  },
+                  "y": {
+                    "type": "number"
+                  },
+                  "z": {
+                    "type": "number"
+                  }
+                }
+              },
+              "PrevKeyFrame": {
+                "type": "integer"
+              }
+            }
+          }
+        },
+        "InterpolatorTypeId": {
+          "type": "integer"
+        },
+        "Flags": {
+          "type": "integer"
+        },
+        "Duration": {
+          "type": "number"
+        }
+      }
+    },
+    "BuildNum": {
+      "type": "integer"
+    },
+    "VersionNum": {
+      "type": "integer"
+    },
+    "ConvertRadians": {
+      "type": "boolean"
+    }
+  }
+}
