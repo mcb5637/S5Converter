@@ -476,91 +476,103 @@ namespace S5Converter
             if (hlist.Parents != null && hlist.Parents.Length != hlist.Nodes.Length)
                 throw new IOException("hanim parents length missmatch");
 
-            for (int i = 0; i < hlist.Nodes.Length; i++)
-            {
-                hlist.Nodes[i].Flags.HasChildren = false;
-                hlist.Nodes[i].Flags.LastSibling = false;
-                hlist.Nodes[i].NodeIndex = i;
-            }
-
+            ClearFlags(hlist);
             List<HInfo> hier = [];
-            for (int i = 0; i < frames.Length; ++i)
-            {
-                FrameWithExt f = frames[i];
-                Node? n = null;
-                int? nid = null;
-                if (f.Extension.HanimPLG != null)
-                {
-                    nid = f.Extension.HanimPLG.NodeID;
-                    n = hlist.Nodes.FirstOrDefault(x => x.NodeID == f.Extension.HanimPLG.NodeID);
-                    if (n == null)
-                        throw new IOException($"hanim frame with node id {nid.Value} has no hierarchy info");
-                }
-                hier.Add(new()
-                {
-                    F = f,
-                    N = n,
-                    FrameIndex = i,
-                    NodeId = nid,
-                });
-            }
-            foreach (Node n in hlist.Nodes)
-            {
-                if (!hier.Any(x => x.NodeId == n.NodeID))
-                    throw new IOException($"hanim hierarchy info {n.NodeID} has no frame");
-            }
-            foreach (HInfo i in hier)
-            {
-                if (i.NodeId == null)
-                    continue;
-                HInfo? p;
-                if (hlist.Parents != null && i.N != null)
-                    p = hier.FirstOrDefault(x => x.N?.NodeIndex == hlist.Parents[i.N.NodeIndex]);
-                else
-                    p = hier.FirstOrDefault(x => x.FrameIndex == i.F.Frame.ParentFrameIndex);
-                if (p == null)
-                    continue;
-                if (p.NodeId == null)
-                    continue;
-                i.Parent = p;
-                p.Children.Add(i);
-            }
-            foreach (HInfo i in hier)
-            {
-                i.Children.Sort((c1, c2) => c1.NodeIndexSave.CompareTo(c2.NodeIndexSave));
-            }
-            if (RebuildNodes(hier.First(x => x.F == hierlist), 0, hlist.Nodes) != hlist.Nodes.Length)
-                throw new IOException("hierarchy rebuild messed up");
-            foreach (HInfo i in hier)
-            {
-                if (i.N == null)
-                    continue;
-                if (i.Children.Count > 0)
-                {
-                    i.N.Flags.HasChildren = true;
-                    HInfo lastch = i.Children[^1];
-                    lastch.N!.Flags.LastSibling = true;
-                }
-            }
-            foreach (HInfo i in hier)
-            {
-                if (i.Parent == null && i.N != null)
-                    i.N.Flags.LastSibling = true;
-            }
+            BuildBasicHierarchy(frames, hlist, hier);
+            CheckEverythingHasFrame(hlist, hier);
+            BuildChildren(hlist, hier);
+            RebuildNodes(hierlist, hlist, hier);
             if (hlist.Parents != null)
-            {
                 BuildParents(hlist.Nodes, hlist.Parents);
-            }
 
-            static int RebuildNodes(HInfo h, int i, Node[] nodes)
+
+            static void RebuildNodes(FrameWithExt hierlist, RpHAnimHierarchy hlist, List<HInfo> hier)
             {
-                if (h.N == null)
-                    throw new IOException($"hanim rebuild node {h.FrameIndex} missing node???");
-                nodes[i] = h.N;
-                ++i;
-                foreach (HInfo c in h.Children)
-                    i = RebuildNodes(c, i, nodes);
-                return i;
+                if (RebuildNodeOrder(hier.First(x => x.F == hierlist), 0, hlist.Nodes) != hlist.Nodes.Length)
+                    throw new IOException("hierarchy rebuild messed up");
+                foreach (HInfo i in hier)
+                {
+                    if (i.Parent == null && i.N != null)
+                        i.N.Flags.LastSibling = true;
+                }
+
+                static int RebuildNodeOrder(HInfo h, int i, Node[] nodes)
+                {
+                    if (h.N == null)
+                        throw new IOException($"hanim rebuild node {h.FrameIndex} missing node???");
+                    nodes[i] = h.N;
+                    ++i;
+                    if (h.Children.Count > 0)
+                    {
+                        h.N.Flags.HasChildren = true;
+                        foreach (HInfo c in h.Children)
+                            i = RebuildNodeOrder(c, i, nodes);
+                        h.Children[^1].N!.Flags.LastSibling = true;
+                    }
+                    return i;
+                }
+            }
+            static void BuildBasicHierarchy(FrameWithExt[] frames, RpHAnimHierarchy hlist, List<HInfo> hier)
+            {
+                for (int i = 0; i < frames.Length; ++i)
+                {
+                    FrameWithExt f = frames[i];
+                    Node? n = null;
+                    int? nid = null;
+                    if (f.Extension.HanimPLG != null)
+                    {
+                        nid = f.Extension.HanimPLG.NodeID;
+                        n = hlist.Nodes.FirstOrDefault(x => x.NodeID == f.Extension.HanimPLG.NodeID);
+                        if (n == null)
+                            throw new IOException($"hanim frame with node id {nid.Value} has no hierarchy info");
+                    }
+                    hier.Add(new()
+                    {
+                        F = f,
+                        N = n,
+                        FrameIndex = i,
+                        NodeId = nid,
+                    });
+                }
+            }
+            static void BuildChildren(RpHAnimHierarchy hlist, List<HInfo> hier)
+            {
+                foreach (HInfo i in hier)
+                {
+                    if (i.NodeId == null)
+                        continue;
+                    HInfo? p;
+                    if (hlist.Parents != null && i.N != null)
+                        p = hier.FirstOrDefault(x => x.N?.NodeIndex == hlist.Parents[i.N.NodeIndex]);
+                    else
+                        p = hier.FirstOrDefault(x => x.FrameIndex == i.F.Frame.ParentFrameIndex);
+                    if (p == null)
+                        continue;
+                    if (p.NodeId == null)
+                        continue;
+                    i.Parent = p;
+                    p.Children.Add(i);
+                }
+                // sort children to preserve old hanim node order, whenever possible
+                foreach (HInfo i in hier)
+                    i.Children.Sort((c1, c2) => c1.NodeIndexSave.CompareTo(c2.NodeIndexSave));
+            }
+            static void CheckEverythingHasFrame(RpHAnimHierarchy hlist, List<HInfo> hier)
+            {
+                foreach (Node n in hlist.Nodes)
+                {
+                    if (!hier.Any(x => x.NodeId == n.NodeID))
+                        throw new IOException($"hanim hierarchy info {n.NodeID} has no frame");
+                }
+            }
+            static void ClearFlags(RpHAnimHierarchy hlist)
+            {
+                for (int i = 0; i < hlist.Nodes.Length; i++)
+                {
+                    hlist.Nodes[i].Flags.HasChildren = false;
+                    hlist.Nodes[i].Flags.LastSibling = false;
+                    hlist.Nodes[i].NodeIndex = i;
+                }
             }
         }
     }
