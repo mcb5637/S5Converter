@@ -401,20 +401,25 @@ namespace S5Converter
                         },
                     };
                 }
-                int last = BuildParents(r.Nodes, r.Parents, 0, -1);
-                if (last != boneCount - 1)
-                    Console.Error.WriteLine("hanim hierarchy messed up, check before using");
+                BuildParents(r.Nodes, r.Parents);
             }
             return r;
+        }
 
-            static int BuildParents(Node[] n, int[] p, int i, int c)
+        private static void BuildParents(Node[] n, int[] p)
+        {
+            int last = Build(n, p, 0, -1);
+            if (last != p.Length - 1)
+                Console.Error.WriteLine("hanim hierarchy messed up, check before using");
+
+            static int Build(Node[] n, int[] p, int i, int c)
             {
                 for (; i < n.Length; ++i)
                 {
                     p[i] = c;
                     bool lsib = n[i].Flags.LastSibling;
                     if (n[i].Flags.HasChildren)
-                        i = BuildParents(n, p, i + 1, i);
+                        i = Build(n, p, i + 1, i);
                     if (lsib)
                         return i;
                 }
@@ -458,6 +463,8 @@ namespace S5Converter
             internal required int? NodeId;
             internal List<HInfo> Children = [];
             internal HInfo? Parent = null;
+
+            internal int NodeIndexSave => N?.NodeIndex ?? -1;
         }
         internal static void RebuildNodeHierarchy(FrameWithExt[] frames)
         {
@@ -479,17 +486,28 @@ namespace S5Converter
             List<HInfo> hier = [];
             for (int i = 0; i < frames.Length; ++i)
             {
-                var f = frames[i];
+                FrameWithExt f = frames[i];
                 Node? n = null;
+                int? nid = null;
                 if (f.Extension.HanimPLG != null)
+                {
+                    nid = f.Extension.HanimPLG.NodeID;
                     n = hlist.Nodes.FirstOrDefault(x => x.NodeID == f.Extension.HanimPLG.NodeID);
+                    if (n == null)
+                        throw new IOException($"hanim frame with node id {nid.Value} has no hierarchy info");
+                }
                 hier.Add(new()
                 {
                     F = f,
                     N = n,
                     FrameIndex = i,
-                    NodeId = f.Extension.HanimPLG?.NodeID,
+                    NodeId = nid,
                 });
+            }
+            foreach (Node n in hlist.Nodes)
+            {
+                if (!hier.Any(x => x.NodeId == n.NodeID))
+                    throw new IOException($"hanim hierarchy info {n.NodeID} has no frame");
             }
             foreach (HInfo i in hier)
             {
@@ -509,12 +527,18 @@ namespace S5Converter
             }
             foreach (HInfo i in hier)
             {
+                i.Children.Sort((c1, c2) => c1.NodeIndexSave.CompareTo(c2.NodeIndexSave));
+            }
+            if (RebuildNodes(hier.First(x => x.F == hierlist), 0, hlist.Nodes) != hlist.Nodes.Length)
+                throw new IOException("hierarchy rebuild messed up");
+            foreach (HInfo i in hier)
+            {
                 if (i.N == null)
                     continue;
                 if (i.Children.Count > 0)
                 {
                     i.N.Flags.HasChildren = true;
-                    HInfo lastch = i.Children.OrderBy(x => x.N?.NodeIndex ?? -1).Last();
+                    HInfo lastch = i.Children[^1];
                     lastch.N!.Flags.LastSibling = true;
                 }
             }
@@ -522,6 +546,21 @@ namespace S5Converter
             {
                 if (i.Parent == null && i.N != null)
                     i.N.Flags.LastSibling = true;
+            }
+            if (hlist.Parents != null)
+            {
+                BuildParents(hlist.Nodes, hlist.Parents);
+            }
+
+            static int RebuildNodes(HInfo h, int i, Node[] nodes)
+            {
+                if (h.N == null)
+                    throw new IOException($"hanim rebuild node {h.FrameIndex} missing node???");
+                nodes[i] = h.N;
+                ++i;
+                foreach (HInfo c in h.Children)
+                    i = RebuildNodes(c, i, nodes);
+                return i;
             }
         }
     }
