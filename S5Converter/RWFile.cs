@@ -29,9 +29,9 @@ namespace S5Converter
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public RpHierarchicalAnim? HierarchicalAnim;
         [JsonInclude]
-        public UInt32 BuildNum = ChunkHeader.DefaultBuildNum;
+        public uint BuildNum = ChunkHeader.DefaultBuildNum;
         [JsonInclude]
-        public UInt32 VersionNum = ChunkHeader.rwLIBRARYCURRENTVERSION;
+        public uint VersionNum = ChunkHeader.rwLIBRARYCURRENTVERSION;
         [JsonInclude]
         public bool ConvertRadians;
 

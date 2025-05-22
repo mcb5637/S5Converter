@@ -5,9 +5,9 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace S5Converter
+namespace S5Converter.Atomic
 {
-    internal class Atomic : IJsonOnDeserialized
+    internal class RpAtomic
     {
         public struct AtomicFlagsS
         {
@@ -39,31 +39,26 @@ namespace S5Converter
             }
         }
         [JsonPropertyName("frameIndex")]
-        [JsonInclude]
-        public int FrameIndex;
+        public required int FrameIndex;
         [JsonPropertyName("geometryIndex")]
-        [JsonInclude]
-        public int GeometryIndex;
-        [JsonInclude]
-        public AtomicFlagsS Flags;
-        [JsonInclude]
-        public int UnknownInt1;
+        public required int GeometryIndex;
+        public AtomicFlagsS Flags = new() { Flags = AtomicFlagsS.AtomicFlags.None };
+        public int UnknownInt1 = 0;
 
         [JsonPropertyName("extension")]
-        [JsonInclude]
         public AtomicExtension Extension = new();
 
         internal int Size => ChunkHeader.Size + sizeof(int) * 4 + Extension.SizeH(this);
         internal int SizeH => Size + ChunkHeader.Size;
 
 
-        internal static Atomic Read(BinaryReader s, bool header, bool convertRad)
+        internal static RpAtomic Read(BinaryReader s, bool header, bool convertRad)
         {
             if (header)
                 ChunkHeader.FindChunk(s, RwCorePluginID.ATOMIC);
             if (ChunkHeader.FindChunk(s, RwCorePluginID.STRUCT).Length != 4 * sizeof(int))
                 throw new IOException("atomic read invalid struct length");
-            Atomic a = new()
+            RpAtomic a = new()
             {
                 FrameIndex = s.ReadInt32(),
                 GeometryIndex = s.ReadInt32(),
@@ -78,7 +73,7 @@ namespace S5Converter
             return a;
         }
 
-        internal void Write(BinaryWriter s, bool header, bool convertRad, UInt32 versionNum, UInt32 buildNum)
+        internal void Write(BinaryWriter s, bool header, bool convertRad, uint versionNum, uint buildNum)
         {
             if (header)
             {
@@ -104,29 +99,22 @@ namespace S5Converter
             Extension.ConvertRadians = convertRad;
             Extension.Write(s, this, versionNum, buildNum);
         }
-        public void OnDeserialized()
-        {
-            Extension ??= new();
-        }
     }
 
-    internal class AtomicExtension : Extension<Atomic>
+    internal class AtomicExtension : Extension<RpAtomic>
     {
-        [JsonInclude]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public bool? MaterialFXAtomic_EffectsEnabled;
+        public bool? MaterialFXAtomic_EffectsEnabled = null;
 
-        [JsonInclude]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public ParticleStandard? ParticleStandard;
+        public ParticleStandard? ParticleStandard = null;
 
-        [JsonInclude]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public RightToRender? RightToRender;
+        public RightToRender? RightToRender = null;
 
-        internal bool ConvertRadians;
+        internal bool ConvertRadians = true;
 
-        internal override int Size(Atomic obj)
+        internal override int Size(RpAtomic obj)
         {
             int r = 0;
             if (MaterialFXAtomic_EffectsEnabled != null)
@@ -138,7 +126,7 @@ namespace S5Converter
             return r;
         }
 
-        internal override bool TryRead(BinaryReader s, ref ChunkHeader h, Atomic obj)
+        internal override bool TryRead(BinaryReader s, ref ChunkHeader h, RpAtomic obj)
         {
             switch (h.Type)
             {
@@ -157,7 +145,7 @@ namespace S5Converter
             return true;
         }
 
-        internal override void WriteExt(BinaryWriter s, Atomic obj, UInt32 versionNum, UInt32 buildNum)
+        internal override void WriteExt(BinaryWriter s, RpAtomic obj, uint versionNum, uint buildNum)
         {
             RightToRender?.Write(s, true, versionNum, buildNum);
             if (MaterialFXAtomic_EffectsEnabled != null)

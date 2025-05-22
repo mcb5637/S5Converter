@@ -1,4 +1,5 @@
-﻿using System;
+﻿using S5Converter.Atomic;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,6 +18,9 @@ namespace S5Converter
             {
                 TypeInfoResolver = SourceGenerationContext.Default,
                 WriteIndented = true,
+                IncludeFields = true,
+                UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
+                RespectNullableAnnotations = true,
             };
             if (args.Length >= 1 && args[0] == "--encodeFloatAsInt")
             {
@@ -66,6 +70,7 @@ namespace S5Converter
             }
             else if (args.Length >= 2 && args[0] == "--checkRoundTrip")
             {
+                opt.WriteIndented = false;
                 for (int i = 1; i < args.Length; ++i)
                     CheckRoundTrip(args[i], opt);
                 Console.Error.WriteLine("done, press enter to exit");
@@ -130,7 +135,7 @@ namespace S5Converter
                         using BinaryReader r = new(new FileStream(f.FullName, FileMode.Open, FileAccess.Read));
                         RWFile d = RWFile.Read(r, true);
                         int emid = 0;
-                        foreach (Atomic a in d.Clp!.Atomics)
+                        foreach (RpAtomic a in d.Clp!.Atomics)
                         {
                             if (a.Extension.ParticleStandard != null)
                             {

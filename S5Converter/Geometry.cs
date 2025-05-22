@@ -1,4 +1,6 @@
-﻿using System;
+﻿using S5Converter.Atomic;
+using S5Converter.CommonExtensions;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -523,17 +525,17 @@ namespace S5Converter
         public Vec3[]? Normals;
         [JsonPropertyName("sphere")]
         [JsonInclude]
-        public Sphere BoundingSphere;
+        public RwSphere BoundingSphere;
 
         internal readonly int NumVerts => Verts?.Length ?? Normals?.Length ?? 0;
 
-        internal readonly int Size => (Verts?.Length ?? 0) * Vec3.Size + (Normals?.Length ?? 0) * Vec3.Size + Sphere.Size + sizeof(int) * 2;
+        internal readonly int Size => (Verts?.Length ?? 0) * Vec3.Size + (Normals?.Length ?? 0) * Vec3.Size + RwSphere.Size + sizeof(int) * 2;
 
         internal static MorphTarget Read(BinaryReader s, int numVert)
         {
             MorphTarget r = new()
             {
-                BoundingSphere = Sphere.Read(s),
+                BoundingSphere = RwSphere.Read(s),
             };
             bool hasverts = s.ReadInt32() != 0;
             bool hasnorm = s.ReadInt32() != 0;

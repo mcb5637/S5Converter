@@ -8,14 +8,12 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace S5Converter
+namespace S5Converter.Atomic
 {
     internal class ParticleStandard
     {
-        [JsonInclude]
-        public int Flags;
-        [JsonInclude]
-        public RpPrtStdEmitter[] Emitters = [];
+        public required int Flags;
+        public required RpPrtStdEmitter[] Emitters = [];
 
         internal int Size => sizeof(int) + Emitters.Sum(x => x.GetSize(Flags));
         internal int SizeH => Size + ChunkHeader.Size;
@@ -36,7 +34,7 @@ namespace S5Converter
             return r;
         }
 
-        internal void Write(BinaryWriter s, bool header, bool convertRad, UInt32 versionNum, UInt32 buildNum)
+        internal void Write(BinaryWriter s, bool header, bool convertRad, uint versionNum, uint buildNum)
         {
             if (header)
             {
@@ -56,60 +54,41 @@ namespace S5Converter
 
     internal class RpPrtStdEmitter : IJsonOnDeserialized
     {
-        public int EmitterClassId = 0;
-        [JsonInclude]
-        public int EmitterFlags = 0;
-        public int ParticleClassId = 0;
-        [JsonInclude]
-        public int MaxParticlesPerBatch = 0;
+        internal int EmitterClassId = 0;
+        public required int EmitterFlags = 0;
+        internal int ParticleClassId = 0;
+        public required int MaxParticlesPerBatch = 0;
 
-        public RpPrtStdPropertyTable<ParticleProperties> ParticleProps = new();
-        public RpPrtStdPropertyTable<EmitterProperties> EmitterProps = new();
-        public RpPrtStdParticleClass ParticleClass = new();
-        public RpPrtStdEmitterClass EmitterClass = new();
+        internal RpPrtStdPropertyTable<ParticleProperties> ParticleProps = new();
+        internal RpPrtStdPropertyTable<EmitterProperties> EmitterProps = new();
+        internal RpPrtStdParticleClass ParticleClass = new();
+        internal RpPrtStdEmitterClass EmitterClass = new();
 
-        [JsonInclude]
         public int ParticlePropsId
         {
             get => ParticleClass.PropertyId;
             set => ParticleClass.PropertyId = value;
         }
-        [JsonInclude]
         public int EmitterPropsId
         {
             get => EmitterClass.PropertyId;
             set => EmitterClass.PropertyId = value;
         }
 
-        [JsonInclude]
         public RpPrtStdEmitterStandard? EmitterStandard;
-        [JsonInclude]
         public RpPrtStdEmitterPrtColor? Color;
-        [JsonInclude]
         public RpPrtStdEmitterPrtTexCoords? TextureCoordinates;
-        [JsonInclude]
         public RpPrtStdEmitterPrtMatrix? Matrix;
-        [JsonInclude]
         public RpPrtStdEmitterPrtSize? ParticleSize;
-        [JsonInclude]
         public RpPrtStdEmitterPrt2DRotate? Rotate;
-        [JsonInclude]
         public RpPrtStdEmitterPTank? Tank;
-        [JsonInclude]
         public RpPrtAdvEmtPointList? AdvPointList;
-        [JsonInclude]
         public RpPrtAdvEmtCircle? AdvCircle;
-        [JsonInclude]
         public RpPrtAdvEmtSphere? AdvSphere;
-        [JsonInclude]
         public RpPrtAdvEmtPrtEmt? AdvEmittingEmitter;
-        [JsonInclude]
         public RpPrtAdvEmtPrtMultiColor? AdvMultiColor;
-        [JsonInclude]
         public RpPrtAdvEmtPrtMultiTexCoords? AdvMultiTexCoords;
-        [JsonInclude]
         public RpPrtAdvEmtPrtMultiSize? AdvMultiSize;
-        [JsonInclude]
         public RpPrtAdvEmtPrtMultiTexCoords? AdvMultiTexCoordsStep;
 
 
@@ -350,7 +329,7 @@ namespace S5Converter
             return r;
         }
 
-        internal void Write(BinaryWriter s, int flags, bool convertRad, UInt32 versionNum, UInt32 buildNum)
+        internal void Write(BinaryWriter s, int flags, bool convertRad, uint versionNum, uint buildNum)
         {
             s.Write(EmitterClassId);
             s.Write(EmitterFlags);
@@ -496,12 +475,9 @@ namespace S5Converter
     internal class RpPrtStdPropertyTable<Properties> where Properties : Enum
     {
 
-        [JsonInclude]
-        public int Id = 0;
-        [JsonInclude]
-        public Properties[] Ids = [];
-        [JsonInclude]
-        public int[] Stride = [];
+        internal int Id = 0;
+        internal Properties[] Ids = [];
+        internal int[] Stride = [];
 
 
         internal int Size => sizeof(int) * 2 + Ids.Length * 2 * sizeof(int);
@@ -525,7 +501,7 @@ namespace S5Converter
             return r;
         }
 
-        internal void Write(BinaryWriter s, bool header, UInt32 versionNum, UInt32 buildNum)
+        internal void Write(BinaryWriter s, bool header, uint versionNum, uint buildNum)
         {
             if (header)
             {
@@ -550,10 +526,8 @@ namespace S5Converter
 
     internal class RpPrtStdParticleClass
     {
-        [JsonInclude]
-        public int Id = 0;
-        [JsonInclude]
-        public int PropertyId = 0;
+        internal int Id = 0;
+        internal int PropertyId = 0;
 
         internal const int Size = sizeof(int) * 2;
         internal const int SizeH = Size + ChunkHeader.Size;
@@ -570,7 +544,7 @@ namespace S5Converter
             return r;
         }
 
-        internal void Write(BinaryWriter s, bool header, UInt32 versionNum, UInt32 buildNum)
+        internal void Write(BinaryWriter s, bool header, uint versionNum, uint buildNum)
         {
             if (header)
             {
@@ -589,10 +563,8 @@ namespace S5Converter
 
     internal class RpPrtStdEmitterClass
     {
-        [JsonInclude]
-        public int Id = 0;
-        [JsonInclude]
-        public int PropertyId = 0;
+        internal int Id = 0;
+        internal int PropertyId = 0;
 
         internal const int Size = sizeof(int) * 2;
         internal const int SizeH = Size + ChunkHeader.Size;
@@ -609,7 +581,7 @@ namespace S5Converter
             return r;
         }
 
-        internal void Write(BinaryWriter s, bool header, UInt32 versionNum, UInt32 buildNum)
+        internal void Write(BinaryWriter s, bool header, uint versionNum, uint buildNum)
         {
             if (header)
             {
@@ -628,47 +600,28 @@ namespace S5Converter
 
     internal class RpPrtStdEmitterStandard
     {
-        [JsonInclude]
-        public int Seed;
-        [JsonInclude]
-        public int MaxParticles;
-        [JsonInclude]
-        public Vec3 Force = new();
-        [JsonInclude]
-        public Vec3 EmitterPosition = new();
-        [JsonInclude]
-        public Vec3 EmitterSize = new();
-        [JsonInclude]
-        public float TimeBetweenEmissions;
-        [JsonInclude]
-        public float TimeBetweenEmissionsRandom;
-        [JsonInclude]
-        public int NumParticlesPerEmission;
-        [JsonInclude]
-        public int NumParticlesPerEmissionRandom;
-        [JsonInclude]
-        public float InitialVelocity;
-        [JsonInclude]
-        public float InitialVelocityRandom;
-        [JsonInclude]
-        public float ParticleLife;
-        [JsonInclude]
-        public float ParticleLifeRandom;
-        [JsonInclude]
-        public Vec3 InitialDirection = new();
-        [JsonInclude]
-        public Vec3 InitialDirectionRandom = new();
-        [JsonInclude]
-        public Vec2 ParticleSize = new();
-        [JsonInclude]
+        public int Seed = 0;
+        public required int MaxParticles;
+        public required Vec3 Force;
+        public required Vec3 EmitterPosition;
+        public required Vec3 EmitterSize;
+        public required float TimeBetweenEmissions;
+        public required float TimeBetweenEmissionsRandom;
+        public required int NumParticlesPerEmission;
+        public required int NumParticlesPerEmissionRandom;
+        public required float InitialVelocity;
+        public required float InitialVelocityRandom;
+        public required float ParticleLife;
+        public required float ParticleLifeRandom;
+        public required Vec3 InitialDirection;
+        public required Vec3 InitialDirectionRandom;
+        public required Vec2 ParticleSize;
         public int ParticleSize_SeriMisstake = 0;
-        [JsonInclude]
-        public RGBA Color = new();
-        [JsonInclude]
+        public required RGBA Color = new();
+        [JsonRequired]
         public Vec2[] TextureCoordinates = new Vec2[4];
-        [JsonInclude]
-        public Texture? ParticleTexture;
-        [JsonInclude]
+        public required Texture? ParticleTexture;
+        [JsonRequired]
         public float ParticleRotation = -1;
 
         internal const int EmitterId = 0x00000001;
@@ -710,6 +663,7 @@ namespace S5Converter
                 ParticleSize = Vec2.Read(s),
                 ParticleSize_SeriMisstake = s.ReadInt32(),
                 Color = RGBA.Read(s),
+                ParticleTexture = null,
             };
             for (int i = 0; i < 4; ++i)
                 r.TextureCoordinates[i] = Vec2.Read(s);
@@ -719,7 +673,7 @@ namespace S5Converter
             return r;
         }
 
-        internal void Write(BinaryWriter s, int flags, bool convertRad, UInt32 versionNum, UInt32 buildNum)
+        internal void Write(BinaryWriter s, int flags, bool convertRad, uint versionNum, uint buildNum)
         {
             s.Write(Seed);
             s.Write(MaxParticles);
@@ -749,14 +703,10 @@ namespace S5Converter
 
     internal class RpPrtStdEmitterPrtColor
     {
-        [JsonInclude]
-        public RGBAF StartColor = new();
-        [JsonInclude]
-        public RGBAF StartColorRandom = new();
-        [JsonInclude]
-        public RGBAF EndColor = new();
-        [JsonInclude]
-        public RGBAF EndColorRandom = new();
+        public required RGBAF StartColor;
+        public required RGBAF StartColorRandom;
+        public required RGBAF EndColor;
+        public required RGBAF EndColorRandom;
 
         internal const int EmitterId = 0x00000002;
         internal const int PropSize = 64;
@@ -787,22 +737,14 @@ namespace S5Converter
 
     internal class RpPrtStdEmitterPrtTexCoords
     {
-        [JsonInclude]
-        public Vec2 StartUV0 = new();
-        [JsonInclude]
-        public Vec2 StartUV0Random = new();
-        [JsonInclude]
-        public Vec2 EndUV0 = new();
-        [JsonInclude]
-        public Vec2 EndUV0Random = new();
-        [JsonInclude]
-        public Vec2 StartUV1 = new();
-        [JsonInclude]
-        public Vec2 StartUV1Random = new();
-        [JsonInclude]
-        public Vec2 EndUV1 = new();
-        [JsonInclude]
-        public Vec2 EndUV1Random = new();
+        public required Vec2 StartUV0;
+        public required Vec2 StartUV0Random;
+        public required Vec2 EndUV0;
+        public required Vec2 EndUV0Random;
+        public required Vec2 StartUV1;
+        public required Vec2 StartUV1Random;
+        public required Vec2 EndUV1;
+        public required Vec2 EndUV1Random;
 
         internal const int EmitterId = 0x00000004;
         internal const int PropSize = 64;
@@ -841,18 +783,12 @@ namespace S5Converter
 
     internal class RpPrtStdEmitterPrtMatrix
     {
-        [JsonInclude]
-        public RwMatrix Matrix = new();
-        [JsonInclude]
-        public Vec3 LookAt = new();
-        [JsonInclude]
-        public Vec3 LookAtRandom = new();
-        [JsonInclude]
-        public Vec3 Up = new();
-        [JsonInclude]
-        public Vec3 UpRandom = new();
-        [JsonInclude]
-        public int Flags;
+        public required RwMatrix Matrix;
+        public required Vec3 LookAt;
+        public required Vec3 LookAtRandom;
+        public required Vec3 Up;
+        public required Vec3 UpRandom;
+        public required int Flags;
 
         internal const int EmitterId = 0x00000040;
         internal const int PropSize = 116;
@@ -874,7 +810,7 @@ namespace S5Converter
             };
         }
 
-        internal void Write(BinaryWriter s, UInt32 versionNum, UInt32 buildNum)
+        internal void Write(BinaryWriter s, uint versionNum, uint buildNum)
         {
             Matrix.Write(s, true, versionNum, buildNum);
             LookAt.Write(s);
@@ -887,14 +823,10 @@ namespace S5Converter
 
     internal class RpPrtStdEmitterPrtSize
     {
-        [JsonInclude]
-        public Vec2 StartSize = new();
-        [JsonInclude]
-        public Vec2 StartSizeRandom = new();
-        [JsonInclude]
-        public Vec2 EndSize = new();
-        [JsonInclude]
-        public Vec2 EndSizeRandom = new();
+        public required Vec2 StartSize;
+        public required Vec2 StartSizeRandom;
+        public required Vec2 EndSize;
+        public required Vec2 EndSizeRandom;
 
         internal const int EmitterId = 0x00000010;
         internal const int PropSize = 32;
@@ -925,14 +857,10 @@ namespace S5Converter
 
     internal class RpPrtStdEmitterPrt2DRotate
     {
-        [JsonInclude]
-        public float StartRotate;
-        [JsonInclude]
-        public float StartRotateRandom;
-        [JsonInclude]
-        public float EndRotate;
-        [JsonInclude]
-        public float EndRotateRandom;
+        public required float StartRotate;
+        public required float StartRotateRandom;
+        public required float EndRotate;
+        public required float EndRotateRandom;
 
         internal const int EmitterId = 0x00000008;
         internal const int PropSize = 16;
@@ -966,37 +894,32 @@ namespace S5Converter
         [Flags]
         public enum RpPTankDataFlags : int
         {
-            NONE = ((int)0x00000000),
-            POSITION = ((int)0x00000001),
-            COLOR = ((int)0x00000002),
-            SIZE = ((int)0x00000004),
-            MATRIX = ((int)0x00000008),
-            NORMAL = ((int)0x00000010),
-            F2DROTATE = ((int)0x00000020),
-            VTXCOLOR = ((int)0x00000040),
-            VTX2TEXCOORDS = ((int)0x00000080),
-            VTX4TEXCOORDS = ((int)0x00000100),
-            CNSMATRIX = ((int)0x00008000),
-            CNS2DROTATE = ((int)0x00020000),
-            CNSVTXCOLOR = ((int)0x00040000),
-            CNSVTX2TEXCOORDS = ((int)0x00080000),
-            CNSVTX4TEXCOORDS = ((int)0x00100000),
-            USECENTER = ((int)0x01000000),
-            ARRAY = ((int)0x10000000),
-            STRUCTURE = ((int)0x20000000),
+            NONE = 0x00000000,
+            POSITION = 0x00000001,
+            COLOR = 0x00000002,
+            SIZE = 0x00000004,
+            MATRIX = 0x00000008,
+            NORMAL = 0x00000010,
+            F2DROTATE = 0x00000020,
+            VTXCOLOR = 0x00000040,
+            VTX2TEXCOORDS = 0x00000080,
+            VTX4TEXCOORDS = 0x00000100,
+            CNSMATRIX = 0x00008000,
+            CNS2DROTATE = 0x00020000,
+            CNSVTXCOLOR = 0x00040000,
+            CNSVTX2TEXCOORDS = 0x00080000,
+            CNSVTX4TEXCOORDS = 0x00100000,
+            USECENTER = 0x01000000,
+            ARRAY = 0x10000000,
+            STRUCTURE = 0x20000000,
         };
 
 
-        [JsonInclude]
-        public RpPTankDataFlags UpdateFlags;
-        [JsonInclude]
-        public RpPTankDataFlags EmitterFlags;
-        [JsonInclude]
-        public int SourceBlend;
-        [JsonInclude]
-        public int DestinationBlend;
-        [JsonInclude]
-        public bool VertexAlphaBlending;
+        public required RpPTankDataFlags UpdateFlags;
+        public required RpPTankDataFlags EmitterFlags;
+        public required int SourceBlend;
+        public required int DestinationBlend;
+        public required bool VertexAlphaBlending;
 
         internal const int EmitterId = 0x00000020;
         internal const int PropSize = 52;
@@ -1027,13 +950,9 @@ namespace S5Converter
 
     internal class RpPrtAdvEmtPointList
     {
-        [JsonInclude]
-        public bool UseDirection;
-        [JsonInclude]
-        public bool Random;
-        [JsonInclude]
+        public required bool UseDirection;
+        public required bool Random;
         public Vec3[]? PointList;
-        [JsonInclude]
         public Vec3[]? DirectionList;
 
         internal const int EmitterId = 0x00010000;
@@ -1099,16 +1018,11 @@ namespace S5Converter
 
     internal class RpPrtAdvEmtCircle
     {
-        [JsonInclude]
-        public float Radius;
-        [JsonInclude]
-        public float RadiusGap;
-        [JsonInclude]
-        public float Height;
-        [JsonInclude]
-        public bool UseCircleEmission;
-        [JsonInclude]
-        public float DirRotation;
+        public required float Radius;
+        public required float RadiusGap;
+        public required float Height;
+        public required bool UseCircleEmission;
+        public required float DirRotation;
 
         internal const int EmitterId = 0x00020000;
         internal const int PropSize = 20;
@@ -1139,12 +1053,9 @@ namespace S5Converter
 
     internal class RpPrtAdvEmtSphere
     {
-        [JsonInclude]
-        public float Radius;
-        [JsonInclude]
-        public float RadiusGap;
-        [JsonInclude]
-        public bool UseSphereEmission;
+        public required float Radius;
+        public required float RadiusGap;
+        public required bool UseSphereEmission;
 
         internal const int EmitterId = 0x00030000;
         internal const int PropSize = 12;
@@ -1171,14 +1082,10 @@ namespace S5Converter
 
     internal class RpPrtAdvEmtPrtEmt
     {
-        [JsonInclude]
-        public float Time;
-        [JsonInclude]
-        public float TimeBias;
-        [JsonInclude]
-        public float TimeGap;
-        [JsonInclude]
-        public float TimeGapBias;
+        public required float Time;
+        public required float TimeBias;
+        public required float TimeGap;
+        public required float TimeGapBias;
 
         internal const int EmitterId = 0x00000100;
         internal const int PropSize = 40;
@@ -1211,14 +1118,10 @@ namespace S5Converter
     {
         internal struct RpPrtAdvEmtPrtColorItem
         {
-            [JsonInclude]
-            public float Time;
-            [JsonInclude]
-            public float TimeBias;
-            [JsonInclude]
-            public RGBAF MidColor;
-            [JsonInclude]
-            public RGBAF MidColorBias;
+            public required float Time;
+            public required float TimeBias;
+            public required RGBAF MidColor;
+            public required RGBAF MidColorBias;
 
             internal const int Size = sizeof(float) * 2 + RGBAF.Size * 2;
 
@@ -1243,8 +1146,7 @@ namespace S5Converter
             }
         }
 
-        [JsonInclude]
-        public RpPrtAdvEmtPrtColorItem[] List = [];
+        public required RpPrtAdvEmtPrtColorItem[] List;
 
         internal const int EmitterId = 0x00000200;
         internal int PropSize => 20 + 40 * List.Length;
@@ -1277,18 +1179,12 @@ namespace S5Converter
     {
         internal struct RpPrtAdvEmtPrtTexCoordsItem
         {
-            [JsonInclude]
-            public float Time;
-            [JsonInclude]
-            public float TimeBias;
-            [JsonInclude]
-            public TexCoord MidUV0;
-            [JsonInclude]
-            public TexCoord MidUV0Bias;
-            [JsonInclude]
-            public TexCoord MidUV1;
-            [JsonInclude]
-            public TexCoord MidUV1Bias;
+            public required float Time;
+            public required float TimeBias;
+            public required TexCoord MidUV0;
+            public required TexCoord MidUV0Bias;
+            public required TexCoord MidUV1;
+            public required TexCoord MidUV1Bias;
 
             internal const int Size = sizeof(float) * 2 + TexCoord.Size * 4;
 
@@ -1317,8 +1213,7 @@ namespace S5Converter
             }
         }
 
-        [JsonInclude]
-        public RpPrtAdvEmtPrtTexCoordsItem[] List = [];
+        public required RpPrtAdvEmtPrtTexCoordsItem[] List;
 
         internal const int EmitterId = 0x00000400;
         internal const int EmitterIdSteps = 0x00000800;
@@ -1354,14 +1249,10 @@ namespace S5Converter
     {
         internal struct RpPrtAdvEmtPrtSizeItem
         {
-            [JsonInclude]
-            public float Time;
-            [JsonInclude]
-            public float TimeBias;
-            [JsonInclude]
-            public Vec2 MidSize;
-            [JsonInclude]
-            public Vec2 MidSizeBias;
+            public required float Time;
+            public required float TimeBias;
+            public required Vec2 MidSize;
+            public required Vec2 MidSizeBias;
 
             internal const int Size = sizeof(float) * 2 + Vec2.Size * 2;
 
@@ -1386,8 +1277,7 @@ namespace S5Converter
             }
         }
 
-        [JsonInclude]
-        public RpPrtAdvEmtPrtSizeItem[] List = [];
+        public required RpPrtAdvEmtPrtSizeItem[] List;
 
         internal const int EmitterId = 0x00001000;
         internal int PropSize => 20 + 24 * List.Length;

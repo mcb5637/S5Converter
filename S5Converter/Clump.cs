@@ -1,4 +1,6 @@
-﻿using System;
+﻿using S5Converter.Atomic;
+using S5Converter.Frame;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,25 +9,21 @@ using System.Threading.Tasks;
 
 namespace S5Converter
 {
-    internal class Clump : IJsonOnDeserialized
+    internal class Clump
     {
         [JsonPropertyName("frames")]
-        [JsonInclude]
-        public FrameWithExt[] Frames = [];
+        public required FrameWithExt[] Frames;
         [JsonPropertyName("atomics")]
-        [JsonInclude]
-        public Atomic[] Atomics = [];
+        public required RpAtomic[] Atomics;
         [JsonPropertyName("geometries")]
-        [JsonInclude]
-        public Geometry[] Geometries = [];
+        public required Geometry[] Geometries;
 
         [JsonPropertyName("extension")]
-        [JsonInclude]
         public ClumpExtension Extension = new();
 
 
         private int GeometryListSize => sizeof(int) + Geometries.Sum(x => x.SizeH);
-        private int FrameListSize => sizeof(int) + Frames.Sum(x => Frame.Size + x.Extension.SizeH(x.Frame));
+        private int FrameListSize => sizeof(int) + Frames.Sum(x => RwFrame.Size + x.Extension.SizeH(x.Frame));
         internal int Size => ChunkHeader.Size * 5 + sizeof(int) * 3 + FrameListSize + GeometryListSize + Atomics.Sum(x => x.SizeH) + Extension.SizeH(this);
         internal int SizeH => Size + ChunkHeader.Size;
 
@@ -37,7 +35,12 @@ namespace S5Converter
             int nAtomics = s.ReadInt32();
             int nLights = s.ReadInt32();
             int nCameras = s.ReadInt32();
-            Clump c = new();
+            Clump c = new()
+            {
+                Frames = [],
+                Atomics = [],
+                Geometries = [],
+            };
 
             // framelist
             ChunkHeader.FindChunk(s, RwCorePluginID.FRAMELIST);
@@ -46,7 +49,7 @@ namespace S5Converter
             c.Frames = new FrameWithExt[nframes];
             for (int i = 0; i < nframes; ++i)
             {
-                Frame f = Frame.Read(s);
+                RwFrame f = RwFrame.Read(s);
                 c.Frames[i] = new()
                 {
                     Frame = f,
@@ -68,12 +71,12 @@ namespace S5Converter
             }
 
             // atomics
-            c.Atomics = new Atomic[nAtomics];
+            c.Atomics = new RpAtomic[nAtomics];
             for (int i = 0; i < nAtomics; ++i)
             {
                 if (nGeoms == 0) // TODO
                     throw new IOException("trying to read atomic without geometry in clump. inline geometry not supportet at the moment!");
-                c.Atomics[i] = Atomic.Read(s, true, convertRad);
+                c.Atomics[i] = RpAtomic.Read(s, true, convertRad);
             }
 
             if (nLights > 0)
@@ -120,7 +123,7 @@ namespace S5Converter
             }.Write(s);
             new ChunkHeader()
             {
-                Length = Frame.Size * Frames.Length + sizeof(int),
+                Length = RwFrame.Size * Frames.Length + sizeof(int),
                 Type = RwCorePluginID.STRUCT,
                 BuildNum = buildNum,
                 Version = versionNum,
@@ -151,20 +154,12 @@ namespace S5Converter
                 g.Write(s, true, versionNum, buildNum);
 
             // atomics
-            foreach (Atomic a in Atomics)
+            foreach (RpAtomic a in Atomics)
                 a.Write(s, true, convertRad, versionNum, buildNum);
 
 
             // extension
             Extension.Write(s, this, versionNum, buildNum);
-        }
-
-        public void OnDeserialized()
-        {
-            Frames ??= [];
-            Geometries ??= [];
-            Atomics ??= [];
-            Extension ??= new();
         }
     }
 
