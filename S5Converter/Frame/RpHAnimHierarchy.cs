@@ -205,7 +205,7 @@ namespace S5Converter.Frame
                 throw new IOException("hanim parents length missmatch");
 
             ClearFlags(hlist);
-            List<HInfo> hier = HInfo.BuildHAnimHierarchyWithFallback(frames, hlist);
+            List<HInfo> hier = HInfo.BuildHAnimHierarchyWithFallback(frames, hlist, false);
             // sort children to preserve old hanim node order, whenever possible
             foreach (HInfo i in hier)
                 i.Children.Sort((c1, c2) => c1.NodeIndexSave.CompareTo(c2.NodeIndexSave));

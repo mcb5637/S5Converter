@@ -98,14 +98,16 @@
             return hier;
         }
 
-        internal static List<HInfo> BuildHAnimHierarchyWithFallback(FrameWithExt[] frames, RpHAnimHierarchy hlist)
+        internal static List<HInfo> BuildHAnimHierarchyWithFallback(FrameWithExt[] frames, RpHAnimHierarchy hlist, bool parentToFrame0)
         {
             List<HInfo> hier = BuildHierarchy(frames, hlist, (hier, i) =>
             {
                 if (i.N == null)
                     return null;
-                if (hlist.Parents != null && i.N != null)
+                if (hlist.Parents != null)
                     return hier.FirstOrDefault(x => x.N?.NodeIndex == hlist.Parents[i.N.NodeIndex]);
+                else if (!parentToFrame0 && i.F.Frame.ParentFrameIndex == 0)
+                    return null;
                 else
                     return hier.FirstOrDefault(x => x.FrameIndex == i.F.Frame.ParentFrameIndex);
             });
