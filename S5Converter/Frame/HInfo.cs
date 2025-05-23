@@ -112,5 +112,42 @@
             hier.RemoveAll(x => x.N == null || x.NodeId == null);
             return hier;
         }
+
+        private static string Check(List<HInfo> hier_a, List<HInfo> hier_b, string name_a, string name_b)
+        {
+            string r = "";
+            foreach (HInfo b in hier_b)
+            {
+                HInfo? a = hier_a.FirstOrDefault(x => x.FrameIndex == b.FrameIndex);
+                if (a == null)
+                {
+                    r += $"{b} is not in {name_a} hierarchy\n";
+                    continue;
+                }
+                if ((b.Parent == null) != (a.Parent == null))
+                {
+                    r += $"{b} parent existence missmatch {name_a}:{ToStringSafe(a.Parent)} <-> {name_b}:{ToStringSafe(b.Parent)}\n";
+                    continue;
+                }
+                if (b.Parent == null || a.Parent == null)
+                    continue;
+                if (b.Parent.FrameIndex != a.Parent.FrameIndex)
+                {
+                    r += $"{b} parent missmatch {name_a}:{a.Parent} <-> {name_b}:{b.Parent}\n";
+                    continue;
+                }
+            }
+            return r;
+
+            static string ToStringSafe(HInfo? i)
+            {
+                return i?.ToString() ?? "null";
+            }
+        }
+
+        internal static string Check(List<HInfo> hanimhier, List<HInfo> framehier)
+        {
+            return Check(hanimhier, framehier, "hanim", "frame") + Check(framehier, hanimhier, "frame", "hanim");
+        }
     }
 }

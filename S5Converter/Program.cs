@@ -157,8 +157,7 @@ namespace S5Converter
                             Console.WriteLine();
                             Console.WriteLine();
                             Console.WriteLine("searching missmatches:");
-                            Check(hanimhier, framehier, "is not in hanim no hierarchy");
-                            Check(framehier, hanimhier, "is not in frame hierarchy???");
+                            Console.Write(HInfo.Check(hanimhier, framehier));
                         }
                     }
                     else
@@ -184,31 +183,6 @@ namespace S5Converter
                 Console.WriteLine(e.ToString());
                 foreach (HInfo c in e.Children)
                     Print(c, lvl + 1);
-            }
-
-            static void Check(List<HInfo> hiere, List<HInfo> framehier, string nex)
-            {
-                foreach (HInfo e in framehier)
-                {
-                    HInfo? o = hiere.FirstOrDefault(x => x.FrameIndex == e.FrameIndex);
-                    if (o == null)
-                    {
-                        Console.WriteLine($"{e} {nex}");
-                        continue;
-                    }
-                    if ((e.Parent == null) != (o.Parent == null))
-                    {
-                        Console.WriteLine($"{e} <-> {o} parent existence missmatch");
-                        continue;
-                    }
-                    if (e.Parent == null || o.Parent == null)
-                        continue;
-                    if (e.Parent.FrameIndex != o.Parent.FrameIndex)
-                    {
-                        Console.WriteLine($"{e} <-> {o} parent missmatch {e.Parent} <-> {o.Parent}");
-                        continue;
-                    }
-                }
             }
         }
 
@@ -280,9 +254,28 @@ namespace S5Converter
                     {
                         using BinaryReader r = new(new FileStream(f.FullName, FileMode.Open, FileAccess.Read));
                         using MemoryStream json = new();
-                        Import(r, json, opt, false);
+                        RWFile d = Import(r, json, opt, false);
                         if (r.PeekChar() >= 0)
                             throw new IOException("not full input read");
+                        if (d.Clp != null)
+                        {
+                            List<HInfo> framehier = HInfo.BuildFrameHierarchy(d.Clp.Frames);
+                            if (framehier.Count > 0)
+                            {
+                                List<HInfo> hanimhier = HInfo.BuildHAnimHierarchy(d.Clp.Frames);
+                                if (hanimhier.Count > 0)
+                                {
+                                    // remove frame 0 (pos in world), it is intended to have no hainm
+                                    framehier.RemoveAll(x => x.FrameIndex == 0);
+                                    foreach (HInfo hi in framehier)
+                                    {
+                                        if (hi.Parent != null && hi.Parent.FrameIndex == 0)
+                                            hi.Parent = null;
+                                    }
+                                    Console.Write(HInfo.Check(hanimhier, framehier));
+                                }
+                            }
+                        }
                         json.Position = 0;
                         using DebugWriteCheckStream o = new() { BytesToWrite = File.ReadAllBytes(f.FullName) };
                         {
@@ -308,10 +301,11 @@ namespace S5Converter
             }
         }
 
-        private static void Import(BinaryReader r, Stream ou, JsonSerializerOptions opt, bool convertRad)
+        private static RWFile Import(BinaryReader r, Stream ou, JsonSerializerOptions opt, bool convertRad)
         {
             RWFile d = RWFile.Read(r, convertRad);
             JsonSerializer.Serialize(ou, d, opt);
+            return d;
         }
 
         private static void Export(Stream r, BinaryWriter ou, JsonSerializerOptions opt)
