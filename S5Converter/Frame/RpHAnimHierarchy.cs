@@ -1,4 +1,5 @@
-﻿using System.Text.Json.Serialization;
+﻿using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace S5Converter.Frame
 {
@@ -194,32 +195,20 @@ namespace S5Converter.Frame
             }
         }
 
-        private class HInfo
-        {
-            internal required FrameWithExt F;
-            internal required Node? N;
-            internal required int FrameIndex;
-            internal required int? NodeId;
-            internal List<HInfo> Children = [];
-            internal HInfo? Parent = null;
-
-            internal int NodeIndexSave => N?.NodeIndex ?? -1;
-        }
         internal static void RebuildNodeHierarchy(FrameWithExt[] frames)
         {
-            FrameWithExt? hierlist = frames.SingleOrDefault(x => (x.Extension.HanimPLG?.Nodes?.Length ?? 0) > 0);
-            if (hierlist == null || hierlist.Extension.HanimPLG == null)
+            (FrameWithExt? hierlist, RpHAnimHierarchy? hlist) = HInfo.GetHierarchy(frames);
+            if (hierlist == null || hlist == null)
                 return;
-            RpHAnimHierarchy hlist = hierlist.Extension.HanimPLG;
 
             if (hlist.Parents != null && hlist.Parents.Length != hlist.Nodes.Length)
                 throw new IOException("hanim parents length missmatch");
 
             ClearFlags(hlist);
-            List<HInfo> hier = [];
-            BuildBasicHierarchy(frames, hlist, hier);
-            CheckEverythingHasFrame(hlist, hier);
-            BuildChildren(hlist, hier);
+            List<HInfo> hier = HInfo.BuildHAnimHierarchyWithFallback(frames, hlist);
+            // sort children to preserve old hanim node order, whenever possible
+            foreach (HInfo i in hier)
+                i.Children.Sort((c1, c2) => c1.NodeIndexSave.CompareTo(c2.NodeIndexSave));
             RebuildNodes(hierlist, hlist, hier);
             if (hlist.Parents != null)
                 BuildParents(hlist.Nodes, hlist.Parents);
@@ -249,59 +238,6 @@ namespace S5Converter.Frame
                         h.Children[^1].N!.Flags.LastSibling = true;
                     }
                     return i;
-                }
-            }
-            static void BuildBasicHierarchy(FrameWithExt[] frames, RpHAnimHierarchy hlist, List<HInfo> hier)
-            {
-                for (int i = 0; i < frames.Length; ++i)
-                {
-                    FrameWithExt f = frames[i];
-                    Node? n = null;
-                    int? nid = null;
-                    if (f.Extension.HanimPLG != null)
-                    {
-                        nid = f.Extension.HanimPLG.NodeID;
-                        n = hlist.Nodes.FirstOrDefault(x => x.NodeID == f.Extension.HanimPLG.NodeID);
-                        if (n == null)
-                            throw new IOException($"hanim frame with node id {nid.Value} has no hierarchy info");
-                    }
-                    hier.Add(new()
-                    {
-                        F = f,
-                        N = n,
-                        FrameIndex = i,
-                        NodeId = nid,
-                    });
-                }
-            }
-            static void BuildChildren(RpHAnimHierarchy hlist, List<HInfo> hier)
-            {
-                foreach (HInfo i in hier)
-                {
-                    if (i.NodeId == null)
-                        continue;
-                    HInfo? p;
-                    if (hlist.Parents != null && i.N != null)
-                        p = hier.FirstOrDefault(x => x.N?.NodeIndex == hlist.Parents[i.N.NodeIndex]);
-                    else
-                        p = hier.FirstOrDefault(x => x.FrameIndex == i.F.Frame.ParentFrameIndex);
-                    if (p == null)
-                        continue;
-                    if (p.NodeId == null)
-                        continue;
-                    i.Parent = p;
-                    p.Children.Add(i);
-                }
-                // sort children to preserve old hanim node order, whenever possible
-                foreach (HInfo i in hier)
-                    i.Children.Sort((c1, c2) => c1.NodeIndexSave.CompareTo(c2.NodeIndexSave));
-            }
-            static void CheckEverythingHasFrame(RpHAnimHierarchy hlist, List<HInfo> hier)
-            {
-                foreach (Node n in hlist.Nodes)
-                {
-                    if (!hier.Any(x => x.NodeId == n.NodeID))
-                        throw new IOException($"hanim hierarchy info {n.NodeID} has no frame");
                 }
             }
             static void ClearFlags(RpHAnimHierarchy hlist)

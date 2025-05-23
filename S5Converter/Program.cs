@@ -1,4 +1,5 @@
 ﻿using S5Converter.Atomic;
+using S5Converter.Frame;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -61,6 +62,11 @@ namespace S5Converter
                 SearchParticles(args[1]);
                 return;
             }
+            else if (args.Length == 2 && args[0] == "--visualizeHierarchy")
+            {
+                VisualizeHierarchy(args[1], opt);
+                return;
+            }
 #if DEBUG
             else if (args.Length == 1 && args[0] == "--buildSchema")
             {
@@ -111,6 +117,99 @@ namespace S5Converter
             }
             Console.Error.WriteLine("done, press enter to exit");
             Console.Read();
+        }
+
+        private static void VisualizeHierarchy(string file, JsonSerializerOptions opt)
+        {
+            try
+            {
+                RWFile f;
+                if (Path.GetExtension(file) == ".json")
+                {
+                    using FileStream r = new(file, FileMode.Open, FileAccess.Read);
+                    f = JsonSerializer.Deserialize<RWFile>(r, opt) ?? throw new IOException("failed to parse file");
+                }
+                else
+                {
+                    using BinaryReader r = new(new FileStream(file, FileMode.Open, FileAccess.Read));
+                    f = RWFile.Read(r, true);
+                }
+                if (f.Clp != null)
+                {
+                    Console.WriteLine("frame hierarchy:");
+
+                    List<HInfo> framehier = HInfo.BuildFrameHierarchy(f.Clp.Frames);
+                    if (framehier.Count > 0)
+                    {
+                        Print(framehier[0], 0);
+
+                        Console.WriteLine();
+                        Console.WriteLine();
+                        Console.WriteLine();
+                        Console.WriteLine("hanim hierarchy:");
+
+                        List<HInfo> hanimhier = HInfo.BuildHAnimHierarchy(f.Clp.Frames);
+                        if (hanimhier.Count > 0)
+                        {
+                            Print(hanimhier[0], 0);
+
+                            Console.WriteLine();
+                            Console.WriteLine();
+                            Console.WriteLine();
+                            Console.WriteLine("searching missmatches:");
+                            Check(hanimhier, framehier, "is not in hanim no hierarchy");
+                            Check(framehier, hanimhier, "is not in frame hierarchy???");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine("empty frame hierarchy");
+                    }
+                }
+            }
+            catch (Exception e) when (e is IOException || e is JsonException)
+            {
+                Console.Error.WriteLine(e.ToString());
+            }
+
+            Console.Error.WriteLine("done, press enter to exit");
+            Console.Read();
+
+            static void Print(HInfo e, int lvl)
+            {
+                for (int i = 0; i < lvl - 1; ++i)
+                    Console.Write(" | ");
+                if (lvl > 0)
+                    Console.Write(" |- ");
+                Console.WriteLine(e.ToString());
+                foreach (HInfo c in e.Children)
+                    Print(c, lvl + 1);
+            }
+
+            static void Check(List<HInfo> hiere, List<HInfo> framehier, string nex)
+            {
+                foreach (HInfo e in framehier)
+                {
+                    HInfo? o = hiere.FirstOrDefault(x => x.FrameIndex == e.FrameIndex);
+                    if (o == null)
+                    {
+                        Console.WriteLine($"{e} {nex}");
+                        continue;
+                    }
+                    if ((e.Parent == null) != (o.Parent == null))
+                    {
+                        Console.WriteLine($"{e} <-> {o} parent existence missmatch");
+                        continue;
+                    }
+                    if (e.Parent == null || o.Parent == null)
+                        continue;
+                    if (e.Parent.FrameIndex != o.Parent.FrameIndex)
+                    {
+                        Console.WriteLine($"{e} <-> {o} parent missmatch {e.Parent} <-> {o.Parent}");
+                        continue;
+                    }
+                }
+            }
         }
 
         private static void SearchParticles(string path)
