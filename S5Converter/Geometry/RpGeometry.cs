@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace S5Converter.Geometry
 {
-    internal class RpGeometry : IJsonOnDeserialized
+    internal class RpGeometry
     {
         public struct GeometryFlagS
         {
@@ -143,27 +143,20 @@ namespace S5Converter.Geometry
         }
 
         [JsonPropertyName("morphTargets")]
-        [JsonInclude]
         public RpMorphTarget[] MorphTargets = [];
         [JsonPropertyName("textureCoordinates")]
-        [JsonInclude]
         public RwTexCoords[][] TextureCoordinates = [];
         [JsonPropertyName("format")]
-        [JsonInclude]
         public GeometryFlagS Flags = new();
         [JsonPropertyName("triangles")]
-        [JsonInclude]
         public RpTriangle[] Triangles = [];
         [JsonPropertyName("materials")]
-        [JsonInclude]
         public RpMaterial[] Materials = [];
         [JsonPropertyName("preLitLum")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        [JsonInclude]
         public RGBA[]? PreLitLum;
 
         [JsonPropertyName("extension")]
-        [JsonInclude]
         public GeometryExtension Extension = new();
 
 
@@ -366,33 +359,20 @@ namespace S5Converter.Geometry
 
             Extension.Write(s, this, versionNum, buildNum);
         }
-
-        public void OnDeserialized()
-        {
-            MorphTargets ??= [];
-            TextureCoordinates ??= [];
-            Triangles ??= [];
-            Materials ??= [];
-            Extension ??= new();
-        }
     }
 
     internal class GeometryExtension : Extension<RpGeometry>
     {
         [JsonPropertyName("userDataPLG")]
-        [JsonInclude]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public Dictionary<string, RpUserDataArray>? UserDataPLG;
 
-        [JsonInclude]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public RpMeshHeader? BinMeshPLG;
 
-        [JsonInclude]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public RpSkin? SkinPLG;
 
-        [JsonInclude]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public RpMorphGeometry? MorphPLG;
 
