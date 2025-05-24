@@ -1,5 +1,6 @@
 ﻿using S5Converter.Atomic;
 using S5Converter.Frame;
+using S5Converter.Geometry;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,7 +17,7 @@ namespace S5Converter
         [JsonPropertyName("atomics")]
         public required RpAtomic[] Atomics;
         [JsonPropertyName("geometries")]
-        public required Geometry[] Geometries;
+        public required RpGeometry[] Geometries;
 
         [JsonPropertyName("extension")]
         public ClumpExtension Extension = new();
@@ -64,10 +65,10 @@ namespace S5Converter
             ChunkHeader.FindChunk(s, RwCorePluginID.GEOMETRYLIST);
             ChunkHeader.FindChunk(s, RwCorePluginID.STRUCT);
             int nGeoms = s.ReadInt32();
-            c.Geometries = new Geometry[nGeoms];
+            c.Geometries = new RpGeometry[nGeoms];
             for (int i = 0; i < nGeoms; ++i)
             {
-                c.Geometries[i] = Geometry.Read(s, true);
+                c.Geometries[i] = RpGeometry.Read(s, true);
             }
 
             // atomics
@@ -150,7 +151,7 @@ namespace S5Converter
                 Version = versionNum,
             }.Write(s);
             s.Write(Geometries.Length);
-            foreach (Geometry g in Geometries)
+            foreach (RpGeometry g in Geometries)
                 g.Write(s, true, versionNum, buildNum);
 
             // atomics

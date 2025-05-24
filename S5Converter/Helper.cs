@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using S5Converter.Atomic;
 using S5Converter.Frame;
+using S5Converter.Geometry;
 
 namespace S5Converter
 {
@@ -107,7 +108,7 @@ namespace S5Converter
             else
                 e &= ~f;
         }
-        internal static void SetFlag(this ref Geometry.GeometryFlagS.RpGeometryFlag e, bool v, Geometry.GeometryFlagS.RpGeometryFlag f)
+        internal static void SetFlag(this ref RpGeometry.GeometryFlagS.RpGeometryFlag e, bool v, RpGeometry.GeometryFlagS.RpGeometryFlag f)
         {
             if (v)
                 e |= f;

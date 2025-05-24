@@ -1,12 +1,10 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace S5Converter.Atomic
+namespace S5Converter.CommonExtensions
 {
     internal class RightToRender
     {
-        [JsonInclude]
         public RwCorePluginID Identifier;
-        [JsonInclude]
         public int ExtraData;
 
         internal const int Size = sizeof(int) * 2;

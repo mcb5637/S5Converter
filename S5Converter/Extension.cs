@@ -1,4 +1,5 @@
-﻿using System;
+﻿using S5Converter.Geometry;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -66,201 +67,6 @@ namespace S5Converter
         rwBLENDINVDESTCOLOR,    /**<(1-Rd, 1-Gd, 1-Bd, 1-Ad) */
         rwBLENDSRCALPHASAT,     /**<(f,    f,    f,    1   )  f = min (As, 1-Ad) */
     };
-
-    internal class MaterialFXMaterial
-    {
-        [JsonConverter(typeof(EnumJsonConverter<DataType>))]
-        internal enum DataType : int
-        {
-            None = 0,
-            BumpMap = 1,
-            EnvMap = 2,
-            DualTexture = 4,
-            UVTransformMat = 5,
-        };
-        [JsonConverter(typeof(EnumJsonConverter<RpMatFXMaterialFlags>))]
-        internal enum RpMatFXMaterialFlags : int
-        {
-            None = 0,
-            BumpMap = 1,
-            EnvMap = 2,
-            BumpEnvMap = 3,
-            DualTexture = 4,
-            UVTransform = 5,
-            DualTextureUVTransform = 6,
-        };
-
-        internal struct Data
-        {
-            [JsonInclude]
-            public DataType Type;
-            [JsonInclude]
-            public Texture? Texture1;
-            [JsonInclude]
-            public Texture? Texture2;
-            [JsonInclude]
-            public float? Coefficient;
-            [JsonInclude]
-            public bool? FrameBufferAlpha;
-            [JsonInclude]
-            public RwBlendFunction? SrcBlendMode;
-            [JsonInclude]
-            public RwBlendFunction? DstBlendMode;
-
-            internal readonly int Size
-            {
-                get
-                {
-                    int r = sizeof(int);
-                    switch (Type)
-                    {
-                        case DataType.BumpMap:
-                            r += sizeof(float);
-                            r += Texture.OptTextureSize(Texture1);
-                            r += Texture.OptTextureSize(Texture2);
-                            break;
-                        case DataType.EnvMap:
-                            r += sizeof(int) * 2; //float/int same size
-                            r += Texture.OptTextureSize(Texture1);
-                            break;
-                        case DataType.DualTexture:
-                            r += sizeof(int) * 2;
-                            r += Texture.OptTextureSize(Texture1);
-                            break;
-                        default:
-                            break;
-                    }
-                    return r;
-                }
-            }
-
-            internal static Data Read(BinaryReader s)
-            {
-                Data d = new()
-                {
-                    Type = (DataType)s.ReadInt32()
-                };
-                switch (d.Type)
-                {
-                    case DataType.BumpMap:
-                        d.Coefficient = s.ReadSingle();
-                        d.Texture1 = Texture.ReadOptText(s);
-                        d.Texture2 = Texture.ReadOptText(s);
-                        break;
-                    case DataType.EnvMap:
-                        d.Coefficient = s.ReadSingle();
-                        d.FrameBufferAlpha = s.ReadInt32() != 0;
-                        d.Texture1 = Texture.ReadOptText(s);
-                        break;
-                    case DataType.DualTexture:
-                        d.SrcBlendMode = (RwBlendFunction)s.ReadInt32();
-                        d.DstBlendMode = (RwBlendFunction)s.ReadInt32();
-                        d.Texture1 = Texture.ReadOptText(s);
-                        break;
-                    default:
-                        break;
-                }
-                return d;
-            }
-
-            internal void Write(BinaryWriter s, UInt32 versionNum, UInt32 buildNum)
-            {
-                s.Write((int)Type);
-                switch (Type)
-                {
-                    case DataType.BumpMap:
-                        s.Write(Coefficient!.Value);
-                        Texture.WriteOptTexture(s, ref Texture1, versionNum, buildNum);
-                        Texture.WriteOptTexture(s, ref Texture2, versionNum, buildNum);
-                        break;
-                    case DataType.EnvMap:
-                        s.Write(Coefficient!.Value);
-                        s.Write(FrameBufferAlpha!.Value ? 1 : 0);
-                        Texture.WriteOptTexture(s, ref Texture1, versionNum, buildNum);
-                        break;
-                    case DataType.DualTexture:
-                        s.Write((int)SrcBlendMode!.Value);
-                        s.Write((int)DstBlendMode!.Value);
-                        Texture.WriteOptTexture(s, ref Texture1, versionNum, buildNum);
-                        break;
-                    default:
-                        break;
-                }
-            }
-        }
-
-        [JsonInclude]
-        internal Data Data1;
-        [JsonInclude]
-        internal Data Data2;
-        [JsonInclude]
-        internal RpMatFXMaterialFlags Flags;
-
-        internal int Size => sizeof(int) + Data1.Size + Data2.Size;
-        internal int SizeH => Size + ChunkHeader.Size;
-
-        internal static MaterialFXMaterial Read(BinaryReader s, bool header)
-        {
-            if (header)
-                ChunkHeader.FindChunk(s, RwCorePluginID.MATERIALEFFECTSPLUGIN);
-            MaterialFXMaterial r = new()
-            {
-                Flags = (RpMatFXMaterialFlags)s.ReadInt32(),
-                Data1 = Data.Read(s),
-                Data2 = Data.Read(s)
-            };
-
-            return r;
-        }
-
-        internal void Write(BinaryWriter s, bool header, UInt32 versionNum, UInt32 buildNum)
-        {
-            if (header)
-            {
-                new ChunkHeader()
-                {
-                    Length = Size,
-                    Type = RwCorePluginID.MATERIALEFFECTSPLUGIN,
-                    BuildNum = buildNum,
-                    Version = versionNum,
-                }.Write(s);
-            }
-            switch (Flags)
-            {
-                case RpMatFXMaterialFlags.None:
-                    if (Data1.Type != DataType.None || Data2.Type != DataType.None)
-                        throw new IOException("materialeffects None data type mismatch");
-                    break;
-                case RpMatFXMaterialFlags.BumpMap:
-                    if (Data1.Type != DataType.BumpMap || Data2.Type != DataType.None)
-                        throw new IOException("materialeffects BumpMap data type mismatch");
-                    break;
-                case RpMatFXMaterialFlags.EnvMap:
-                    if (Data1.Type != DataType.EnvMap || Data2.Type != DataType.None)
-                        throw new IOException("materialeffects EnvMap data type mismatch");
-                    break;
-                case RpMatFXMaterialFlags.BumpEnvMap:
-                    if (Data1.Type != DataType.BumpMap || Data2.Type != DataType.EnvMap)
-                        throw new IOException("materialeffects BumpEnvMap data type mismatch");
-                    break;
-                case RpMatFXMaterialFlags.DualTexture:
-                    if (Data1.Type != DataType.DualTexture || Data2.Type != DataType.None)
-                        throw new IOException("materialeffects DualTexture data type mismatch");
-                    break;
-                case RpMatFXMaterialFlags.UVTransform:
-                    if (Data1.Type != DataType.UVTransformMat || Data2.Type != DataType.None)
-                        throw new IOException("materialeffects UVTransform data type mismatch");
-                    break;
-                case RpMatFXMaterialFlags.DualTextureUVTransform:
-                    if (Data1.Type != DataType.UVTransformMat || Data2.Type != DataType.DualTexture)
-                        throw new IOException("materialeffects DualTextureUVTransform data type mismatch");
-                    break;
-            }
-            s.Write((int)Flags);
-            Data1.Write(s, versionNum, buildNum);
-            Data2.Write(s, versionNum, buildNum);
-        }
-    }
 
     internal class RpMeshHeader
     {
@@ -469,7 +275,7 @@ namespace S5Converter
         [JsonInclude]
         public Split SplitData;
 
-        internal int GetSize(Geometry g)
+        internal int GetSize(RpGeometry g)
         {
             if (g.Flags.Native)
                 throw new IOException("geometry skin native not supported");
@@ -484,9 +290,9 @@ namespace S5Converter
             r += SplitData.MeshBoneRLE?.Length ?? 0 * sizeof(byte);
             return r;
         }
-        internal int GetSizeH(Geometry g) => GetSize(g) + ChunkHeader.Size;
+        internal int GetSizeH(RpGeometry g) => GetSize(g) + ChunkHeader.Size;
 
-        internal static RpSkin Read(BinaryReader s, Geometry g, bool header)
+        internal static RpSkin Read(BinaryReader s, RpGeometry g, bool header)
         {
             if (g.Flags.Native) // seems to not be used
                 throw new IOException("geometry skin native not supported");
@@ -528,7 +334,7 @@ namespace S5Converter
             return r;
         }
 
-        internal void Write(BinaryWriter s, Geometry g, bool header, UInt32 versionNum, UInt32 buildNum)
+        internal void Write(BinaryWriter s, RpGeometry g, bool header, UInt32 versionNum, UInt32 buildNum)
         {
             if (g.Flags.Native)
                 throw new IOException("geometry skin native not supported");
@@ -585,56 +391,6 @@ namespace S5Converter
                         throw new IOException("SplitData must either be fully populated or not at all");
                 }
             }
-        }
-    }
-
-    internal class MaterialUVAnim
-    {
-        [JsonInclude]
-        public string[] Name = [];
-
-        internal const int FixedSizeString = 32;
-
-        private int DataSize => Name.Length * FixedSizeString + sizeof(int);
-        internal int Size => ChunkHeader.Size + DataSize;
-        internal int SizeH => Size + ChunkHeader.Size;
-
-        internal static MaterialUVAnim Read(BinaryReader s, bool header)
-        {
-            if (header)
-                ChunkHeader.FindChunk(s, RwCorePluginID.UVANIMPLUGIN);
-            ChunkHeader.FindChunk(s, RwCorePluginID.STRUCT);
-            int nanims = s.ReadInt32();
-            MaterialUVAnim r = new()
-            {
-                Name = new string[nanims],
-            };
-            r.Name.ReadArray(() => s.ReadFixedSizeString(FixedSizeString));
-            return r;
-        }
-
-        internal void Write(BinaryWriter s, bool header, UInt32 versionNum, UInt32 buildNum)
-        {
-            if (header)
-            {
-                new ChunkHeader()
-                {
-                    Type = RwCorePluginID.UVANIMPLUGIN,
-                    Length = Size,
-                    BuildNum = buildNum,
-                    Version = versionNum,
-                }.Write(s);
-            }
-            new ChunkHeader()
-            {
-                Type = RwCorePluginID.STRUCT,
-                Length = DataSize,
-                BuildNum = buildNum,
-                Version = versionNum,
-            }.Write(s);
-            s.Write(Name.Length);
-            foreach (string n in Name)
-                s.WriteFixedSizeString(n, FixedSizeString);
         }
     }
 

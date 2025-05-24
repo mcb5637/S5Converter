@@ -1,4 +1,5 @@
-﻿using System;
+﻿using S5Converter.Geometry;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -620,7 +621,7 @@ namespace S5Converter.Atomic
         public required RGBA Color = new();
         [JsonRequired]
         public Vec2[] TextureCoordinates = new Vec2[4];
-        public required Texture? ParticleTexture;
+        public required RwTexture? ParticleTexture;
         [JsonRequired]
         public float ParticleRotation = -1;
 
@@ -635,7 +636,7 @@ namespace S5Converter.Atomic
             r += Vec3.Size * 6;
             r += RGBA.Size;
             r += Vec2.Size * TextureCoordinates.Length;
-            r += Texture.OptTextureSize(ParticleTexture);
+            r += RwTexture.OptTextureSize(ParticleTexture);
             if (flags >= 3)
                 r += sizeof(float);
             return r;
@@ -667,7 +668,7 @@ namespace S5Converter.Atomic
             };
             for (int i = 0; i < 4; ++i)
                 r.TextureCoordinates[i] = Vec2.Read(s);
-            r.ParticleTexture = Texture.ReadOptText(s);
+            r.ParticleTexture = RwTexture.ReadOptText(s);
             if (flags >= 3)
                 r.ParticleRotation = s.ReadSingle().RadToDegOpt(convertRad);
             return r;
@@ -695,7 +696,7 @@ namespace S5Converter.Atomic
             Color.Write(s);
             for (int i = 0; i < 4; ++i)
                 TextureCoordinates[i].Write(s);
-            Texture.WriteOptTexture(s, ref ParticleTexture, versionNum, buildNum);
+            RwTexture.WriteOptTexture(s, ref ParticleTexture, versionNum, buildNum);
             if (flags >= 3)
                 s.Write(ParticleRotation.DegToRadOpt(convertRad));
         }
@@ -1181,12 +1182,12 @@ namespace S5Converter.Atomic
         {
             public required float Time;
             public required float TimeBias;
-            public required TexCoord MidUV0;
-            public required TexCoord MidUV0Bias;
-            public required TexCoord MidUV1;
-            public required TexCoord MidUV1Bias;
+            public required RwTexCoords MidUV0;
+            public required RwTexCoords MidUV0Bias;
+            public required RwTexCoords MidUV1;
+            public required RwTexCoords MidUV1Bias;
 
-            internal const int Size = sizeof(float) * 2 + TexCoord.Size * 4;
+            internal const int Size = sizeof(float) * 2 + RwTexCoords.Size * 4;
 
             internal static RpPrtAdvEmtPrtTexCoordsItem Read(BinaryReader s)
             {
@@ -1194,10 +1195,10 @@ namespace S5Converter.Atomic
                 {
                     Time = s.ReadSingle(),
                     TimeBias = s.ReadSingle(),
-                    MidUV0 = TexCoord.Read(s),
-                    MidUV0Bias = TexCoord.Read(s),
-                    MidUV1 = TexCoord.Read(s),
-                    MidUV1Bias = TexCoord.Read(s),
+                    MidUV0 = RwTexCoords.Read(s),
+                    MidUV0Bias = RwTexCoords.Read(s),
+                    MidUV1 = RwTexCoords.Read(s),
+                    MidUV1Bias = RwTexCoords.Read(s),
                 };
                 return r;
             }
