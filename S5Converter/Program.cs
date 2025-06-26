@@ -67,6 +67,15 @@ namespace S5Converter
                 VisualizeHierarchy(args[1], opt);
                 return;
             }
+            else if (args.Length == 2 && args[0] == "--patchwork")
+            {
+                using FileStream r = new(args[1], FileMode.Open, FileAccess.Read);
+                PatchworkModel d = JsonSerializer.Deserialize<PatchworkModel>(r, opt) ?? throw new IOException("failed to parse file");
+                d.Build(opt);
+                Console.Error.WriteLine("done, press enter to exit");
+                Console.Read();
+                return;
+            }
 #if DEBUG
             else if (args.Length == 1 && args[0] == "--buildSchema")
             {
@@ -316,6 +325,7 @@ namespace S5Converter
     }
     [JsonSourceGenerationOptions(WriteIndented = true)]
     [JsonSerializable(typeof(RWFile))]
+    [JsonSerializable(typeof(PatchworkModel))]
     internal partial class SourceGenerationContext : JsonSerializerContext
     {
     }
