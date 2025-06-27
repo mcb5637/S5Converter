@@ -22,6 +22,7 @@ namespace S5Converter
                 IncludeFields = true,
                 UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
                 RespectNullableAnnotations = true,
+                PropertyNameCaseInsensitive = true,
             };
             if (args.Length >= 1 && args[0] == "--encodeFloatAsInt")
             {

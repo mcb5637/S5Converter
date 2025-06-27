@@ -97,3 +97,7 @@ https://github.com/Novator12/s5_BlenderPlugin
 ## Skin:
 - makes verticies influenced by up to 4 bones instead of 1
 - attached as SkinPLG extension on geometry
+
+# TODOs:
+- animation keyframe ordering
+- skin plg reordering?

@@ -62,6 +62,7 @@ namespace S5Converter.Frame
         public Node[] Nodes = [];
         [JsonPropertyName("parents")]
         public int[]? Parents;
+        public bool ReBuildNodesArray = false;
 
         internal class Node
         {
@@ -201,6 +202,9 @@ namespace S5Converter.Frame
             if (hierlist == null || hlist == null)
                 return;
 
+            if (hlist.ReBuildNodesArray)
+                BuildNodeArray(frames, hlist);
+
             if (hlist.Parents != null && hlist.Parents.Length != hlist.Nodes.Length)
                 throw new IOException("hanim parents length missmatch");
 
@@ -214,6 +218,12 @@ namespace S5Converter.Frame
                 BuildParents(hlist.Nodes, hlist.Parents);
 
 
+            static void BuildNodeArray(FrameWithExt[] frames, RpHAnimHierarchy hlist)
+            {
+                hlist.Nodes = [.. frames.Where(x => x.Extension.HanimPLG != null).Select(x => new Node() { NodeID = x.Extension.HanimPLG!.NodeID })];
+                hlist.Parents = null; // clear, because order has changed now
+                hlist.ReBuildNodesArray = false;
+            }
             static void RebuildNodes(FrameWithExt hierlist, RpHAnimHierarchy hlist, List<HInfo> hier)
             {
                 if (RebuildNodeOrder(hier.First(x => x.F == hierlist), 0, hlist.Nodes) != hlist.Nodes.Length)

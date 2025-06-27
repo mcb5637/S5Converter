@@ -18,7 +18,7 @@
 
         internal static (FrameWithExt?, RpHAnimHierarchy?) GetHierarchy(FrameWithExt[] frames)
         {
-            FrameWithExt? hierlist = frames.SingleOrDefault(x => (x.Extension.HanimPLG?.Nodes?.Length ?? 0) > 0);
+            FrameWithExt? hierlist = frames.SingleOrDefault(x => ((x.Extension.HanimPLG?.Nodes?.Length ?? 0) > 0) || (x.Extension.HanimPLG?.ReBuildNodesArray ?? false));
             if (hierlist == null || hierlist.Extension.HanimPLG == null)
                 return (null, null);
             return (hierlist, hierlist.Extension.HanimPLG);
