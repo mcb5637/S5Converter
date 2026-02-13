@@ -1,13 +1,8 @@
 ﻿using S5Converter.Atomic;
 using S5Converter.Frame;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Schema;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace S5Converter
 {
@@ -71,7 +66,7 @@ namespace S5Converter
             else if (args.Length == 2 && args[0] == "--patchwork")
             {
                 using FileStream r = new(args[1], FileMode.Open, FileAccess.Read);
-                PatchworkModel d = JsonSerializer.Deserialize<PatchworkModel>(r, opt) ?? throw new IOException("failed to parse file");
+                PatchworkModel d = JsonSerializer.Deserialize<PatchworkModel>(r, new SourceGenerationContext(opt).PatchworkModel) ?? throw new IOException("failed to parse file");
                 d.Build(opt);
                 Console.Error.WriteLine("done, press enter to exit");
                 Console.Read();
@@ -80,7 +75,11 @@ namespace S5Converter
 #if DEBUG
             else if (args.Length == 1 && args[0] == "--buildSchema")
             {
+#pragma warning disable IL2026
+#pragma warning disable IL3050
                 string d = JsonSerializerOptions.Default.GetJsonSchemaAsNode(typeof(RWFile)).ToString();
+#pragma warning restore IL3050
+#pragma warning restore IL2026
                 File.WriteAllText("./schema.json", d);
                 return;
             }
@@ -137,7 +136,7 @@ namespace S5Converter
                 if (Path.GetExtension(file) == ".json")
                 {
                     using FileStream r = new(file, FileMode.Open, FileAccess.Read);
-                    f = JsonSerializer.Deserialize<RWFile>(r, opt) ?? throw new IOException("failed to parse file");
+                    f = JsonSerializer.Deserialize<RWFile>(r, new SourceGenerationContext(opt).RWFile) ?? throw new IOException("failed to parse file");
                 }
                 else
                 {
@@ -288,10 +287,8 @@ namespace S5Converter
                         }
                         json.Position = 0;
                         using DebugWriteCheckStream o = new() { BytesToWrite = File.ReadAllBytes(f.FullName) };
-                        {
-                            using BinaryWriter w = new(o);
-                            Export(json, w, opt);
-                        }
+                        using BinaryWriter w = new(o);
+                        Export(json, w, opt);
                         o.CheckEnd();
                         // File.WriteAllBytes("./out.json", json.ToArray())
                         // Export(json, new BinaryWriter(new FileStream("./out.dff", FileMode.Create, FileAccess.Write)), opt)
@@ -314,13 +311,13 @@ namespace S5Converter
         private static RWFile Import(BinaryReader r, Stream ou, JsonSerializerOptions opt, bool convertRad)
         {
             RWFile d = RWFile.Read(r, convertRad);
-            JsonSerializer.Serialize(ou, d, opt);
+            JsonSerializer.Serialize(ou, d, new SourceGenerationContext(opt).RWFile);
             return d;
         }
 
         private static void Export(Stream r, BinaryWriter ou, JsonSerializerOptions opt)
         {
-            RWFile d = JsonSerializer.Deserialize<RWFile>(r, opt) ?? throw new IOException("failed to parse file");
+            RWFile d = JsonSerializer.Deserialize<RWFile>(r, new SourceGenerationContext(opt).RWFile) ?? throw new IOException("failed to parse file");
             d.Write(ou);
         }
     }

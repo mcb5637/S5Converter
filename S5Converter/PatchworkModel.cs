@@ -52,7 +52,7 @@ namespace S5Converter
             if (Output.EndsWith(".json"))
             {
                 using FileStream ou = new(Output, FileMode.Create, FileAccess.Write);
-                JsonSerializer.Serialize(ou, new RWFile() { Clp = clump }, opt);
+                JsonSerializer.Serialize(ou, new RWFile() { Clp = clump }, new SourceGenerationContext(opt).RWFile);
             }
             else
             {
@@ -67,7 +67,7 @@ namespace S5Converter
             if (i.Model.EndsWith(".json"))
             {
                 using FileStream r = new(i.Model, FileMode.Open, FileAccess.Read);
-                f = JsonSerializer.Deserialize<RWFile>(r, opt) ?? throw new IOException("failed to parse file");
+                f = JsonSerializer.Deserialize<RWFile>(r, new SourceGenerationContext(opt).RWFile) ?? throw new IOException("failed to parse file");
             }
             else
             {
