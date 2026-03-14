@@ -63,16 +63,16 @@ internal static class CLI
         }
         else if (args.Length == 2 && args[0] == "--visualizeHierarchy")
         {
-            VisualizeHierarchy(args[1], opt);
+            VisualizeHierarchy(args[1], sgen);
             return;
         }
         else if (args.Length == 2 && args[0] == "--patchwork")
         {
             using FileStream r = new(args[1], FileMode.Open, FileAccess.Read);
             PatchworkModel d =
-                JsonSerializer.Deserialize<PatchworkModel>(r, new SourceGenerationContext(opt).PatchworkModel) ??
+                JsonSerializer.Deserialize<PatchworkModel>(r, sgen.PatchworkModel) ??
                 throw new IOException("failed to parse file");
-            d.Build(opt);
+            d.Build(sgen);
             Console.Error.WriteLine("done");
             return;
         }
@@ -131,7 +131,7 @@ internal static class CLI
         Console.Error.WriteLine("done");
     }
 
-    private static void VisualizeHierarchy(string file, JsonSerializerOptions opt)
+    private static void VisualizeHierarchy(string file, SourceGenerationContext opt)
     {
         try
         {
@@ -139,7 +139,7 @@ internal static class CLI
             if (Path.GetExtension(file) == ".json")
             {
                 using FileStream r = new(file, FileMode.Open, FileAccess.Read);
-                f = JsonSerializer.Deserialize<RWFile>(r, new SourceGenerationContext(opt).RWFile) ??
+                f = JsonSerializer.Deserialize<RWFile>(r, opt.RWFile) ??
                     throw new IOException("failed to parse file");
             }
             else
@@ -325,6 +325,7 @@ internal static class CLI
     {
         RWFile d = JsonSerializer.Deserialize<RWFile>(r, opt.RWFile) ??
                    throw new IOException("failed to parse file");
+        d.RebuildPreWrite();
         d.Write(ou);
     }
 }

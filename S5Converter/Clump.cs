@@ -80,7 +80,7 @@ internal class Clump
         {
             if (nGeoms == 0) // TODO
                 throw new IOException(
-                    "trying to read atomic without geometry in clump. inline geometry not supportet at the moment!");
+                    "trying to read atomic without geometry in clump. inline geometry not supported at the moment!");
             c.Atomics[i] = RpAtomic.Read(s, true, convertRad);
         }
 
@@ -96,6 +96,11 @@ internal class Clump
         c.Extension.Read(s, c);
 
         return c;
+    }
+
+    internal void RebuildPreWrite()
+    {
+        RpHAnimHierarchy.RebuildNodeHierarchy(Frames);
     }
 
     internal void Write(BinaryWriter s, bool header, bool convertRad, UInt32 versionNum, UInt32 buildNum)
@@ -123,7 +128,6 @@ internal class Clump
         s.Write(0);
 
         // framelist
-        RpHAnimHierarchy.RebuildNodeHierarchy(Frames);
         new ChunkHeader()
         {
             Length = FrameListSize + ChunkHeader.Size,

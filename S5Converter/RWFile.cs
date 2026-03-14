@@ -70,6 +70,7 @@ internal class RWFile
 
         f.BuildNum = h.BuildNum;
         f.VersionNum = h.Version;
+        f.RebuildPostRead();
         return f;
     }
 
@@ -102,5 +103,15 @@ internal class RWFile
         }
 
         throw new IOException("empty");
+    }
+
+    internal void RebuildPreWrite()
+    {
+        Clp?.RebuildPreWrite();
+    }
+
+    internal void RebuildPostRead()
+    {
+        
     }
 }

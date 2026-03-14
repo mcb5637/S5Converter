@@ -21,7 +21,7 @@ internal class PatchworkModel
     public required string Output;
 
 
-    internal void Build(JsonSerializerOptions opt)
+    internal void Build(SourceGenerationContext opt)
     {
         Dictionary<(string, int), int> geomCache = [];
         var clump = Load(ref Main, opt);
@@ -49,22 +49,24 @@ internal class PatchworkModel
         if (Output.EndsWith(".json"))
         {
             using FileStream ou = new(Output, FileMode.Create, FileAccess.Write);
-            JsonSerializer.Serialize(ou, new RWFile() { Clp = clump }, new SourceGenerationContext(opt).RWFile);
+            JsonSerializer.Serialize(ou, new RWFile() { Clp = clump }, opt.RWFile);
         }
         else
         {
             using BinaryWriter ou = new(new FileStream(Output, FileMode.Create, FileAccess.Write));
-            new RWFile() { Clp = clump }.Write(ou);
+            RWFile f = new() { Clp = clump };
+            f.RebuildPreWrite();
+            f.Write(ou);
         }
     }
 
-    private static Clump Load(ref ModelInfo i, JsonSerializerOptions opt)
+    private static Clump Load(ref ModelInfo i, SourceGenerationContext opt)
     {
         RWFile f;
         if (i.Model.EndsWith(".json"))
         {
             using FileStream r = new(i.Model, FileMode.Open, FileAccess.Read);
-            f = JsonSerializer.Deserialize<RWFile>(r, new SourceGenerationContext(opt).RWFile) ??
+            f = JsonSerializer.Deserialize<RWFile>(r, opt.RWFile) ??
                 throw new IOException("failed to parse file");
         }
         else
