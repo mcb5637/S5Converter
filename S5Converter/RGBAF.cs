@@ -1,37 +1,40 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace S5Converter
+namespace S5Converter;
+
+// ReSharper disable once InconsistentNaming
+internal struct RGBAF
 {
-    internal struct RGBAF
+    [JsonPropertyName("red")]
+    public float Red;
+
+    [JsonPropertyName("green")]
+    public float Green;
+
+    [JsonPropertyName("blue")]
+    public float Blue;
+
+    [JsonPropertyName("alpha")]
+    public float Alpha;
+
+    internal const int Size = 4 * sizeof(float);
+
+    internal static RGBAF Read(BinaryReader s)
     {
-        [JsonPropertyName("red")]
-        public float Red;
-        [JsonPropertyName("green")]
-        public float Green;
-        [JsonPropertyName("blue")]
-        public float Blue;
-        [JsonPropertyName("alpha")]
-        public float Alpha;
-
-        internal const int Size = 4 * sizeof(float);
-
-        internal static RGBAF Read(BinaryReader s)
+        return new()
         {
-            return new()
-            {
-                Red = s.ReadSingle(),
-                Green = s.ReadSingle(),
-                Blue = s.ReadSingle(),
-                Alpha = s.ReadSingle(),
-            };
-        }
+            Red = s.ReadSingle(),
+            Green = s.ReadSingle(),
+            Blue = s.ReadSingle(),
+            Alpha = s.ReadSingle(),
+        };
+    }
 
-        internal readonly void Write(BinaryWriter s)
-        {
-            s.Write(Red);
-            s.Write(Green);
-            s.Write(Blue);
-            s.Write(Alpha);
-        }
+    internal readonly void Write(BinaryWriter s)
+    {
+        s.Write(Red);
+        s.Write(Green);
+        s.Write(Blue);
+        s.Write(Alpha);
     }
 }
