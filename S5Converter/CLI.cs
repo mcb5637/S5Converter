@@ -12,7 +12,6 @@ internal static class CLI
     {
         JsonSerializerOptions opt = new(JsonSerializerDefaults.General)
         {
-            TypeInfoResolver = SourceGenerationContext.Default,
             WriteIndented = true,
             IncludeFields = true,
             UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
@@ -25,13 +24,15 @@ internal static class CLI
             args = args[1..];
         }
 
+        SourceGenerationContext sgen = new(opt);
+
         if (args.Length == 1 && args[0] == "--import")
         {
             try
             {
                 using BinaryReader r = new(Console.OpenStandardInput());
                 using Stream ou = Console.OpenStandardOutput();
-                Import(r, ou, opt, true);
+                Import(r, ou, sgen, true);
             }
             catch (Exception e) when (e is IOException || e is JsonException)
             {
@@ -46,7 +47,7 @@ internal static class CLI
             {
                 using Stream r = Console.OpenStandardInput();
                 using BinaryWriter ou = new(Console.OpenStandardOutput());
-                Export(r, ou, opt);
+                Export(r, ou, sgen);
             }
             catch (Exception e) when (e is IOException || e is JsonException)
             {
@@ -72,8 +73,7 @@ internal static class CLI
                 JsonSerializer.Deserialize<PatchworkModel>(r, new SourceGenerationContext(opt).PatchworkModel) ??
                 throw new IOException("failed to parse file");
             d.Build(opt);
-            Console.Error.WriteLine("done, press enter to exit");
-            Console.Read();
+            Console.Error.WriteLine("done");
             return;
         }
 #if DEBUG
@@ -89,11 +89,9 @@ internal static class CLI
         }
         else if (args.Length >= 2 && args[0] == "--checkRoundTrip")
         {
-            opt.WriteIndented = false;
             for (int i = 1; i < args.Length; ++i)
-                CheckRoundTrip(args[i], opt);
-            Console.Error.WriteLine("done, press enter to exit");
-            Console.Read();
+                CheckRoundTrip(args[i], sgen);
+            Console.Error.WriteLine("done");
             return;
         }
 #endif
@@ -107,7 +105,7 @@ internal static class CLI
                     using FileStream r = new(f, FileMode.Open, FileAccess.Read);
                     using BinaryWriter ou = new(new FileStream(Path.ChangeExtension(f, ".out"), FileMode.Create,
                         FileAccess.Write));
-                    Export(r, ou, opt);
+                    Export(r, ou, sgen);
                 }
                 catch (Exception e) when (e is IOException || e is JsonException)
                 {
@@ -121,7 +119,7 @@ internal static class CLI
                     Console.Error.WriteLine($"converting {f}");
                     using BinaryReader r = new(new FileStream(f, FileMode.Open, FileAccess.Read));
                     using FileStream ou = new(Path.ChangeExtension(f, ".json"), FileMode.Create, FileAccess.Write);
-                    Import(r, ou, opt, true);
+                    Import(r, ou, sgen, true);
                 }
                 catch (Exception e) when (e is IOException || e is JsonException)
                 {
@@ -130,8 +128,7 @@ internal static class CLI
             }
         }
 
-        Console.Error.WriteLine("done, press enter to exit");
-        Console.Read();
+        Console.Error.WriteLine("done");
     }
 
     private static void VisualizeHierarchy(string file, JsonSerializerOptions opt)
@@ -252,13 +249,13 @@ internal static class CLI
     }
 
     // --encodeFloatAsInt --checkRoundTrip D:\programme\s5\s5complete\graphics\models D:\programme\s5\s5complete\graphics\animations
-    private static void CheckRoundTrip(string path, JsonSerializerOptions opt)
+    private static void CheckRoundTrip(string path, SourceGenerationContext opt)
     {
         DirectoryInfo i = new(path);
         string[] exclude = ["xd_gold1.dff", "zxdummy.dff", "heads", "piles"];
         Search(i, opt, exclude);
 
-        static void Search(DirectoryInfo i, JsonSerializerOptions opt, string[] exclude)
+        static void Search(DirectoryInfo i, SourceGenerationContext opt, string[] exclude)
         {
             foreach (FileInfo f in i.GetFiles())
             {
@@ -266,6 +263,7 @@ internal static class CLI
                     continue;
                 try
                 {
+                    Console.WriteLine($"File: {f.FullName}");
                     using BinaryReader r = new(new FileStream(f.FullName, FileMode.Open, FileAccess.Read));
                     using MemoryStream json = new();
                     RWFile d = Import(r, json, opt, false);
@@ -316,16 +314,16 @@ internal static class CLI
         }
     }
 
-    private static RWFile Import(BinaryReader r, Stream ou, JsonSerializerOptions opt, bool convertRad)
+    private static RWFile Import(BinaryReader r, Stream ou, SourceGenerationContext opt, bool convertRad)
     {
         RWFile d = RWFile.Read(r, convertRad);
-        JsonSerializer.Serialize(ou, d, new SourceGenerationContext(opt).RWFile);
+        JsonSerializer.Serialize(ou, d, opt.RWFile);
         return d;
     }
 
-    private static void Export(Stream r, BinaryWriter ou, JsonSerializerOptions opt)
+    private static void Export(Stream r, BinaryWriter ou, SourceGenerationContext opt)
     {
-        RWFile d = JsonSerializer.Deserialize<RWFile>(r, new SourceGenerationContext(opt).RWFile) ??
+        RWFile d = JsonSerializer.Deserialize<RWFile>(r, opt.RWFile) ??
                    throw new IOException("failed to parse file");
         d.Write(ou);
     }
