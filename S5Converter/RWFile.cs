@@ -1,5 +1,6 @@
 ﻿using S5Converter.Anim;
 using System.Text.Json.Serialization;
+using S5Converter.Frame;
 
 namespace S5Converter;
 
@@ -39,6 +40,10 @@ internal class RWFile
 
     [JsonInclude]
     public bool ConvertRadians;
+    
+    [JsonInclude]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public FrameWithExt[]? FramesForAnimExport;
 
     internal static RWFile Read(BinaryReader s, bool convertRad)
     {
@@ -108,10 +113,19 @@ internal class RWFile
     internal void RebuildPreWrite()
     {
         Clp?.RebuildPreWrite();
+        int[]? nodeIds = null;
+        if (FramesForAnimExport != null)
+        {
+            RpHAnimHierarchy.RebuildNodeHierarchy(FramesForAnimExport);
+            nodeIds = HInfo.GetHierarchy(FramesForAnimExport).Item2?.Nodes.Select(x => x.NodeID).ToArray();
+        }
+        CompressedAnim?.RebuildKeyframeOrders(nodeIds);
+        HierarchicalAnim?.RebuildKeyframeOrders(nodeIds);
     }
 
     internal void RebuildPostRead()
     {
-        
+        CompressedAnim?.RecreateNodeIds(null);
+        HierarchicalAnim?.RecreateNodeIds(null);
     }
 }

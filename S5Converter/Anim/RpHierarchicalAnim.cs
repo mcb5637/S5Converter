@@ -2,12 +2,10 @@
 
 internal class RpHierarchicalAnim : RtAnimAnimation
 {
-    internal struct RpHAnimKeyFrame
+    internal class RpHAnimKeyFrame : AnimKeyframe
     {
-        public required float Time;
         public required RtQuat Q;
         public required Vec3 T;
-        public required int PrevKeyFrame;
 
         // ReSharper disable once MemberHidesStaticFromOuterClass
         internal const int Size = sizeof(float) * 2 + Vec3.Size + RtQuat.Size;
@@ -29,7 +27,7 @@ internal class RpHierarchicalAnim : RtAnimAnimation
             return r;
         }
 
-        internal readonly void Write(BinaryWriter s)
+        internal void Write(BinaryWriter s)
         {
             s.Write(Time);
             Q.Write(s);
@@ -75,5 +73,15 @@ internal class RpHierarchicalAnim : RtAnimAnimation
 
         foreach (RpHAnimKeyFrame kf in KeyFrames)
             kf.Write(s);
+    }
+
+    internal void RecreateNodeIds(int[]? nodeIds)
+    {
+        RecreateNodeIds(KeyFrames, nodeIds);
+    }
+
+    internal void RebuildKeyframeOrders(int[]? nodeIds)
+    {
+        RebuildKeyframeOrders(KeyFrames, nodeIds);
     }
 }

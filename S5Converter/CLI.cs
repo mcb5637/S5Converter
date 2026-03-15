@@ -290,6 +290,15 @@ internal static class CLI
                         }
                     }
 
+                    if (d.HierarchicalAnim != null)
+                    {
+                        d.HierarchicalAnim.KeyFrames = d.HierarchicalAnim.KeyFrames.Shuffle().ToArray();
+                    }
+                    if (d.CompressedAnim != null)
+                    {
+                        d.CompressedAnim.KeyFrames = d.CompressedAnim.KeyFrames.Shuffle().ToArray();
+                    }
+
                     json.Position = 0;
                     using DebugWriteCheckStream o = new() { BytesToWrite = File.ReadAllBytes(f.FullName) };
                     using BinaryWriter w = new(o);

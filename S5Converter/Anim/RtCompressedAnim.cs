@@ -4,12 +4,10 @@ namespace S5Converter.Anim;
 
 internal class RtCompressedAnim : RtAnimAnimation
 {
-    internal struct RtCompressedKeyFrame
+    internal class RtCompressedKeyFrame : AnimKeyframe
     {
-        public required float Time;
         public required RtQuat Q;
         public required Vec3 T;
-        public required int PrevKeyFrame;
 
         // ReSharper disable once MemberHidesStaticFromOuterClass
         internal const int Size = sizeof(float) * 2 + sizeof(short) * 7;
@@ -88,7 +86,7 @@ internal class RtCompressedAnim : RtAnimAnimation
             return r;
         }
 
-        internal readonly void Write(BinaryWriter s)
+        internal void Write(BinaryWriter s)
         {
             s.Write(Time);
             s.Write(Compress(Q.Imaginary.X));
@@ -151,5 +149,15 @@ internal class RtCompressedAnim : RtAnimAnimation
 
         Offset.Write(s);
         Scalar.Write(s);
+    }
+
+    internal void RecreateNodeIds(int[]? nodeIds)
+    {
+        RecreateNodeIds(KeyFrames, nodeIds);
+    }
+
+    internal void RebuildKeyframeOrders(int[]? nodeIds)
+    {
+        RebuildKeyframeOrders(KeyFrames, nodeIds);
     }
 }

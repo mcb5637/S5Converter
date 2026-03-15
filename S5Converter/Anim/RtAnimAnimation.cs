@@ -91,4 +91,53 @@ internal abstract class RtAnimAnimation
                 throw new IOException($"anim type {interpolatorTypeId} is not supported.");
         }
     }
+    
+    internal abstract class AnimKeyframe
+    {
+        public required float Time;
+        public required int PrevKeyFrame;
+        public int NodeId = 0;
+    }
+
+    protected void RecreateNodeIds<T>(T[] keyframes, int[]? nodeIds) where T : AnimKeyframe
+    {
+        for (int i = 0; i < keyframes.Length; i++)
+        {
+            var f = keyframes[i];
+            if (f.PrevKeyFrame < 0 && f.Time <= 0.0)
+            {
+                f.NodeId = i;
+            }
+            else if (f.PrevKeyFrame >= 0 && f.PrevKeyFrame < keyframes.Length)
+            {
+                f.NodeId = keyframes[f.PrevKeyFrame].NodeId;
+            }
+            else
+            {
+                throw new IOException("anim nodeid rebuild failed");
+            }
+        }
+
+        if (nodeIds != null)
+        {
+            foreach (var f in keyframes)
+                f.NodeId = nodeIds[f.NodeId];
+        }
+    }
+
+    protected void RebuildKeyframeOrders<T>(T[] keyframes, int[]? nodeIds) where T : AnimKeyframe
+    {
+        keyframes.Sort((a, b) => GetSortKey(a).CompareTo(GetSortKey(b)));
+
+        (float, int) GetSortKey(T f)
+        {
+            return (TimeOfPrevKeyframe(f), nodeIds?[f.NodeId] ?? f.NodeId);
+        }
+        float TimeOfPrevKeyframe(AnimKeyframe f)
+        {
+            if (f.PrevKeyFrame < 0)
+                return -1.0f;
+            return keyframes[f.PrevKeyFrame].Time;
+        }
+    }
 }
