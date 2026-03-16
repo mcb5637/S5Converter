@@ -101,6 +101,8 @@ internal class Clump
     internal void RebuildPreWrite()
     {
         RpHAnimHierarchy.RebuildNodeHierarchy(Frames);
+        foreach (var g in Geometries)
+            g.Extension.BinMeshPLG?.TryRebuildTriStrip(g);
     }
 
     internal void Write(BinaryWriter s, bool header, bool convertRad, UInt32 versionNum, UInt32 buildNum)

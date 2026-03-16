@@ -78,7 +78,7 @@ jobs:
 
       - uses: softprops/action-gh-release@v2
         with:
-          body: "latest code from master"
+          body: "latest code from master\n\nTri-Stripping done by: https://github.com/MaxHwoy/SharpTriStrip (its license applies)"
           prerelease: true
           files: |
             ./Release.zip

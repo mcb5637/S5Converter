@@ -1,0 +1,3 @@
+[submodule "SharpTriStrip"]
+	path = SharpTriStrip
+	url = https://github.com/MaxHwoy/SharpTriStrip.git

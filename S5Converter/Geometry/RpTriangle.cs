@@ -36,4 +36,11 @@ internal struct RpTriangle
         s.Write(MaterialId);
         s.Write(V3);
     }
+
+    internal IEnumerable<ushort> Verts()
+    {
+        yield return (ushort)V1;
+        yield return (ushort)V2;
+        yield return (ushort)V3;
+    }
 }

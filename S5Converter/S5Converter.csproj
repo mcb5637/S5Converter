@@ -19,4 +19,8 @@
       <Folder Include="Properties\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\SharpTriStrip\SharpTriStrip\SharpTriStrip.csproj" />
+    </ItemGroup>
+
 </Project>

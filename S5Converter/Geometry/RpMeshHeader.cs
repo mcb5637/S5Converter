@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+using SharpTriStrip;
 
 namespace S5Converter.Geometry;
 
@@ -150,5 +151,30 @@ internal class RpMeshHeader
             foreach (int v in m.VertexIndices)
                 s.Write(v);
         }
+    }
+
+    internal void TryRebuildTriStrip(RpGeometry geom)
+    {
+        if (Meshes.Length != 0 || Flags.Type != MeshHeaderFlags.MeshType.TriStrip)
+            return;
+        TriStrip strip = new();
+        strip.DisableRestart();
+        strip.SetListsOnly(false);
+        strip.SetStitchStrips(true);
+
+        Meshes = geom.Triangles.GroupBy(x => x.MaterialId).Select(x =>
+        {
+            if (!strip.GenerateStrips(x.SelectMany(y => y.Verts()).ToArray(), out var stripped, false))
+                throw new IOException("failed to create tristrip");
+            if (stripped.Length != 1)
+                throw new IOException("unexpected length of tristrip");
+            if (stripped[0].Type != TriStrip.PrimitiveType.Strip)
+                throw new IOException("unexpected type of tristrip");
+            return new RpMesh
+            {
+                MaterialIndex = x.Key,
+                VertexIndices = stripped[0].Indices.Select(y => (int)y).ToArray(),
+            };
+        }).ToArray();
     }
 }
